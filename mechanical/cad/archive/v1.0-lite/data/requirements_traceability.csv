@@ -1,0 +1,27 @@
+Requirement ID,Requirement,Subsystem,Verification method,Evidence,Status
+REQ-MECH-001,"Desktop companion; compact soft premium body, not industrial humanoid",System,Inspection,ACTIVE STEP/render,PASS
+REQ-MECH-002,Exactly two powered wheels; differential drive; no Mecanum,Mobility,Inspection,ACTIVE/SHUTDOWN STEP,PASS
+REQ-MECH-003,Hidden passive third support plus anti-tip backup,Mobility,Inspection/Test,Caster/skid geometry + tilt test,PASS/TEST
+REQ-HEAD-001,Landscape digital face with hidden top-center camera,Head,Inspection,Head assembly,PASS
+REQ-HEAD-002,Head has Pan + Tilt + vertical retract,Head,Inspection/Demonstration,ACTIVE/SLEEP/SHUTDOWN configurations,PASS
+REQ-HEAD-003,Sleep hides neck while most of screen remains visible,Head,Analysis/Inspection,Visible-screen calculation,PASS
+REQ-HEAD-004,Protected shutdown hides/protects screen/camera,Head,Analysis/Inspection,Shutdown top flush,PASS
+REQ-HEAD-005,No structural shutdown latch; 3-point padded seating,Head,Inspection/Test,Seat geometry + cycle test,PASS/TEST
+REQ-HEAD-006,Retract only after centered Pan and dock Tilt confirmation,Controls,Test,Firmware/state-machine later,OPEN-SW
+REQ-ARM-001,"Two functional arms with 2-DOF shoulder, elbow, telescope, roll, wrist pitch",Arms,Inspection,Arm CAD,PASS
+REQ-ARM-002,Arm stows into intentional side recess without distal collision,Arms,Analysis/Test,Boolean collision test + physical cycle,PASS/TEST
+REQ-ARM-003,"Telescopic drive has end states, hard stop and jam sensing",Arms,Inspection/Test,CAD provisions + bench test,PASS/TEST
+REQ-TOOL-001,"Manual quick swap, keyed, mechanically load bearing",Tools,Inspection/Test,Bayonet prototype STL,PASS/TEST
+REQ-TOOL-002,Tool contacts carry no structural load; power off before lock,Tools,Inspection/Test,Interface CAD + electrical interlock,PASS/OPEN-EE
+REQ-SAFE-001,Local independent Safety/Motion MCU remains safety boundary,System,Inspection/Test,Architecture + firmware later,PASS/OPEN-SW
+REQ-SAFE-002,Hardware Motion Kill cuts actuator authority independently,Safety,Inspection/Test,Control-panel/EE freeze later,OPEN-EE
+REQ-SAFE-003,Hardware Privacy disables camera/mics,Safety,Inspection/Test,EE freeze later,OPEN-EE
+REQ-SAFE-004,Desk cliff coverage at four corners plus independent fallback,Safety,Inspection/Test,4 sensor mounts + bumper; surface matrix,PASS/TEST
+REQ-PWR-001,Battery low/central and rear removable,Power/Mechanical,Inspection,Battery cassette/rails,PASS
+REQ-PWR-002,Charging disables drive/arms,Power/Safety,Test,Firmware+interlock later,OPEN-EE/SW
+REQ-SVC-001,Rear cosmetic service shell carries no essential wiring,Service,Inspection,Rear cover,PASS
+REQ-SVC-002,Critical modules independently removable,Service,Inspection/Demonstration,"Board trays, battery, wheel/tool modules",PASS/TEST
+REQ-RF-001,ESP32 antenna has nonmetallic keep-out region,RF,Inspection/Test,Keep-out volume + RF test,PASS/TEST
+REQ-AUD-001,Speaker hidden in isolated lower-front chamber,Audio,Inspection/Test,Speaker chamber + acoustic test,PASS/TEST
+REQ-CAD-001,CAD is parameterized and reproducible; STEP/STL outputs generated,CAD,Inspection,CadQuery source/build outputs,PASS
+REQ-CAD-002,Unverified dimensions are marked estimates/freeze gates,CAD,Inspection,Component table/release notes,PASS

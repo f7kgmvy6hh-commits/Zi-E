@@ -10,6 +10,8 @@ This repository is intended to be the portable source of truth for ZI-E across C
 5. `docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md`
 6. `mechanical/cad/current/docs/VALIDATION_REPORT.md`
 7. `docs/OPEN_ITEMS_AND_FREEZE_GATES.md`
+8. `docs/LASER_RANGEFINDER_SPEC.md`
+9. `docs/RELEASE_v0.3.md`
 
 ## Authority order
 1. Current explicit user correction/decision

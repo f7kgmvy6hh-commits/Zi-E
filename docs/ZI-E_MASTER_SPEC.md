@@ -45,6 +45,17 @@ Primary candidate: 3.5-inch IPS TFT, 320×480 native (used landscape as 480×320
 - Camera sits top-center in structural sensor brow.
 - Aesthetic smoked cover is allowed only if low-light/vision testing remains acceptable.
 
+### Dedicated laser rangefinder
+- Primary: VL53L1X single-point Time-of-Flight sensor, invisible 940 nm Class 1 laser, up to 4 m / 50 Hz.
+- Prototype CAD reserves a 25.5 × 17.5 × 4.6 mm carrier; final head sensor PCB may use the 4.9 × 2.5 × 1.56 mm bare package.
+- Located in the modular head sensor brow beside the centered OV5640; it does not replace the lower STM32 cliff/proximity safety sensors.
+- Primary role: requested distance measurement, camera/object distance assistance, approach measurement and vision calibration.
+- The sensor is single-point: camera/rangefinder extrinsic alignment must be calibrated and software must expose the actual ranging point.
+- Optical cover must be qualified around 940 nm, with minimized air gap/tilt and offset/crosstalk calibration after assembly. Arbitrary smoked plastic is not accepted without measurement.
+- Backup A: Benewake TF-Luna 0.2–8 m / up to 250 Hz if field requirements exceed 4 m or 50 Hz.
+- Backup B: TFmini-S class only if a real longer-range requirement appears.
+- Detailed rules: `docs/LASER_RANGEFINDER_SPEC.md`.
+
 ### Microphones
 - 2 matched I2S MEMS microphones in the head brow, symmetric around camera.
 - Current candidate: PUI DMM-4026-B-I2S-R; TDK T5848 class is a backup.
@@ -156,6 +167,19 @@ Current chain per arm:
 - Opening collar cuts tool power before rotation/unmating.
 - Each tool has a small local MCU (STM32C011-class) and independent transceiver/driver electronics as required.
 
+
+## 11B. Hidden Belly Light Matrix (BLM)
+- Fixed-torso low-resolution RGB information/ambient-light surface, hidden when off.
+- Prototype electronics: IS31FL3741 13×9 / 117 RGB pixel class; final custom PCB may be wider within the reserved CAD keepout.
+- Current CAD v0.3 reserves an 80 × 54 × 12 mm electronics/optical keepout and a flush ~74 × 46 mm optical insert.
+- Optical insert is secret-until-lit PC/PMMA with body-matched finish/coating; an opaque normal shell cannot provide the effect.
+- Internal black baffle/light well suppresses crosstalk and seam glow.
+- Controlled by ESP32-S3 on a non-safety bus/power path. The matrix may fail dark without affecting safety.
+- Hardware enable/load switch and global current/brightness cap are mandatory.
+- Intended information includes clock, timer, battery, charging, tool state, warnings, directional cues, AI state, audio visualization and ambient effects.
+- Safety/warning presentation has priority over cosmetic AI animation.
+- Final optical material, transmission, diffuser spacing, brightness and thermal limit require bench coupon testing before custom PCB/panel purchase.
+
 ## 12. Mobility
 - Exactly 2 independently powered fixed wheels, differential drive. Not four powered wheels, not mecanum/omni drive.
 - Hidden passive ball caster provides the third normal support point.
@@ -222,6 +246,16 @@ Current chain per arm:
 - Local ring-buffer/flight-recorder fault logging is required.
 - Updates and communications must eventually use authenticated/encrypted channels with rollback-safe update architecture.
 
+
+
+### Commissioning / execution semantics added from open-source failure review
+- First power-up uses a low-current commissioning state: scan actuator IDs/model/baud, verify voltage class, direction, physical indexing, zero/range and feedback one joint at a time. No autonomous animation before this passes.
+- A motion request has explicit states such as RECEIVED / ACCEPTED / ARMED / EXECUTING / COMPLETED / REJECTED / FAULTED. Receipt is never treated as proof of motion.
+- One command arbiter owns each moving subsystem; AI, web UI, teleoperation and scripted behavior cannot fight over raw setpoints.
+- Servo/head/arm cable topology avoids unnecessary downstream dependence on pass-through connectors; left/right/head remain separately isolatable fault domains.
+- Dynamic payload/tool mass and COM feed stability and torque limits.
+- Dynamic collision zones expand with speed, arm extension, tool length, payload and head height; stale critical range data means stop.
+
 ## 17. Thermal / EMI / RF / wiring
 - Separate high-current/noisy power routes from sensitive data/audio/RF routes.
 - Keep RF antenna area in an upper/rear nonmetallic region away from battery/large metal structures.
@@ -231,18 +265,18 @@ Current chain per arm:
 - Passive thermal path must work even in Protected Shutdown; add fans only if measured thermal tests prove necessary.
 
 ## 18. CAD status
-Current engineering CAD is in `mechanical/cad/current/`.
+Current project/CAD release is **v0.3** and is in `mechanical/cad/current/`.
 - Parametric source: `src/zie_cad.py`.
 - STEP/STL/glTF exports provided.
 - Active, Sleep, Shutdown and Cutaway states included.
-- Current automated validation snapshot: 34 checks total; 33 pass; one case (two arms each carrying 250 g forward) is intentionally restricted for normal driving because static stability margin drops below target.
-- Current mass estimate: ~2.42 kg, low/medium confidence until real parts and printed masses are measured.
+- Current automated validation snapshot (CAD v0.3): 39 checks total; 38 pass; one case (two arms each carrying 250 g forward) is intentionally restricted for normal driving because static stability margin drops below target.
+- Current mass estimate: ~2.44 kg, low/medium confidence until real parts and printed masses are measured.
 - Current active envelope is about 248 mm wide × 174 mm depth × 282 mm tall in the modeled state; these are CAD-state outputs, not immutable product dimensions.
 
 ## 19. Engineering method / mandatory loops
 Every significant change is reviewed through: requirements → research → alternatives → FMEA → common-cause → tolerance/manufacturing → abuse/human error → test plan → integration → change-impact → lifecycle/wear → red-team → approval/redesign.
 
-Additional mandatory checks include memory/inventory loop, interface/dependency loop, worst-combination loop, recovery loop, stale-data/timeouts, boot ambiguity, sensor blind spots/common power, STPA/fault-tree thinking for catastrophic outcomes, graceful degradation, calibration drift, logging/observability, latency, mass/space/energy/cost budgets, privacy/cybersecurity, supply-chain/obsolescence, repair/end-of-life, and an experiment ladder from simulation to controlled physical integration.
+Additional mandatory checks include memory/inventory loop, **Open-Source Harvest Loop (including issue trackers/troubleshooting)**, interface/dependency loop, worst-combination loop, recovery loop, stale-data/timeouts, boot ambiguity, sensor blind spots/common power, STPA/fault-tree thinking for catastrophic outcomes, graceful degradation, calibration drift, logging/observability, latency, mass/space/energy/cost budgets, privacy/cybersecurity, supply-chain/obsolescence, repair/end-of-life, and an experiment ladder from simulation to controlled physical integration.
 
 ## 20. Unresolved / freeze-gate items
 Do not call these production-frozen until physically verified:

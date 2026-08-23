@@ -268,3 +268,17 @@ Important correction applied to later concept:
 - RGB chest light made concealed/seamless when off.
 
 Images are **visual direction references**, not dimensionally accurate CAD.
+
+
+## 2026-08-23 — Hidden Belly Light Matrix and pre-purchase failure-harvest
+**Decision:** Add a hidden RGB belly matrix behind a flush secret-until-lit optical insert. Prototype with IS31FL3741 13×9, but reserve larger custom matrix keepout in CAD. It is non-safety multimedia and must fail dark.
+
+**Decision:** Add a permanent Open-Source Harvest Loop. Reachy Mini, LeRobot SO-101, OpenArm, Stretch, MoveIt/Nav2 and MuJoCo failure patterns are used to create preventive tests and architecture changes before bulk part purchase. Immediate changes include safe commissioning, explicit command execution state, single motion arbiter, bus/cable fault containment, dynamic payload/stability model, dynamic collision zones, diagnostic tooling and explicit simulation inertials.
+
+## 2026-08-23 — Project v0.3 dedicated head laser rangefinder
+- Add one dedicated forward single-point Class-1 ToF laser rangefinder in the head sensor brow.
+- Primary candidate: VL53L1X, because up-to-4 m / 50 Hz is sufficient for a desktop companion and the final bare package is extremely small.
+- Camera remains centered; rangefinder is offset and software must calibrate the camera/rangefinder extrinsic relationship.
+- Rangefinder is for measurement/vision assistance and does **not** replace local STM32 cliff/proximity/bumper safety.
+- The optical brow/window must be validated for ~940 nm transmission and crosstalk; arbitrary dark plastic is not accepted without test.
+- TF-Luna becomes the intentional backup if >4 m range or >50 Hz is required; TFmini-S only if a real longer-range requirement appears.

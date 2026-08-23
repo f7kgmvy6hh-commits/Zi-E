@@ -14,3 +14,27 @@ The project may continue, but the following cannot be silently treated as final:
 10. Wiring: validate bend radii, strain relief, service loops, EMI and wear cycle counts.
 11. Shell: apply final industrial-design surfaces only after all service/collision/thermal/sensor keep-outs pass.
 12. Charging: V1 uses external 12.6V CC/CV; integrated USB-C PD is a future revision, not a hidden requirement.
+
+
+## Belly Matrix / hidden HMI
+- Optical dead-front coupon: off-state concealment vs lit readability.
+- Sunlight/daylight visibility and color shift.
+- Diffuser/baffle distance and light-leak test.
+- Full-white/current/temperature stress.
+- Dedicated non-safety bus and fail-off power gating.
+
+## Commissioning and fault containment
+- Actuator scan/model/baud/ID/direction/range before normal torque.
+- Bus topology / cable fault injection: loss of one actuator/cable must degrade predictably.
+- Command protocol must distinguish accepted from physically executed.
+- Command arbiter prevents multiple simultaneous setpoint writers.
+- Diagnostic bundle/system-check must exist before full integrated prototype testing.
+
+
+## Head laser rangefinder freeze gate
+- Verify VL53L1X prototype carrier and final sensor brow packaging.
+- Select/measure IR-transmissive cover material around 940 nm.
+- Minimize air gap/tilt and perform offset + crosstalk calibration.
+- Calibrate camera-to-rangefinder optical axes and document the ranging point.
+- Test known distances, dark/daylight, black/glossy/glass targets and contamination.
+- Do not promote to BUY-BATCH until results are saved under `tests/results/`.

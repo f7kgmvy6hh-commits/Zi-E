@@ -100,3 +100,14 @@ Good examples:
 - `SLEEP`
 
 Avoid exposing uncontrolled raw hardware operations directly to AI, such as arbitrary raw PWM/servo values without local safety checks.
+
+
+## Hidden Belly Light Matrix
+A fixed-torso secret-until-lit RGB matrix is controlled by ESP32-S3 as non-safety multimedia. It has independent power gating/current limiting and must not share a critical failure dependency with cliff/safety sensing.
+
+## Commissioning / arbitration
+Normal autonomous motion is locked out until actuator identity/direction/range checks pass. High-level control is single-owner/lease based and motion commands distinguish receipt from physical execution.
+
+
+## Head measurement sensor
+`VL53L1X -> I2C -> ESP32-S3` provides single-point forward distance aligned/calibrated with the head camera. It is non-safety-critical. Lower cliff/proximity sensors remain local to STM32.

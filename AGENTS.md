@@ -83,3 +83,15 @@ After every meaningful ZI-E project session:
 - update `docs/CURRENT_STATE.md`;
 - promote approved decisions to `docs/DESIGN_DECISIONS.md`;
 - do not rely on chat-only memory for important project state.
+
+## Open-source harvest rule
+
+Before freezing an important mechanical, electrical, controls, or AI subsystem, inspect mature open-source robotics projects **including their issue trackers and troubleshooting docs**, not only polished README pages.
+
+Required flow: `problem -> comparable projects -> real failure reports -> adapted ZI-E mitigation -> simulation/bench verification -> decision`.
+
+Record material findings in `docs/OPEN_SOURCE_HARVEST_AUDIT.md`. Do not copy code/CAD into ZI-E until license compatibility and provenance are checked. Engineering ideas may inform the design, but imported artifacts need explicit license/source review.
+
+## Safe commissioning rule
+
+No newly assembled robot may enter normal autonomous motion before a low-power commissioning pass verifies actuator identity, model/voltage class, bus/baud, direction, zero/range, end-state sensors, and plausible feedback. A received command is not considered executed until actual state confirms it.

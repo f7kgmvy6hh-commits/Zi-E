@@ -40,3 +40,7 @@ AI-generated visuals are not CAD authority. CAD authority comes from parametric 
 
 ## Model collaboration rule
 Use one model/agent as owner for a task, request an independent review only for high-risk/critical work, and avoid wasting credits by having multiple models duplicate routine work. Approved results must be promoted into this repository rather than living only in chat.
+
+
+## Open-Source Harvest Loop
+For each material subsystem decision: define the problem; search mature open-source robots and their issue trackers/troubleshooting docs; extract actual failure modes; adapt only the useful principle to ZI-E; check license before importing any code/CAD; add a verification test; then KEEP/REJECT. Current findings live in `OPEN_SOURCE_HARVEST_AUDIT.md`.

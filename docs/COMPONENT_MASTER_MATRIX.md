@@ -5,7 +5,9 @@ This is the quick lookup table. `Primary` means current first-choice; `Backup` m
 | Subsystem | Primary | Backup(s) / Switch Condition | Status |
 |---|---|---|---|
 | Display | 3.5" IPS touch, ILI9488, 480×320 landscape | EastRising/BuyDisplay or equivalent documented panel if FPC/touch IC/availability fails | KEEP, verify exact panel |
+| Belly Light Matrix | IS31FL3741 13×9 RGB prototype + secret-until-lit optical insert | Wider custom IS31FL3741-class matrix after optical/power test | KEEP architecture, VERIFY optics/thermal |
 | Camera | OV5640 5MP AF | OV2640 if budget forces it | KEEP |
+| Head laser rangefinder | VL53L1X 940 nm Class-1 ToF, up to 4 m | TF-Luna 8 m if >4 m / >50 Hz required; TFmini-S for longer-range requirement | KEEP architecture, VERIFY optics/calibration |
 | Multimedia MCU | ESP32-S3-WROOM-1-N16R8 | Same class/PSRAM variant only after pin/resource audit | KEEP |
 | Safety MCU | STM32G0B1RET6 | Same-family equivalent only after I/O/timer/CAN audit | KEEP |
 | Main MCU link | Classical CAN/TWAI | UART only as development fallback | KEEP |

@@ -1,0 +1,291 @@
+{
+  "tests_total": 34,
+  "passed": 33,
+  "failed": 1,
+  "estimated_mass_g": 2422,
+  "estimated_com_mm": {
+    "x": -0.7,
+    "y": -1.8,
+    "z": 90.7
+  },
+  "support_triangle_mm": [
+    [
+      -98.0,
+      18.0
+    ],
+    [
+      98.0,
+      18.0
+    ],
+    [
+      0,
+      -53.0
+    ]
+  ],
+  "state_bboxes_mm": {
+    "ACTIVE": [
+      -124.0,
+      -98.36,
+      -0.0,
+      124.0,
+      75.5,
+      282.0
+    ],
+    "SLEEP": [
+      -110.0,
+      -75.5,
+      -0.0,
+      110.0,
+      75.5,
+      247.0
+    ],
+    "SHUTDOWN": [
+      -110.0,
+      -75.5,
+      -0.0,
+      110.0,
+      75.5,
+      182.0
+    ]
+  },
+  "tests": [
+    {
+      "test": "Head bay side clearance per side",
+      "value": 3.5,
+      "limit_or_target": ">= 1.5 mm",
+      "pass": true,
+      "notes": "Docking only at centered pan/defined tilt."
+    },
+    {
+      "test": "Head bay depth clearance per side",
+      "value": 4.0,
+      "limit_or_target": ">= 2.0 mm",
+      "pass": true,
+      "notes": "Allows shell tolerance and cable-safe docking."
+    },
+    {
+      "test": "Display side bezel each side",
+      "value": 15.740000000000002,
+      "limit_or_target": ">= 10 mm",
+      "pass": true,
+      "notes": "Provides structure around glass and room for tilt frame."
+    },
+    {
+      "test": "Display vertical margin total",
+      "value": 26.740000000000002,
+      "limit_or_target": ">= 20 mm",
+      "pass": true,
+      "notes": "Shared with top camera/mic brow."
+    },
+    {
+      "test": "Sleep visible active-screen fraction",
+      "value": 0.847,
+      "limit_or_target": ">= 0.75",
+      "pass": true,
+      "notes": "Neck hidden while most of face remains visible."
+    },
+    {
+      "test": "Shutdown head top flush",
+      "value": 0.0,
+      "limit_or_target": "<= 1 mm above body top",
+      "pass": true,
+      "notes": "Protected shutdown has no screen/camera exposure above top plane."
+    },
+    {
+      "test": "ACTIVE minimum Z",
+      "value": -0.0,
+      "limit_or_target": ">= -0.1 mm",
+      "pass": true,
+      "notes": "No geometry should penetrate the desk plane."
+    },
+    {
+      "test": "SLEEP minimum Z",
+      "value": -0.0,
+      "limit_or_target": ">= -0.1 mm",
+      "pass": true,
+      "notes": "No geometry should penetrate the desk plane."
+    },
+    {
+      "test": "SHUTDOWN minimum Z",
+      "value": -0.0,
+      "limit_or_target": ">= -0.1 mm",
+      "pass": true,
+      "notes": "No geometry should penetrate the desk plane."
+    },
+    {
+      "test": "Shutdown overall height",
+      "value": 182.0,
+      "limit_or_target": "~182 mm",
+      "pass": true,
+      "notes": "Compact pod target."
+    },
+    {
+      "test": "Active overall height",
+      "value": 282.0,
+      "limit_or_target": "<= 290 mm",
+      "pass": true,
+      "notes": "Desktop scale."
+    },
+    {
+      "test": "Arm distal collision with torso: active",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Shoulder mount overlap intentionally excluded."
+    },
+    {
+      "test": "Arm distal collision with torso: stow",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Shoulder mount overlap intentionally excluded."
+    },
+    {
+      "test": "Arm distal collision with torso: reach",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Shoulder mount overlap intentionally excluded."
+    },
+    {
+      "test": "Arm distal collision with torso: desk",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Shoulder mount overlap intentionally excluded."
+    },
+    {
+      "test": "Active tire desk contact",
+      "value": 0.0,
+      "limit_or_target": "~0 mm",
+      "pass": true,
+      "notes": "Powered wheels define two primary contact points."
+    },
+    {
+      "test": "Wheel tire/base collision active",
+      "value": 1.072,
+      "limit_or_target": "< 2 mm^3 numerical",
+      "pass": true,
+      "notes": "Near-zero boolean sliver is acceptable; no structural collision."
+    },
+    {
+      "test": "Stowed wheel ground clearance",
+      "value": 5.96,
+      "limit_or_target": ">= 4 mm",
+      "pass": true,
+      "notes": "Robot rests on four shutdown feet, not folded wheels."
+    },
+    {
+      "test": "Wheel tire/base collision stowed",
+      "value": 0.0,
+      "limit_or_target": "< 2 mm^3 numerical",
+      "pass": true,
+      "notes": "Near-zero boolean sliver is acceptable; no structural collision."
+    },
+    {
+      "test": "Head shell/torso collision ACTIVE",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Head bay clears the cosmetic shell at docking pan/tilt."
+    },
+    {
+      "test": "Head shell/torso collision SLEEP",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Head bay clears the cosmetic shell at docking pan/tilt."
+    },
+    {
+      "test": "Head shell/torso collision SHUTDOWN",
+      "value": 0.0,
+      "limit_or_target": "0 mm^3",
+      "pass": true,
+      "notes": "Head bay clears the cosmetic shell at docking pan/tilt."
+    },
+    {
+      "test": "Head lift nominal linear speed",
+      "value": 6.67,
+      "limit_or_target": "~6.7 mm/s",
+      "pass": true,
+      "notes": "T5x2 at 200 RPM; full protected travel ~15 s."
+    },
+    {
+      "test": "Head protected travel time",
+      "value": 15.0,
+      "limit_or_target": "<= 18 s",
+      "pass": true,
+      "notes": "Can switch to faster N20 if user testing wants faster motion."
+    },
+    {
+      "test": "Rated drive speed",
+      "value": 0.251,
+      "limit_or_target": "0.20-0.30 m/s",
+      "pass": true,
+      "notes": "Software speed is lower near edges and during manipulation."
+    },
+    {
+      "test": "Head tilt rated torque margin",
+      "value": 2.7,
+      "limit_or_target": ">= 2.0x",
+      "pass": true,
+      "notes": "Assumes head COM within 20 mm of tilt axis; measure real head before freeze."
+    },
+    {
+      "test": "Wrist pitch rated torque margin",
+      "value": 1.98,
+      "limit_or_target": ">= 1.7x",
+      "pass": true,
+      "notes": "150 g tool at 40 mm; heavier tools trigger ST3036/HL2915 backup."
+    },
+    {
+      "test": "Shoulder rated torque sanity margin",
+      "value": 1.68,
+      "limit_or_target": ">= 1.5x",
+      "pass": true,
+      "notes": "Approximation only; dummy-arm thermal/load test remains mandatory."
+    },
+    {
+      "test": "Elbow rated torque sanity margin",
+      "value": 1.74,
+      "limit_or_target": ">= 1.5x",
+      "pass": true,
+      "notes": "Approximation only; uses planned ~2:1 belt reduction."
+    },
+    {
+      "test": "Estimated total mass",
+      "value": 2422,
+      "limit_or_target": "informational",
+      "pass": true,
+      "notes": "Current estimate before measured printed/component mass."
+    },
+    {
+      "test": "Baseline static support margin",
+      "value": 19.8,
+      "limit_or_target": ">= 18 mm",
+      "pass": true,
+      "notes": "Minimum distance of COM projection to primary support triangle edge."
+    },
+    {
+      "test": "One-arm 250g forward static margin",
+      "value": 20.0,
+      "limit_or_target": ">= 15 mm",
+      "pass": true,
+      "notes": "Allowed only at reduced base speed/acceleration."
+    },
+    {
+      "test": "Two-arm 2x250g forward static margin",
+      "value": 12.2,
+      "limit_or_target": ">= 15 mm for normal driving",
+      "pass": false,
+      "notes": "Expected restricted case: base lock/very-low acceleration or smaller payload."
+    },
+    {
+      "test": "Protected worst commanded rail budget",
+      "value": 15.5,
+      "limit_or_target": "< 20 A cell ceiling",
+      "pass": true,
+      "notes": "Independent eFuses/current limits prevent theoretical all-joint stall from reaching cell ceiling."
+    }
+  ]
+}

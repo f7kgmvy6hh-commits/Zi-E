@@ -97,3 +97,7 @@ After laptop-based behavior/database is stable:
 - offline behavior;
 - cloud fallback;
 - power/thermal strategy.
+
+
+## Immediate pre-purchase risk-retirement step
+Run the minimum-parts bench campaign in `PRE_PURCHASE_GATE.md` before ordering batches. Prioritize actuator commissioning/thermal tests, cliff surface tests, head cable loop, wheel traction/braking, battery transients, magnet pull/thermal, and belly optical coupons.

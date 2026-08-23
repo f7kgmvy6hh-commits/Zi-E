@@ -169,3 +169,6 @@ Images remain visual inspiration and are not engineering drawings.
 Concept design is sufficiently defined to begin **Design Freeze v0.1**.
 
 Next work should convert visual proportions to real dimensions and internal movement/service envelopes before choosing parts one-by-one.
+
+### 2026-08-23 — v0.3 laser measurement addition
+User requested adding a laser to measure distance and combining the full project into one v0.3 package. Current implementation selects a Class-1 invisible ToF rangefinder rather than a visible pointer laser, adds it to CAD/docs/tests, and retains all earlier project files/history in the release package.

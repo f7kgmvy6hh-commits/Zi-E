@@ -1,0 +1,11 @@
+Subsystem,Part,CAD envelope mm,Authority/notes
+Display candidate,ILI9488 IPS touch,84.52 x 55.26 x 4.0,ElectroPeak listing; touch IC/FPC pinout still verification gate
+Camera,OV5640 autofocus,26 x 16 x 18 envelope,compact final FPC module target; breakout not packaging authority
+Main MCU,ESP32-S3-WROOM-1-N16R8,18 x 25.5 x 3.1,official module datasheet
+Safety MCU,STM32G0B1RET6 board envelope,74 x 48 x 13,"custom carrier reservation, not final PCB"
+Shoulder servo,Feetech ST-3215-C018,45.2 x 24.7 x 35,official Feetech
+Elbow servo,Feetech HL-2915-C001,34 x 20 x 23,official Feetech
+SC09,Waveshare SC09,23.2 x 12.0 x 25.5,official Waveshare
+Wheel motor,25SG-370CA-78-EN,25D x 54L,RobotShop/E-S Motor
+Battery cell,Molicel M35A,18.6D max x 65.2H max,official Molicel
+Speaker,PUI AS04004PO-R,40 x 28.4 x 13,PUI/DigiKey
