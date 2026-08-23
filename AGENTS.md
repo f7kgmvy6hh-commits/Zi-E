@@ -75,3 +75,11 @@ Reserve stronger reasoning / independent cross-review for:
 - major firmware architecture;
 - final purchase BOM;
 - major design freeze decisions.
+
+## Conversation archive
+
+After every meaningful ZI-E project session:
+- archive the user-visible project discussion under `docs/conversations/`;
+- update `docs/CURRENT_STATE.md`;
+- promote approved decisions to `docs/DESIGN_DECISIONS.md`;
+- do not rely on chat-only memory for important project state.

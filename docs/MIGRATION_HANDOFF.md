@@ -37,3 +37,11 @@ Before ending a significant future session:
 3. Update architecture if it changed.
 4. Commit the changes.
 5. Avoid relying on chat-only memory.
+
+## Conversation archive
+
+Historical project discussion is under `docs/conversations/`.
+
+A new AI account should read the concise source-of-truth files first, then use the conversation archive when it needs rationale or historical context.
+
+Future sessions should follow `docs/CONVERSATION_ARCHIVE_POLICY.md`.

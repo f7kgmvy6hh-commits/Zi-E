@@ -65,3 +65,9 @@ ZI-E/
 ├── simulation/
 └── tests/
 ```
+
+## Conversation history
+
+Project chat history is preserved under `docs/conversations/`.
+
+See `docs/CONVERSATION_ARCHIVE_POLICY.md` for the rule that keeps future sessions portable between AI accounts.
