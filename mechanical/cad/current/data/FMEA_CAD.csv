@@ -1,0 +1,21 @@
+Failure mode,Severity 1-10,Occurrence 1-10,Detection 1-10,Mitigation / verification
+Head retract jam,9,4,3,"Tapered/self-centering bay, current+position fault, slow final travel, reverse/stop, manual screw rescue"
+Head drops on power loss,8,2,4,Counterbalance + lead screw + damping; shutdown seats; do not assume self-locking
+Wheel pod unlocks while driving,9,2,2,Hard structural stop carries load; positive lock sensor gates motor enable
+Wheel fold cable fatigue,6,4,5,"Defined flex loop, strain relief, cycle-testable removable pod"
+Cliff sensor false-safe on glass/black,10,4,4,"4-corner geometry, invalid/stale=stop, bumper/anti-tip fallback, mandatory surface matrix"
+AI/network sends unsafe motion,10,3,2,"STM32 safety boundary, heartbeat lease, local limits, no raw PWM authority"
+Arm collision with body/head,8,4,3,CAD key-pose collision checks + runtime collision envelopes + stow sequence
+Arm overcurrent / simultaneous stall,9,3,2,"~5A per-arm hardware branch limit, current sensing, global budget, thermal derating"
+Tool detaches under load,8,3,3,"3-lug structural bayonet, safety collar, lock sensing, pull/twist release"
+Tool hot-plug arc/short,8,3,2,Tool power disabled until lock+ID; wrist eFuse/current limit
+Magnet overheats,7,4,3,"Temperature sensor, time/current limit, default off, pull/thermal bench test"
+Gripper pinches user,7,4,3,"Spring-open failure, elastic tendon, rounded fingers, current/load caps, slow human zone"
+Battery pack short/overcurrent,10,2,2,"BQ77915 protection architecture, fuse/eFuse, keyed cassette, insulated cell volume"
+Battery service screw puncture,10,1,2,No screw tips into cell envelope; hard rails/stop carry loads
+Rear cover removal damages wiring,5,2,2,No essential wiring on removable cosmetic cover
+Speaker vibration corrupts camera/mics,5,4,5,"Separated lower-front chamber, isolation, AEC reference, acoustic A/B test"
+Thermal buildup in shutdown,8,3,5,Independent rear/lower passive airflow path; shutdown thermal test
+Antenna detuning,5,3,5,Upper-rear nonmetallic keep-out; RF test after PCB/shell integration
+Display unavailable / pinout undocumented,5,4,2,Same-envelope backup candidate; adapter cartridge; do not freeze PCB before pinout/touch IC
+Maintenance wear/backlash,6,5,4,Replaceable pads/belts/bearings/tools; cycle tests; output sensing where practical

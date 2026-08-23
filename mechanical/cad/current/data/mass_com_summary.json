@@ -1,0 +1,9 @@
+{
+  "estimated_total_mass_g": 2422,
+  "estimated_active_COM_mm": {
+    "x": -0.7,
+    "y": -1.8,
+    "z": 90.7
+  },
+  "warning": "Mass/COM is an engineering estimate until components and printed parts are weighed."
+}

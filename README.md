@@ -1,73 +1,30 @@
 # ZI-E — Desktop AI Companion Robot
 
-ZI-E is a modular desktop companion robot project currently in **Concept Design / Pre-Engineering**.
-
-The current design direction was defined conversationally first, then captured here so the repository—not any single AI chat—becomes the project's source of truth.
+ZI-E is an original, modular desktop AI robot combining an expressive digital face, camera/audio interaction, two functional arms with quick-swap tools, two-wheel differential mobility, local safety control, and an external laptop/future-phone AI brain.
 
 ## Current status
+**Prototype component architecture + parametric CAD are complete enough to enter physical validation.** Production dimensions/parts are not frozen until the listed freeze-gate tests pass.
 
-**Concept Design v0.1 is complete enough to begin engineering freeze work.**
+### Start here
+- [`docs/ZI-E_MASTER_SPEC.md`](docs/ZI-E_MASTER_SPEC.md) — complete current architecture
+- [`docs/COMPONENT_MASTER_MATRIX.md`](docs/COMPONENT_MASTER_MATRIX.md) — primary/backups/switch conditions
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — project status
+- [`docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md`](docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md) — mandatory design/review process
+- [`mechanical/cad/current/`](mechanical/cad/current/) — current CAD source, STEP/STL, renders and validation data
+- [`docs/OPEN_ITEMS_AND_FREEZE_GATES.md`](docs/OPEN_ITEMS_AND_FREEZE_GATES.md) — what must still be physically verified
+- [`docs/GITHUB_HANDOFF_CURRENT.md`](docs/GITHUB_HANDOFF_CURRENT.md) — migration/upload guide
 
-No hardware component, pinout, power architecture, final dimension, or production firmware should be treated as finalized yet.
+## Key architecture
+- AI brain: laptop initially; phone may later become portable/edge brain.
+- Multimedia/UI: ESP32-S3-WROOM-1-N16R8.
+- Real-time safety/motion: STM32G0B1RET6.
+- Face: 3.5-inch landscape IPS touch panel class + OV5640 AF camera.
+- Head: Pan + Tilt + vertical retract with Active/Sleep/Protected Shutdown.
+- Arms: 2-DOF shoulder, elbow, telescopic forearm, roll, wrist pitch, quick-swap tool.
+- Tools: adaptive gripper and removable electromagnet tool.
+- Mobility: exactly **two powered wheels + one passive ball caster**; no four-wheel/mecanum base in V1.
+- Safety: local cliff sensors, bumper, IMU, current/jam supervision, hardware Motion Kill, state interlocks and safe-stop behavior.
+- Battery: low-central 3S2P 18650 Li-ion pack architecture.
 
-### Next engineering milestone
-
-**Design Freeze v0.1**
-1. Establish real external dimensions and proportions.
-2. Define internal volumes and service clearances.
-3. Define head retraction envelope and arm motion envelope.
-4. Define wheel/battery/mechanical zones.
-5. Only then review and choose parts one-by-one.
-6. Freeze electrical architecture after component validation.
-7. Build simulation/prototype before purchasing the full hardware set.
-
-## Read these first
-
-1. `PROJECT_CONTEXT.md`
-2. `docs/DESIGN_DECISIONS.md`
-3. `docs/ARCHITECTURE.md`
-4. `docs/CURRENT_STATE.md`
-5. `AGENTS.md`
-6. `docs/MIGRATION_HANDOFF.md`
-
-## Important rule about legacy files
-
-Everything under `legacy/` is **reference material only**. The old WALL-E-derived theory, guides, and firmware contain known contradictions and unverified assumptions.
-
-**Do not copy legacy wiring, pinouts, power decisions, dimensions, or firmware into the new ZI-E design without re-verification.**
-
-## Repository structure
-
-```text
-ZI-E/
-├── README.md
-├── PROJECT_CONTEXT.md
-├── AGENTS.md
-├── docs/
-│   ├── DESIGN_DECISIONS.md
-│   ├── ARCHITECTURE.md
-│   ├── CURRENT_STATE.md
-│   ├── CHAT_DECISION_LOG.md
-│   ├── AI_WORKFLOW.md
-│   ├── LEGACY_AUDIT.md
-│   ├── ROADMAP.md
-│   └── MIGRATION_HANDOFF.md
-├── assets/
-│   ├── branding/
-│   └── concepts/
-├── legacy/
-│   ├── guides/
-│   └── firmware/
-├── mechanical/
-├── electronics/
-├── firmware/
-├── software/
-├── simulation/
-└── tests/
-```
-
-## Conversation history
-
-Project chat history is preserved under `docs/conversations/`.
-
-See `docs/CONVERSATION_ARCHIVE_POLICY.md` for the rule that keeps future sessions portable between AI accounts.
+## Important warning
+`legacy/` contains old WALL-E-era material with known contradictions and is **not source of truth**. Likewise, `assets/deprecated/` contains generated images that may show incorrect geometry. Use current docs/CAD instead.

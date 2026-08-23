@@ -1,0 +1,131 @@
+{
+  "wall_cosmetic": 2.4,
+  "wall_structural": 3.2,
+  "moving_clearance": 0.6,
+  "static_clearance": 0.3,
+  "service_gap": 0.5,
+  "cable_clearance": 1.5,
+  "m3_clearance": 3.4,
+  "m3_insert_pilot": 4.1,
+  "base_w": 184.0,
+  "base_d": 142.0,
+  "base_h": 58.0,
+  "torso_h": 128.0,
+  "torso_bottom_w": 178.0,
+  "torso_bottom_d": 136.0,
+  "torso_top_w": 158.0,
+  "torso_top_d": 118.0,
+  "body_z0": 54.0,
+  "head_w": 116.0,
+  "head_d": 38.0,
+  "head_h": 82.0,
+  "head_bay_w": 123.0,
+  "head_bay_d": 46.0,
+  "head_lift_stroke": 100.0,
+  "head_active_bottom": 200.0,
+  "head_sleep_bottom": 165.0,
+  "head_shutdown_bottom": 100.0,
+  "pan_range_deg": 120.0,
+  "tilt_up_deg": 45.0,
+  "tilt_down_deg": 30.0,
+  "display_w": 84.52,
+  "display_h": 55.26,
+  "display_t": 4.0,
+  "display_active_w": 73.44,
+  "display_active_h": 48.96,
+  "camera_env": [
+    26.0,
+    16.0,
+    18.0
+  ],
+  "wheel_d": 64.0,
+  "wheel_t": 18.0,
+  "wheel_x_active": 98.0,
+  "wheel_y": 18.0,
+  "wheel_z_active": 32.0,
+  "wheel_x_stowed": 80.0,
+  "wheel_z_stowed": 20.0,
+  "wheel_fold_deg": 55.0,
+  "caster_ball_d": 25.4,
+  "caster_y": -61.0,
+  "shoulder_x": 91.0,
+  "shoulder_y": -2.0,
+  "shoulder_z": 154.0,
+  "upper_arm_len": 72.0,
+  "forearm_outer_len": 82.0,
+  "telescope_stroke": 55.0,
+  "upper_arm_d": 31.0,
+  "forearm_outer_d": 29.0,
+  "forearm_inner_d": 22.0,
+  "wrist_interface_d": 30.0,
+  "wrist_collar_d": 35.0,
+  "sts3215": [
+    45.2,
+    24.7,
+    35.0
+  ],
+  "hl2915": [
+    34.0,
+    20.0,
+    23.0
+  ],
+  "sc09": [
+    23.2,
+    12.0,
+    25.5
+  ],
+  "n20_env": [
+    18.0,
+    16.0,
+    39.0
+  ],
+  "wheel_motor": [
+    25.0,
+    25.0,
+    54.0
+  ],
+  "speaker": [
+    40.0,
+    28.4,
+    13.0
+  ],
+  "esp32": [
+    18.0,
+    25.5,
+    3.1
+  ],
+  "stm32_board_env": [
+    74.0,
+    48.0,
+    13.0
+  ],
+  "main_board_env": [
+    88.0,
+    56.0,
+    14.0
+  ],
+  "power_board_env": [
+    92.0,
+    54.0,
+    16.0
+  ],
+  "vl53_env": [
+    8.0,
+    8.0,
+    5.0
+  ],
+  "cell_d": 18.6,
+  "cell_l": 65.2,
+  "battery_env": [
+    62.0,
+    72.0,
+    43.0
+  ],
+  "rear_service_w": 118.0,
+  "rear_service_h": 78.0,
+  "battery_door_w": 80.0,
+  "battery_door_h": 48.0,
+  "pan_hollow_d": 20.0,
+  "cable_channel_w": 10.0,
+  "cable_channel_d": 8.0
+}
