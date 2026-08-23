@@ -60,3 +60,10 @@ Therefore:
 - current state must be maintained in `docs/CURRENT_STATE.md`;
 - decisions must be recorded in `docs/DESIGN_DECISIONS.md`;
 - legacy material must remain clearly separated from approved design.
+
+
+Current process also includes an Open-Source Harvest Loop: inspect mature robotics projects and their real issue trackers before freezing important hardware/software decisions.
+
+
+## v0.3 addition — head laser distance measurement
+Dedicated forward VL53L1X Class-1 ToF rangefinder added to the head sensor brow; it is a high-level measurement/vision aid and does not replace STM32 cliff/bumper safety. See `docs/LASER_RANGEFINDER_SPEC.md`.

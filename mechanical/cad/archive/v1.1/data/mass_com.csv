@@ -1,0 +1,14 @@
+item,mass_g,x_mm,y_mm,z_mm,confidence,source
+3S2P M35A cells,288,0,17,34,high,6 x 48 g max Molicel datasheet
+battery cassette+BMS+wiring,65,0,17,35,medium,CAD/engineering estimate
+left wheel motor,91,-73,-6,49,medium,25Dx54 class reference mass
+right wheel motor,91,73,-6,49,medium,25Dx54 class reference mass
+wheels+hubs+pods,100,0,18,32,low,50 g each estimated
+lower chassis/base shell/feet,310,0,2,35,low,prototype print estimate
+torso shell+structural towers,330,0,6,116,low,prototype print estimate
+electronics+wiring,145,0,40,112,low,PCB/connector estimate
+speaker+chamber,42,-39,-42,74,medium,speaker vendor mass + chamber estimate
+belly matrix+deadfront+baffle,22,0,-61,121.0,medium,Adafruit board 5.8 g + optical/baffle/harness estimate
+moving head complete,220,0,0,241.0,low,display/camera/frame/servos estimate
+left arm complete,370,-96,-24,100,low,selected actuator masses + printed links/tool
+right arm complete,370,96,-24,100,low,selected actuator masses + printed links/tool

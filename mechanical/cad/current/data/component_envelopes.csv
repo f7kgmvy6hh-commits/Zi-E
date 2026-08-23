@@ -1,6 +1,7 @@
 Subsystem,Part,CAD envelope mm,Authority/notes
 Display candidate,ILI9488 IPS touch,84.52 x 55.26 x 4.0,ElectroPeak listing; touch IC/FPC pinout still verification gate
 Camera,OV5640 autofocus,26 x 16 x 18 envelope,compact final FPC module target; breakout not packaging authority
+Head laser rangefinder,VL53L1X ToF laser,25.5 x 17.5 x 4.6 prototype carrier; 4.9 x 2.5 x 1.56 bare sensor,940 nm invisible Class 1; up to 4 m / 50 Hz; dedicated IR window + crosstalk calibration
 Main MCU,ESP32-S3-WROOM-1-N16R8,18 x 25.5 x 3.1,official module datasheet
 Safety MCU,STM32G0B1RET6 board envelope,74 x 48 x 13,"custom carrier reservation, not final PCB"
 Shoulder servo,Feetech ST-3215-C018,45.2 x 24.7 x 35,official Feetech
@@ -9,3 +10,5 @@ SC09,Waveshare SC09,23.2 x 12.0 x 25.5,official Waveshare
 Wheel motor,25SG-370CA-78-EN,25D x 54L,RobotShop/E-S Motor
 Battery cell,Molicel M35A,18.6D max x 65.2H max,official Molicel
 Speaker,PUI AS04004PO-R,40 x 28.4 x 13,PUI/DigiKey
+Belly RGB prototype,Adafruit IS31FL3741 13x9,51.3 x 39.0 x 4.6,Adafruit product 5201; final custom matrix reserved by 80 x 54 x 12 keepout
+Belly optical insert,Secret-until-lit PC/PMMA,74 x 46 x 1.2 nominal,Optical coupon test is authority; 0.8-1.5 mm prototype range

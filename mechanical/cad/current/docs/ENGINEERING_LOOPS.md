@@ -1,4 +1,4 @@
-# Engineering Loops Applied to CAD v1.0
+# Engineering Loops Applied to CAD v0.3
 
 The CAD was not created as a single styling pass. The following loops are part of the release gate.
 
@@ -22,3 +22,7 @@ The CAD was not created as a single styling pass. The following loops are part o
 18. **Service loop** — rear service cover, battery door, modular boards, manual lift rescue and replaceable wheel/tool modules are preserved.
 19. **Failure/recovery loop** — no head retract unless dock state is confirmed; wheel lock confirmation gates drive; extension/lift have independent end states; tool power is off until lock+ID.
 20. **Red-team loop** — anything still requiring measured hardware is explicitly a freeze gate, not hidden by CAD precision.
+
+
+## Open-Source Harvest Loop (added v0.3)
+Problem → inspect mature open-source robots **and issue trackers** → extract failure pattern → adapt to ZI-E → simulate/bench test → record KEEP/REJECT. See `OPEN_SOURCE_HARVEST_AUDIT.md`.

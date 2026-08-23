@@ -1,12 +1,12 @@
 {
-  "tests_total": 34,
-  "passed": 33,
+  "tests_total": 39,
+  "passed": 38,
   "failed": 1,
-  "estimated_mass_g": 2422,
+  "estimated_mass_g": 2448,
   "estimated_com_mm": {
-    "x": -0.7,
-    "y": -1.8,
-    "z": 90.7
+    "x": -0.6,
+    "y": -2.4,
+    "z": 91.3
   },
   "support_triangle_mm": [
     [
@@ -75,7 +75,42 @@
       "value": 26.740000000000002,
       "limit_or_target": ">= 20 mm",
       "pass": true,
-      "notes": "Shared with top camera/mic brow."
+      "notes": "Shared with top camera/mic/lidar brow."
+    },
+    {
+      "test": "Camera-to-lidar horizontal packaging gap",
+      "value": 2.25,
+      "limit_or_target": ">= 2 mm",
+      "pass": true,
+      "notes": "Prototype carrier fits beside centered camera without overlap; final bare sensor is much smaller."
+    },
+    {
+      "test": "Lidar carrier inside head width",
+      "value": 17.25,
+      "limit_or_target": ">= 10 mm side structure",
+      "pass": true,
+      "notes": "Preserves shell/fastener margin on right side of sensor brow."
+    },
+    {
+      "test": "Belly prototype PCB inside reserved keepout width",
+      "value": 28.700000000000003,
+      "limit_or_target": ">= 20 mm spare",
+      "pass": true,
+      "notes": "Allows custom wider matrix later without changing torso envelope."
+    },
+    {
+      "test": "Belly prototype PCB inside reserved keepout height",
+      "value": 15.0,
+      "limit_or_target": ">= 10 mm spare",
+      "pass": true,
+      "notes": "Allows baffle, connector, and optical tuning space."
+    },
+    {
+      "test": "Belly optical window thickness",
+      "value": 1.2,
+      "limit_or_target": "0.8-1.5 mm prototype range",
+      "pass": true,
+      "notes": "Final transmission/color requires optical coupon test, not CAD assumption."
     },
     {
       "test": "Sleep visible active-screen fraction",
@@ -254,28 +289,28 @@
     },
     {
       "test": "Estimated total mass",
-      "value": 2422,
+      "value": 2448,
       "limit_or_target": "informational",
       "pass": true,
       "notes": "Current estimate before measured printed/component mass."
     },
     {
       "test": "Baseline static support margin",
-      "value": 19.8,
+      "value": 20.4,
       "limit_or_target": ">= 18 mm",
       "pass": true,
       "notes": "Minimum distance of COM projection to primary support triangle edge."
     },
     {
       "test": "One-arm 250g forward static margin",
-      "value": 20.0,
+      "value": 19.8,
       "limit_or_target": ">= 15 mm",
       "pass": true,
       "notes": "Allowed only at reduced base speed/acceleration."
     },
     {
       "test": "Two-arm 2x250g forward static margin",
-      "value": 12.2,
+      "value": 12.1,
       "limit_or_target": ">= 15 mm for normal driving",
       "pass": false,
       "notes": "Expected restricted case: base lock/very-low acceleration or smaller payload."

@@ -33,7 +33,14 @@ def main():
     T('Head bay side clearance per side',(P['head_bay_w']-P['head_w'])/2,'>= 1.5 mm', (P['head_bay_w']-P['head_w'])/2>=1.5,'Docking only at centered pan/defined tilt.')
     T('Head bay depth clearance per side',(P['head_bay_d']-P['head_d'])/2,'>= 2.0 mm',(P['head_bay_d']-P['head_d'])/2>=2.0,'Allows shell tolerance and cable-safe docking.')
     T('Display side bezel each side',(P['head_w']-P['display_w'])/2,'>= 10 mm',(P['head_w']-P['display_w'])/2>=10,'Provides structure around glass and room for tilt frame.')
-    T('Display vertical margin total',P['head_h']-P['display_h'],'>= 20 mm',P['head_h']-P['display_h']>=20,'Shared with top camera/mic brow.')
+    T('Display vertical margin total',P['head_h']-P['display_h'],'>= 20 mm',P['head_h']-P['display_h']>=20,'Shared with top camera/mic/lidar brow.')
+    lidar_w=P['lidar_proto_env'][0]; cam_w=P['camera_env'][0]
+    lidar_left=P['lidar_x']-lidar_w/2; cam_right=cam_w/2
+    T('Camera-to-lidar horizontal packaging gap',round(lidar_left-cam_right,2),'>= 2 mm',lidar_left-cam_right>=2,'Prototype carrier fits beside centered camera without overlap; final bare sensor is much smaller.')
+    T('Lidar carrier inside head width',round(P['head_w']/2-(P['lidar_x']+lidar_w/2),2),'>= 10 mm side structure',P['head_w']/2-(P['lidar_x']+lidar_w/2)>=10,'Preserves shell/fastener margin on right side of sensor brow.')
+    T('Belly prototype PCB inside reserved keepout width',P['belly_matrix_keepout_w']-P['belly_matrix_proto_w'],'>= 20 mm spare',P['belly_matrix_keepout_w']-P['belly_matrix_proto_w']>=20,'Allows custom wider matrix later without changing torso envelope.')
+    T('Belly prototype PCB inside reserved keepout height',P['belly_matrix_keepout_h']-P['belly_matrix_proto_h'],'>= 10 mm spare',P['belly_matrix_keepout_h']-P['belly_matrix_proto_h']>=10,'Allows baffle, connector, and optical tuning space.')
+    T('Belly optical window thickness',P['belly_window_t'],'0.8-1.5 mm prototype range',0.8<=P['belly_window_t']<=1.5,'Final transmission/color requires optical coupon test, not CAD assumption.')
     # Sleep visible screen fraction above body top
     body_top=P['body_z0']+P['torso_h']; screen_center=P['head_sleep_bottom']+34
     screen_low=screen_center-P['display_active_h']/2; screen_high=screen_center+P['display_active_h']/2
@@ -131,7 +138,7 @@ def main():
              'support_triangle_mm':tri,'state_bboxes_mm':{k:[round(x,2) for x in v] for k,v in bboxes.items()},
              'tests':tests}
     (DATA/'validation_summary.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
-    lines=['# ZI-E CAD v1.0 — Automated Geometry / Engineering Validation','',f"**Result:** {summary['passed']}/{summary['tests_total']} checks pass. Failed checks are design restrictions or freeze gates, not silently ignored.",'',f"Estimated mass: **{total/1000:.2f} kg**; active estimated COM: **({com[0]:.1f}, {com[1]:.1f}, {com[2]:.1f}) mm**.",'','| Check | Value | Target | Result |','|---|---:|---|---|']
+    lines=['# ZI-E CAD v0.3 — Automated Geometry / Engineering Validation','',f"**Result:** {summary['passed']}/{summary['tests_total']} checks pass. Failed checks are design restrictions or freeze gates, not silently ignored.",'',f"Estimated mass: **{total/1000:.2f} kg**; active estimated COM: **({com[0]:.1f}, {com[1]:.1f}, {com[2]:.1f}) mm**.",'','| Check | Value | Target | Result |','|---|---:|---|---|']
     for t in tests:
         lines.append(f"| {t['test']} | {t['value']} | {t['limit_or_target']} | {'PASS' if t['pass'] else 'RESTRICT / VERIFY'} |")
     lines += ['','## Important interpretation','',

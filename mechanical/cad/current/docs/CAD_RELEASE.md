@@ -1,4 +1,4 @@
-# ZI-E CAD v1.0 — Prototype Release
+# ZI-E CAD v0.3 — Prototype Release
 
 ## Release meaning
 
@@ -13,10 +13,10 @@ It is **not yet a production freeze** because several dimensions depend on real-
 - units = mm
 
 ## Generated system states
-- `ZI-E_v1_0_ACTIVE.step`
-- `ZI-E_v1_0_SLEEP.step`
-- `ZI-E_v1_0_SHUTDOWN.step`
-- `ZI-E_v1_0_CUTAWAY.step`
+- `ZI-E_v0_3_ACTIVE.step`
+- `ZI-E_v0_3_SLEEP.step`
+- `ZI-E_v0_3_SHUTDOWN.step`
+- `ZI-E_v0_3_CUTAWAY.step`
 - matching glTF viewer exports
 
 ## Current generated envelopes
@@ -112,3 +112,5 @@ The following must be completed before “final manufacturing CAD” is claimed:
 8. Run speaker/microphone A/B acoustic tests with motors/display active.
 9. Run thermal tests with the shell installed and in shutdown.
 10. Replace low-confidence mass estimates with measured part masses and rerun stability.
+
+- Added dedicated head laser rangefinder packaging and camera/rangefinder alignment gate.

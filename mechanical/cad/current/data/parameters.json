@@ -38,6 +38,17 @@
     16.0,
     18.0
   ],
+  "lidar_proto_env": [
+    25.5,
+    17.5,
+    4.6
+  ],
+  "lidar_final_env": [
+    8.0,
+    6.0,
+    4.0
+  ],
+  "lidar_x": 28.0,
   "wheel_d": 64.0,
   "wheel_t": 18.0,
   "wheel_x_active": 98.0,
@@ -47,7 +58,7 @@
   "wheel_z_stowed": 20.0,
   "wheel_fold_deg": 55.0,
   "caster_ball_d": 25.4,
-  "caster_y": -61.0,
+  "caster_y": -53.0,
   "shoulder_x": 91.0,
   "shoulder_y": -2.0,
   "shoulder_z": 154.0,
@@ -127,5 +138,15 @@
   "battery_door_h": 48.0,
   "pan_hollow_d": 20.0,
   "cable_channel_w": 10.0,
-  "cable_channel_d": 8.0
+  "cable_channel_d": 8.0,
+  "belly_window_w": 74.0,
+  "belly_window_h": 46.0,
+  "belly_window_t": 1.2,
+  "belly_matrix_keepout_w": 80.0,
+  "belly_matrix_keepout_h": 54.0,
+  "belly_matrix_keepout_d": 12.0,
+  "belly_matrix_proto_w": 51.3,
+  "belly_matrix_proto_h": 39.0,
+  "belly_matrix_proto_t": 4.6,
+  "belly_matrix_z": 121.0
 }

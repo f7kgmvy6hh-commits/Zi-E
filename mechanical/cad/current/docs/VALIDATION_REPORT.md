@@ -1,8 +1,8 @@
-# ZI-E CAD v1.0 — Automated Geometry / Engineering Validation
+# ZI-E CAD v0.3 — Automated Geometry / Engineering Validation
 
-**Result:** 33/34 checks pass. Failed checks are design restrictions or freeze gates, not silently ignored.
+**Result:** 38/39 checks pass. Failed checks are design restrictions or freeze gates, not silently ignored.
 
-Estimated mass: **2.42 kg**; active estimated COM: **(-0.7, -1.8, 90.7) mm**.
+Estimated mass: **2.45 kg**; active estimated COM: **(-0.6, -2.4, 91.3) mm**.
 
 | Check | Value | Target | Result |
 |---|---:|---|---|
@@ -10,6 +10,11 @@ Estimated mass: **2.42 kg**; active estimated COM: **(-0.7, -1.8, 90.7) mm**.
 | Head bay depth clearance per side | 4.0 | >= 2.0 mm | PASS |
 | Display side bezel each side | 15.740000000000002 | >= 10 mm | PASS |
 | Display vertical margin total | 26.740000000000002 | >= 20 mm | PASS |
+| Camera-to-lidar horizontal packaging gap | 2.25 | >= 2 mm | PASS |
+| Lidar carrier inside head width | 17.25 | >= 10 mm side structure | PASS |
+| Belly prototype PCB inside reserved keepout width | 28.700000000000003 | >= 20 mm spare | PASS |
+| Belly prototype PCB inside reserved keepout height | 15.0 | >= 10 mm spare | PASS |
+| Belly optical window thickness | 1.2 | 0.8-1.5 mm prototype range | PASS |
 | Sleep visible active-screen fraction | 0.847 | >= 0.75 | PASS |
 | Shutdown head top flush | 0.0 | <= 1 mm above body top | PASS |
 | ACTIVE minimum Z | -0.0 | >= -0.1 mm | PASS |
@@ -35,10 +40,10 @@ Estimated mass: **2.42 kg**; active estimated COM: **(-0.7, -1.8, 90.7) mm**.
 | Wrist pitch rated torque margin | 1.98 | >= 1.7x | PASS |
 | Shoulder rated torque sanity margin | 1.68 | >= 1.5x | PASS |
 | Elbow rated torque sanity margin | 1.74 | >= 1.5x | PASS |
-| Estimated total mass | 2422 | informational | PASS |
-| Baseline static support margin | 19.8 | >= 18 mm | PASS |
-| One-arm 250g forward static margin | 20.0 | >= 15 mm | PASS |
-| Two-arm 2x250g forward static margin | 12.2 | >= 15 mm for normal driving | RESTRICT / VERIFY |
+| Estimated total mass | 2448 | informational | PASS |
+| Baseline static support margin | 20.4 | >= 18 mm | PASS |
+| One-arm 250g forward static margin | 19.8 | >= 15 mm | PASS |
+| Two-arm 2x250g forward static margin | 12.1 | >= 15 mm for normal driving | RESTRICT / VERIFY |
 | Protected worst commanded rail budget | 15.5 | < 20 A cell ceiling | PASS |
 
 ## Important interpretation

@@ -1,0 +1,38 @@
+test,value,limit_or_target,pass,notes
+Head bay side clearance per side,3.5,>= 1.5 mm,True,Docking only at centered pan/defined tilt.
+Head bay depth clearance per side,4.0,>= 2.0 mm,True,Allows shell tolerance and cable-safe docking.
+Display side bezel each side,15.740000000000002,>= 10 mm,True,Provides structure around glass and room for tilt frame.
+Display vertical margin total,26.740000000000002,>= 20 mm,True,Shared with top camera/mic brow.
+Belly prototype PCB inside reserved keepout width,28.700000000000003,>= 20 mm spare,True,Allows custom wider matrix later without changing torso envelope.
+Belly prototype PCB inside reserved keepout height,15.0,>= 10 mm spare,True,"Allows baffle, connector, and optical tuning space."
+Belly optical window thickness,1.2,0.8-1.5 mm prototype range,True,"Final transmission/color requires optical coupon test, not CAD assumption."
+Sleep visible active-screen fraction,0.847,>= 0.75,True,Neck hidden while most of face remains visible.
+Shutdown head top flush,0.0,<= 1 mm above body top,True,Protected shutdown has no screen/camera exposure above top plane.
+ACTIVE minimum Z,-0.0,>= -0.1 mm,True,No geometry should penetrate the desk plane.
+SLEEP minimum Z,-0.0,>= -0.1 mm,True,No geometry should penetrate the desk plane.
+SHUTDOWN minimum Z,-0.0,>= -0.1 mm,True,No geometry should penetrate the desk plane.
+Shutdown overall height,182.0,~182 mm,True,Compact pod target.
+Active overall height,282.0,<= 290 mm,True,Desktop scale.
+Arm distal collision with torso: active,0.0,0 mm^3,True,Shoulder mount overlap intentionally excluded.
+Arm distal collision with torso: stow,0.0,0 mm^3,True,Shoulder mount overlap intentionally excluded.
+Arm distal collision with torso: reach,0.0,0 mm^3,True,Shoulder mount overlap intentionally excluded.
+Arm distal collision with torso: desk,0.0,0 mm^3,True,Shoulder mount overlap intentionally excluded.
+Active tire desk contact,0.0,~0 mm,True,Powered wheels define two primary contact points.
+Wheel tire/base collision active,1.072,< 2 mm^3 numerical,True,Near-zero boolean sliver is acceptable; no structural collision.
+Stowed wheel ground clearance,5.96,>= 4 mm,True,"Robot rests on four shutdown feet, not folded wheels."
+Wheel tire/base collision stowed,0.0,< 2 mm^3 numerical,True,Near-zero boolean sliver is acceptable; no structural collision.
+Head shell/torso collision ACTIVE,0.0,0 mm^3,True,Head bay clears the cosmetic shell at docking pan/tilt.
+Head shell/torso collision SLEEP,0.0,0 mm^3,True,Head bay clears the cosmetic shell at docking pan/tilt.
+Head shell/torso collision SHUTDOWN,0.0,0 mm^3,True,Head bay clears the cosmetic shell at docking pan/tilt.
+Head lift nominal linear speed,6.67,~6.7 mm/s,True,T5x2 at 200 RPM; full protected travel ~15 s.
+Head protected travel time,15.0,<= 18 s,True,Can switch to faster N20 if user testing wants faster motion.
+Rated drive speed,0.251,0.20-0.30 m/s,True,Software speed is lower near edges and during manipulation.
+Head tilt rated torque margin,2.7,>= 2.0x,True,Assumes head COM within 20 mm of tilt axis; measure real head before freeze.
+Wrist pitch rated torque margin,1.98,>= 1.7x,True,150 g tool at 40 mm; heavier tools trigger ST3036/HL2915 backup.
+Shoulder rated torque sanity margin,1.68,>= 1.5x,True,Approximation only; dummy-arm thermal/load test remains mandatory.
+Elbow rated torque sanity margin,1.74,>= 1.5x,True,Approximation only; uses planned ~2:1 belt reduction.
+Estimated total mass,2444,informational,True,Current estimate before measured printed/component mass.
+Baseline static support margin,20.4,>= 18 mm,True,Minimum distance of COM projection to primary support triangle edge.
+One-arm 250g forward static margin,19.8,>= 15 mm,True,Allowed only at reduced base speed/acceleration.
+Two-arm 2x250g forward static margin,12.0,>= 15 mm for normal driving,False,Expected restricted case: base lock/very-low acceleration or smaller payload.
+Protected worst commanded rail budget,15.5,< 20 A cell ceiling,True,Independent eFuses/current limits prevent theoretical all-joint stall from reaching cell ceiling.

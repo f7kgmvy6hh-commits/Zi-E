@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ZI-E CAD v1.0 Prototype Release
+"""ZI-E CAD v0.3 Prototype Release
 Parametric top-down packaging/mechanical CAD built from the project's approved design decisions.
 Units: mm. Coordinate convention: X left/right, Y front(-)/rear(+), Z up.
 
@@ -47,13 +47,17 @@ P = {
     'display_w': 84.52, 'display_h': 55.26, 'display_t': 4.0,
     'display_active_w': 73.44, 'display_active_h': 48.96,
     'camera_env': [26.0, 16.0, 18.0],
+    # Dedicated forward laser rangefinder. Prototype uses Adafruit VL53L1X carrier; final head PCB may use bare sensor.
+    'lidar_proto_env': [25.5, 17.5, 4.6],
+    'lidar_final_env': [8.0, 6.0, 4.0],
+    'lidar_x': 28.0,
 
     # Mobility
     'wheel_d': 64.0, 'wheel_t': 18.0,
     'wheel_x_active': 98.0, 'wheel_y': 18.0, 'wheel_z_active': 32.0,
     'wheel_x_stowed': 80.0, 'wheel_z_stowed': 20.0,
     'wheel_fold_deg': 55.0,
-    'caster_ball_d': 25.4, 'caster_y': -61.0,
+    'caster_ball_d': 25.4, 'caster_y': -53.0,
 
     # Arms
     'shoulder_x': 91.0, 'shoulder_y': -2.0, 'shoulder_z': 154.0,
@@ -83,6 +87,14 @@ P = {
     'battery_door_w': 80.0, 'battery_door_h': 48.0,
     'pan_hollow_d': 20.0,
     'cable_channel_w': 10.0, 'cable_channel_d': 8.0,
+
+    # Hidden belly RGB information/light matrix (secret-until-lit)
+    # Prototype carrier: Adafruit 13x9 IS31FL3741 51.3 x 39.0 x 4.6 mm.
+    # CAD reserves a larger window/keepout so final custom matrix may become wider without recutting the torso.
+    'belly_window_w': 74.0, 'belly_window_h': 46.0, 'belly_window_t': 1.2,
+    'belly_matrix_keepout_w': 80.0, 'belly_matrix_keepout_h': 54.0, 'belly_matrix_keepout_d': 12.0,
+    'belly_matrix_proto_w': 51.3, 'belly_matrix_proto_h': 39.0, 'belly_matrix_proto_t': 4.6,
+    'belly_matrix_z': 121.0,
 }
 
 # ---------- low-level geometry ----------
@@ -145,7 +157,7 @@ C={
  'shell':color('#E7E4DE'), 'dark':color('#252A30'),'black':color('#0B1015'),'metal':color('#70777D'),
  'structure':color('#4B5157'),'battery':color('#348B4E'),'pcb':color('#2D6C9F'),'power':color('#D88730'),
  'sensor':color('#21B6C7'),'motor':color('#AA4A2C'),'servo':color('#C35D31'),'tire':color('#17191D'),
- 'tool':color('#424950'),'accent':color('#55BDEB'),'keepout':cq.Color(0.4,0.7,1.0,0.3),'cable':color('#D7A920')
+ 'tool':color('#424950'),'accent':color('#55BDEB'),'light':color('#7EDCFF'),'keepout':cq.Color(0.4,0.7,1.0,0.3),'cable':color('#D7A920')
 }
 
 # ---------- core printable / structural parts ----------
@@ -190,6 +202,10 @@ def torso_shell():
     for sx in (-1,1):
         cut=rounded_box(34,70,116,11,(sx*(P['torso_bottom_w']/2-5),-4,110))
         shell=shell.cut(cut)
+    # hidden belly light-matrix optical insert opening on front (-Y). The opening is structural only;
+    # the external visible surface is a flush secret-until-lit PC/PMMA insert, not a visible screen bezel.
+    belly_cut=rounded_box(P['belly_window_w']+1.0,10,P['belly_window_h']+1.0,8,(0,-P['torso_bottom_d']/2+1,P['belly_matrix_z']))
+    shell=shell.cut(belly_cut)
     # rear service opening
     service=rounded_box(P['rear_service_w'],10,P['rear_service_h'],8,(0,P['torso_bottom_d']/2-1,122))
     shell=shell.cut(service)
@@ -252,7 +268,7 @@ def head_shell_shape(head_bottom, screen_open=True):
         # display opening on front (-Y), landscape, plus camera brow opening
         screen_cut=rounded_box(P['display_w']+2.0,12,P['display_h']+2.0,4,(0,-P['head_d']/2+1,z0+34))
         shell=shell.cut(screen_cut)
-        brow=rounded_box(40,12,9,3,(0,-P['head_d']/2+1,z0+72))
+        brow=rounded_box(88,12,10,3,(0,-P['head_d']/2+1,z0+72))
         shell=shell.cut(brow)
     # rear head service hatch
     hatch=rounded_box(64,12,38,6,(0,P['head_d']/2-1,z0+38))
@@ -274,10 +290,15 @@ def screen_envelope(head_bottom):
 def camera_envelope(head_bottom):
     w,d,h=P['camera_env']; return rounded_box(w,d,h,2,(0,-2,head_bottom+70))
 
+def lidar_envelope(head_bottom):
+    # Prototype carrier envelope. Final custom brow PCB is expected to shrink toward the bare VL53L1X package.
+    w,h,d=P['lidar_proto_env']
+    return rounded_box(w,d,h,1.5,(P['lidar_x'],-P['head_d']/2+7,head_bottom+70))
+
 def mic_envelopes(head_bottom):
-    # actual mic body tiny; envelope includes gasket/port PCB
-    return [rounded_box(8,6,6,1,(-34,-P['head_d']/2+5,head_bottom+71)),
-            rounded_box(8,6,6,1,(34,-P['head_d']/2+5,head_bottom+71))]
+    # actual mic body tiny; envelope includes gasket/port PCB; keep symmetric for beamforming.
+    return [rounded_box(8,6,6,1,(-46,-P['head_d']/2+5,head_bottom+71)),
+            rounded_box(8,6,6,1,(46,-P['head_d']/2+5,head_bottom+71))]
 
 def tilt_yoke(head_bottom):
     z=head_bottom+P['head_h']/2
@@ -338,6 +359,29 @@ def speaker_enclosure():
 
 def speaker_envelope():
     w,d,h=P['speaker']; return rounded_box(w,d,h,2,(-39,-46,75))
+
+def belly_deadfront_window():
+    # Reference geometry for a flush 0.8-1.5 mm optical-grade PC/PMMA insert.
+    # Final finish/transmission is selected by optical coupon testing; do not print opaque.
+    y=-P['torso_bottom_d']/2-0.1
+    return rounded_box(P['belly_window_w'],P['belly_window_t'],P['belly_window_h'],6,(0,y,P['belly_matrix_z']))
+
+def belly_matrix_proto_envelope():
+    # Adafruit 13x9 carrier used only as a development envelope; custom PCB can use the larger reserved keepout.
+    y=-P['torso_bottom_d']/2+8.0
+    return rounded_box(P['belly_matrix_proto_w'],P['belly_matrix_proto_t'],P['belly_matrix_proto_h'],2,(0,y,P['belly_matrix_z']))
+
+def belly_matrix_keepout():
+    y=-P['torso_bottom_d']/2+10.0
+    return rounded_box(P['belly_matrix_keepout_w'],P['belly_matrix_keepout_d'],P['belly_matrix_keepout_h'],5,(0,y,P['belly_matrix_z']))
+
+def belly_pixel_baffle():
+    # Black internal light well; protects readability and suppresses glow into torso seams/electronics.
+    # Prototype is a shallow printable frame, not 117 individual cells. Final custom PCB may add pixel-cell ribs.
+    y=-P['torso_bottom_d']/2+5.2
+    outer=rounded_box(P['belly_window_w']-2,8,P['belly_window_h']-2,5,(0,y,P['belly_matrix_z']))
+    inner=rounded_box(P['belly_window_w']-7,10,P['belly_window_h']-7,4,(0,y,P['belly_matrix_z']))
+    return outer.cut(inner)
 
 def sensor_mounts():
     down=[]; horiz=[]
@@ -690,6 +734,11 @@ def build_assembly(state='ACTIVE', cutaway=False):
     main,safety,power=electronics_trays(); add(assy,main,'main_multimedia_board_env',C['pcb']); add(assy,safety,'safety_motion_board_env',C['power']); add(assy,power,'power_distribution_board_env',C['power'])
     add(assy,esp32_antenna_keepout(),'esp32_antenna_keepout',C['keepout'])
     add(assy,speaker_enclosure(),'speaker_chamber',C['dark']); add(assy,speaker_envelope(),'PUI_AS04004PO_env',C['pcb'])
+    # Hidden belly RGB information/light matrix. Window stays visually quiet when off; PCB is non-safety multimedia.
+    add(assy,belly_deadfront_window(),'belly_deadfront_window',C['shell'])
+    add(assy,belly_pixel_baffle(),'belly_matrix_baffle',C['black'])
+    add(assy,belly_matrix_proto_envelope(),'IS31FL3741_13x9_proto_env',C['light'])
+    add(assy,belly_matrix_keepout(),'belly_matrix_future_keepout',C['keepout'])
 
     # Sensors/bumper
     down,horiz=sensor_mounts()
@@ -714,7 +763,7 @@ def build_assembly(state='ACTIVE', cutaway=False):
     add(assy,head_carriage(zring),'head_carriage',C['structure']); add(assy,pan_ring(zring),'pan_bearing_ring',C['metal']); add(assy,pan_servo(zring),'pan_SC09',C['servo'])
     add(assy,tilt_yoke(hb),'tilt_yoke',C['structure']); add(assy,tilt_servo(hb),'tilt_SC09',C['servo'])
     add(assy,head_shell_shape(hb),'head_shell',C['shell']); add(assy,head_bezel(hb),'head_bezel',C['dark']); add(assy,head_rear_hatch(hb),'head_rear_hatch',C['shell'])
-    add(assy,screen_envelope(hb),'display_3p5_ILI9488_env',C['black']); add(assy,camera_envelope(hb),'OV5640_AF_env',C['pcb'])
+    add(assy,screen_envelope(hb),'display_3p5_ILI9488_env',C['black']); add(assy,camera_envelope(hb),'OV5640_AF_env',C['pcb']); add(assy,lidar_envelope(hb),'VL53L1X_laser_rangefinder_env',C['sensor'])
     for i,m in enumerate(mic_envelopes(hb)): add(assy,m,f'I2S_mic_{i+1}_env',C['sensor'])
     for i,s in enumerate(shutdown_head_seats()): add(assy,s,f'head_shutdown_seat_{i+1}',C['structure'])
     add(assy,head_harness_keepout(st.lower()),'head_dynamic_harness_keepout',C['keepout'])
@@ -735,6 +784,7 @@ def printable_parts():
       'base_shell':base_shell(), 'torso_shell':torso_shell(), 'rear_service_cover':rear_service_cover(), 'battery_door':battery_door(),
       'lower_chassis':lower_chassis(),'rear_bridge':rear_bridge(),'shoulder_tower_L':shoulder_tower(-1),'shoulder_tower_R':shoulder_tower(1),
       'battery_cassette':battery_cassette(),'speaker_chamber':speaker_enclosure(),
+      'belly_matrix_baffle':belly_pixel_baffle(),'belly_deadfront_window_REFERENCE':belly_deadfront_window(),
       'head_shell':head_shell_shape(P['head_active_bottom']),'head_bezel':head_bezel(P['head_active_bottom']),'head_rear_hatch':head_rear_hatch(P['head_active_bottom']),
       'tilt_yoke':tilt_yoke(P['head_active_bottom']),'head_carriage':head_carriage_printable(),
       'quick_swap_female':quickswap_female(),'quick_swap_male':quickswap_male(),'quick_swap_safety_collar':quickswap_safety_collar(),
@@ -781,7 +831,9 @@ def mass_model():
     r('torso shell+structural towers',330,0,6,116,'low','prototype print estimate')
     r('electronics+wiring',145,0,40,112,'low','PCB/connector estimate')
     r('speaker+chamber',42,-39,-42,74,'medium','speaker vendor mass + chamber estimate')
+    r('belly matrix+deadfront+baffle',22,0,-61,P['belly_matrix_z'],'medium','Adafruit board 5.8 g + optical/baffle/harness estimate')
     r('moving head complete',220,0,0,P['head_active_bottom']+41,'low','display/camera/frame/servos estimate')
+    r('head laser rangefinder prototype carrier',4,P['lidar_x'],-14,P['head_active_bottom']+70,'medium','VL53L1X carrier allowance; final bare sensor is lighter')
     r('left arm complete',370,-96,-24,100,'low','selected actuator masses + printed links/tool')
     r('right arm complete',370,96,-24,100,'low','selected actuator masses + printed links/tool')
     total=sum(q['mass_g'] for q in rows)
@@ -795,6 +847,7 @@ def write_reports():
     comp=[
       ['Display candidate','ILI9488 IPS touch','84.52 x 55.26 x 4.0','ElectroPeak listing; touch IC/FPC pinout still verification gate'],
       ['Camera','OV5640 autofocus','26 x 16 x 18 envelope','compact final FPC module target; breakout not packaging authority'],
+      ['Head laser rangefinder','VL53L1X ToF laser','25.5 x 17.5 x 4.6 prototype carrier; 4.9 x 2.5 x 1.56 bare sensor','940 nm invisible Class 1; up to 4 m / 50 Hz; dedicated IR window + crosstalk calibration'],
       ['Main MCU','ESP32-S3-WROOM-1-N16R8','18 x 25.5 x 3.1','official module datasheet'],
       ['Safety MCU','STM32G0B1RET6 board envelope','74 x 48 x 13','custom carrier reservation, not final PCB'],
       ['Shoulder servo','Feetech ST-3215-C018','45.2 x 24.7 x 35','official Feetech'],
@@ -803,6 +856,8 @@ def write_reports():
       ['Wheel motor','25SG-370CA-78-EN','25D x 54L','RobotShop/E-S Motor'],
       ['Battery cell','Molicel M35A','18.6D max x 65.2H max','official Molicel'],
       ['Speaker','PUI AS04004PO-R','40 x 28.4 x 13','PUI/DigiKey'],
+      ['Belly RGB prototype','Adafruit IS31FL3741 13x9','51.3 x 39.0 x 4.6','Adafruit product 5201; final custom matrix reserved by 80 x 54 x 12 keepout'],
+      ['Belly optical insert','Secret-until-lit PC/PMMA','74 x 46 x 1.2 nominal','Optical coupon test is authority; 0.8-1.5 mm prototype range'],
     ]
     with open(DATA/'component_envelopes.csv','w',newline='',encoding='utf-8') as f:
         w=csv.writer(f); w.writerow(['Subsystem','Part','CAD envelope mm','Authority/notes']); w.writerows(comp)
@@ -819,12 +874,12 @@ def export_all():
     # assemblies in three system states + cutaway
     bboxes={}
     for state in ('ACTIVE','SLEEP','SHUTDOWN'):
-        a=build_assembly(state,False); path=CAD/f'ZI-E_v1_0_{state}.step'; a.save(str(path)); bboxes[state]=bbox_of_assy(a)
+        a=build_assembly(state,False); path=CAD/f'ZI-E_v0_3_{state}.step'; a.save(str(path)); bboxes[state]=bbox_of_assy(a)
         # glTF for easy viewing
-        try: a.save(str(CAD/f'ZI-E_v1_0_{state}.gltf'))
+        try: a.save(str(CAD/f'ZI-E_v0_3_{state}.gltf'))
         except Exception as e: print('gltf warning',state,e)
-    cut=build_assembly('ACTIVE',True); cut.save(str(CAD/'ZI-E_v1_0_CUTAWAY.step'))
-    try: cut.save(str(CAD/'ZI-E_v1_0_CUTAWAY.gltf'))
+    cut=build_assembly('ACTIVE',True); cut.save(str(CAD/'ZI-E_v0_3_CUTAWAY.step'))
+    try: cut.save(str(CAD/'ZI-E_v0_3_CUTAWAY.gltf'))
     except Exception as e: print('gltf cut warning',e)
     # printable parts
     for name,shape in printable_parts().items():

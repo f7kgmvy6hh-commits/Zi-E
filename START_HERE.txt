@@ -1,0 +1,12 @@
+ZI-E v0.3 — START HERE
+
+1) README.md
+2) ZI-E_v0.3_MASTER_ALL_IN_ONE.md
+3) docs/ZI-E_MASTER_SPEC.md
+4) docs/LASER_RANGEFINDER_SPEC.md
+5) docs/COMPONENT_MASTER_MATRIX.md
+6) mechanical/cad/current/
+
+New in v0.3: dedicated VL53L1X Class-1 invisible laser ToF distance sensor in the head brow, with TF-Luna/TFmini-S backups and optical/crosstalk/calibration gates.
+
+For GitHub: upload the contents of this ZI-E_v0.3 folder as the repository root. The repo_history/*.bundle file preserves Git history separately.

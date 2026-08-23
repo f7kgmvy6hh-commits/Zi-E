@@ -1,4 +1,4 @@
-# ZI-E AI-CAD Workflow — v1.0
+# ZI-E AI-CAD Workflow — v0.3
 
 This file defines how an AI agent must modify ZI-E CAD. It is intentionally stricter than “generate a shape that looks right.” The CAD is treated as an engineering model tied to requirements, components, tests, and revision history.
 
