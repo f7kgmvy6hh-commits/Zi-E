@@ -1,0 +1,6 @@
+ZI-E Lite Aluminum v0.1
+
+PRINT FIRST: templates/ZI-E_Lite_v0.1_1to1_A4_CUT_TEMPLATES.pdf at 100% / Actual Size.
+VERIFY: the 50 mm calibration line with a ruler.
+READ: docs/MASTER_SPEC.md and docs/ALUMINUM_BUILD_GUIDE.md.
+DO NOT install electronics or a battery during any cutting, grinding or welding.

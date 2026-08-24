@@ -1,0 +1,16 @@
+ID,Thickness_mm,Shape,Nominal_size_mm,Notes
+BODY_FRONT,1.5,trapezoid,bottom 158; top 146; height 126,"front shell, RGB micro-hole cluster"
+BODY_LEFT_SIDE,1.5,trapezoid,bottom depth 108; top depth 98; height 126,welded
+BODY_RIGHT_SIDE,1.5,trapezoid,bottom depth 108; top depth 98; height 126,welded
+BODY_TOP,1.5,rectangle,146 x 98,head interface + cable pass
+BODY_BOTTOM,1.5,rectangle,158 x 108,future base interface
+BODY_REAR,1.5,trapezoid,bottom 158; top 146; height 126,"REMOVABLE, drill cover screws after fitting"
+HEAD_FRONT,1.5,trapezoid,bottom 120; top 128; height 90,screen + camera openings
+HEAD_LEFT_SIDE,1.5,rectangle,40 x 90,welded
+HEAD_RIGHT_SIDE,1.5,rectangle,40 x 90,RF window zone
+HEAD_TOP,1.5,rectangle,128 x 40,welded
+HEAD_BOTTOM,1.5,rectangle,120 x 40,head interface/cable
+HEAD_REAR,1.5,trapezoid,bottom 120; top 128; height 90,REMOVABLE
+BOARD_CARRIER,1.5,rectangle,108 x 76,M2 board slots; removable
+BATTERY_CARRIER,1.0-1.5,rectangle,110 x 70,optional later
+STATIONARY_BASE,2.0,rectangle,170 x 120,rubber feet + future base pattern

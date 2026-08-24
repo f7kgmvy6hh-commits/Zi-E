@@ -1,0 +1,14 @@
+Category,Part,Qty,Stage,Notes
+Main integrated board,Waveshare ESP32-S3-Touch-LCD-3.5B,1,BUY AFTER BODY/SOFTWARE PLAN,3.5in touch + ESP32-S3 + audio + IMU + RTC + PMIC
+Camera,OV5640 DVP module compatible with board,1,BUY WITH/AFTER MAIN BOARD,Bundle camera preferred for lowest integration risk
+Speaker,6 ohm 1 W speaker (included),1,INCLUDED,Use board speaker header
+Emotion LED,5mm diffused common-cathode RGB LED,1,CHEAP,3x 330R series resistors
+RGB resistors,330 ohm 1/4W,3,CHEAP,Tune later if needed
+Battery,"Protected 1S 3.7V LiPo 4000mAh, <=95x55x12mm",1,LATER,Optional; USB-C first
+Shell,5052-H32 aluminum sheet 1.5mm,~0.25 m2,FABRICATE,1.3mm acceptable fallback
+Stationary base,Aluminum sheet 2.0mm 170x120mm,1,FABRICATE,4 rubber feet
+Rear service hardware,M3 screws + rivnuts/nuts + angle tabs,set,FABRICATE,Body and head rear panels removable
+Board mounts,M2 standoffs + insulating washers,4,AFTER BOARD,72 x 48.5mm board hole spacing
+RF window,Polycarbonate/ABS/acrylic 35x20mm,1,FABRICATE,Required in aluminum head
+Cable protection,Rubber grommet / edge trim / heatshrink,set,FABRICATE,No wire on raw aluminum edges
+Feet,Rubber feet,4,CHEAP,Stationary first build
