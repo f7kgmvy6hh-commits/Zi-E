@@ -282,3 +282,15 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Rangefinder is for measurement/vision assistance and does **not** replace local STM32 cliff/proximity/bumper safety.
 - The optical brow/window must be validated for ~940 nm transmission and crosstalk; arbitrary dark plastic is not accepted without test.
 - TF-Luna becomes the intentional backup if >4 m range or >50 Hz is required; TFmini-S only if a real longer-range requirement appears.
+
+## 2026-08-27 -- Modular hardware firmware boundary
+
+- Preserve ESP32-S3 ownership of multimedia/presence hardware and STM32 ownership of
+  safety/motion-critical hardware.
+- AI/behavior uses a safe high-level command facade and never directly controls GPIO,
+  PWM, registers, vendor APIs, motors, or individual actuators.
+- Hardware is supplied through stable capability interfaces and explicit profile
+  bindings. Optional hardware is represented as an absent capability, not hidden by a
+  guessed or silent production fallback.
+- Production motion remains gated by verified low-power commissioning and actual-state
+  confirmation. The initial code is an architecture scaffold, not a hardware freeze.

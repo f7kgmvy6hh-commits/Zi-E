@@ -15,6 +15,11 @@ Prototype architecture and Project/CAD v0.3 package prepared; next phase is risk
 - Battery placement/configuration, V1 charging approach and protected power-domain philosophy.
 - Cliff/collision sensing layers and safety state machine direction.
 - Parametric CAD, STEP/STL exports, CAD FMEA/requirements/validation dataset.
+- A vendor-neutral firmware architecture scaffold now defines stable hardware
+  interfaces, dependency registry, services, safe behavior commands, optional
+  capabilities, and bench-minimal/stage1/full-prototype profile requirements.
+- Host-side architecture tests cover profile validation, commissioning gating, and
+  invalid high-level motion requests. Production hardware bindings are not implemented.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

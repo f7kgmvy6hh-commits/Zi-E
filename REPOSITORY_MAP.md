@@ -13,6 +13,8 @@
 - `docs/LASER_RANGEFINDER_SPEC.md` — head Class-1 ToF rangefinder design/test authority
 - `docs/RELEASE_v0.3.md` — current release delta
 - `docs/GITHUB_HANDOFF_CURRENT.md` — upload/migration instructions
+- `docs/MODULAR_HARDWARE_ARCHITECTURE.md` -- firmware dependency and safety boundaries
+- `docs/REPOSITORY_ORGANIZATION.md` -- active and historical file organization policy
 - `docs/conversations/` — archived project conversation/continuation notes
 - `mechanical/cad/current/` — latest parametric CAD, STEP/STL/glTF, renders, data and validation
 - `mechanical/cad/archive/` — earlier CAD snapshots

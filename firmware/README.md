@@ -1,5 +1,44 @@
-# Firmware
+# ZI-E firmware
 
-This folder will contain the new ZI-E firmware.
+ZI-E firmware is split by responsibility while sharing stable, vendor-neutral contracts. The ESP32-S3 owns multimedia and presence hardware. The STM32 owns motion and safety-critical hardware. Laptop/phone behavior sends only safe, high-level commands.
 
-Old WALL-E-derived sketches are preserved only under `legacy/firmware/`.
+## Layers
+
+```text
+AI / behavior
+    -> api/SafeRobotCommands
+    -> services
+    -> core/HardwareRegistry (interfaces only)
+    -> drivers/{esp32,stm32,stub}
+    -> vendor SDK / hardware
+```
+
+- `include/zie/hal/`: stable hardware interfaces and shared value types.
+- `include/zie/core/`: capability registry and hardware-profile declarations.
+- `include/zie/services/`: reusable robot logic that depends only on interfaces.
+- `include/zie/api/`: the only intended behavior/AI-facing command surface.
+- `drivers/esp32/`: multimedia/presence bindings.
+- `drivers/stm32/`: safety/motion bindings.
+- `drivers/stub/`: deterministic host/bench implementations.
+- `profiles/`: composition roots for `bench-minimal`, `stage1`, and `full-prototype`.
+- `tests/`: host-side dependency and safety-boundary checks.
+
+Concrete board drivers translate a stable interface into a vendor SDK. Vendor headers, GPIO, PWM, register access, bus addresses, and board pin identifiers stay inside the relevant driver implementation. Services and the AI-facing API must not include them.
+
+## Hardware profiles
+
+- `bench-minimal`: stub display, motion controller, battery, range sensor, and audio.
+- `stage1`: requires the baseline plus STM32 safety sensing; camera and belly matrix are optional.
+- `full-prototype`: requires the baseline plus camera, belly matrix, head motion, arms, and cliff/collision sensing.
+
+Production profile factories intentionally remain unbound until exact hardware details are verified. Missing required capabilities fail profile validation instead of silently falling back.
+
+## Host validation
+
+```sh
+cmake -S firmware -B build/firmware-host
+cmake --build build/firmware-host
+ctest --test-dir build/firmware-host --output-on-failure
+```
+
+This validates architecture and safe-command behavior only. It is not hardware commissioning. Before motion on assembled hardware, follow the repository's low-power commissioning and actual-state-confirmation rules.
