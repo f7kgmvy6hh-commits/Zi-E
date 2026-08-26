@@ -80,6 +80,14 @@ not synthesize completion from individual arm/head command acceptance.
 Motion remains rejected until commissioning is confirmed. A driver must report
 explicit execution state; command receipt is never completion.
 
+Phase 2A adds a transport-independent lifecycle core ahead of the future controller
+link. Commands carry nonzero source/session/sequence identity, one command owns a
+motion subsystem at a time, duplicates do not renew leases, in-flight replacement is
+rejected, and only defined accepted/armed/executing/terminal transitions are legal.
+Every transition checks a caller-supplied monotonic time and an expired lease faults
+locally. The lifecycle report does not replace the STM32 safe-stop actuator path or
+actual-state confirmation.
+
 String identifiers are semantic catalog keys, not vendor commands. Drivers must
 validate supported identifiers synchronously and must copy any value retained after
 the call; future frozen catalogs may replace them with typed enums.

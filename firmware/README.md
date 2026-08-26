@@ -25,6 +25,20 @@ AI / behavior
 
 Concrete board drivers translate a stable interface into a vendor SDK. Vendor headers, GPIO, PWM, register access, bus addresses, and board pin identifiers stay inside the relevant driver implementation. Services and the AI-facing API must not include them.
 
+## Motion command lifecycle
+
+`core/MotionCommandLifecycle` is the Phase 2A transport-independent safety contract.
+It identifies commands by source/session/sequence, permits only one active owner,
+rejects duplicates without extending their lease, rejects stale or in-flight
+replacement requests, enforces legal execution-state transitions, and detects lease
+expiry using caller-supplied monotonic milliseconds. A transition at or after expiry
+fails closed as `faulted` with `command_lease_expired`.
+
+This class reports when a safe stop is required; it does not actuate hardware. The
+STM32 integration must poll it from the local safety loop and execute/confirm the
+physical stop. Cross-session authority, wire encoding, and link heartbeat behavior
+remain Phase 2B work.
+
 ## Hardware profiles
 
 - `bench-minimal`: stub display, motion controller, battery, range sensor, and audio.

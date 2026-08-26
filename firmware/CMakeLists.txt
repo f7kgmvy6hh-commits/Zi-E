@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(zie_firmware
     src/HardwareProfile.cpp
+    src/MotionCommandLifecycle.cpp
     src/RobotServices.cpp
     src/SafeRobotCommands.cpp
     drivers/stub/BenchHardware.cpp

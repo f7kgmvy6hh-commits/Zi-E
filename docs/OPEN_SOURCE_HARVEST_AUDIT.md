@@ -66,3 +66,26 @@ This document records problems found in Reachy Mini/Reachy, LeRobot SO-101, Open
 - Nav2 Collision Monitor: https://docs.nav2.org/configuration/packages/collision_monitor/configuring-collision-monitor-node.html
 - MuJoCo XML reference: https://mujoco.readthedocs.io/en/stable/XMLreference.html
 - Adafruit IS31FL3741: https://learn.adafruit.com/adafruit-is31fl3741
+
+## Phase 2 protocol/control harvest — 2026-08-27
+
+| Problem | Comparable project / failure evidence | Adapted ZI-E mitigation | Verification before freeze |
+|---|---|---|---|
+| External setpoints can look healthy while a heartbeat is missing or jittering | PX4 Offboard requires continuous proof-of-life; PX4 issue #16944 reports intermittent offboard-loss failsafe despite high apparent publish rates | STM32 owns a monotonic lease expiry independent of command receipt; accepted state never suppresses link-loss handling | Deterministic expiry tests in 2A; jitter, dropped-frame, and delayed-frame tests in 2B |
+| Middleware reconnect is not automatic and reconnection paths can churn or hang | micro-ROS Arduino issues #572, #912, #1502, and #1759 | Safety behavior cannot depend on micro-ROS/agent availability; peer reboot/session and reconnection are explicit 2B states | Kill/restart peer, cable interruption, partial entity creation, and repeated reconnect tests |
+| Active controllers on inactive/failed hardware can cause unexpected motion | ros2_control Controller Manager defaults reject activation on inactive hardware and deactivate controllers on hardware error | Keep commissioning/health gating local and make illegal lifecycle transitions fail closed | Transition-table tests in 2A; hardware-error and restart tests in 2C |
+| Duplicate suppression becomes unsafe around sender state loss or reboot | OpenCyphal/CAN uses transfer IDs and documents transfer-ID timeout/restart edge cases | Separate source, boot session, and sequence identity; do not infer a reboot from sequence wrap | Duplicate/out-of-order tests in 2A; boot/session negotiation and replay tests in 2B |
+| One healthy loop can mask a stalled safety task | Zephyr task watchdog supports per-task channels with optional hardware-watchdog fallback | Plan independent supervision of safety/control tasks; transport heartbeat is not a substitute for task watchdogs | Stalled-task fault injection in 2C |
+
+Phase 2 references:
+
+- PX4 Offboard Mode: https://docs.px4.io/main/en/flight_modes/offboard.html
+- PX4 issue #16944: https://github.com/PX4/PX4-Autopilot/issues/16944
+- ros2_control Controller Manager: https://control.ros.org/master/doc/ros2_control/controller_manager/doc/userdoc.html
+- micro-ROS Arduino issue #572: https://github.com/micro-ROS/micro_ros_arduino/issues/572
+- micro-ROS Arduino issue #912: https://github.com/micro-ROS/micro_ros_arduino/issues/912
+- micro-ROS Arduino issue #1502: https://github.com/micro-ROS/micro_ros_arduino/issues/1502
+- micro-ROS Arduino issue #1759: https://github.com/micro-ROS/micro_ros_arduino/issues/1759
+- OpenCyphal specification: https://specification.opencyphal.org/Cyphal_Specification.pdf
+- libcanard transfer-ID behavior: https://github.com/OpenCyphal/libcanard/blob/master/libcanard/canard.h
+- Zephyr task watchdog: https://docs.zephyrproject.org/latest/services/task_wdt/index.html

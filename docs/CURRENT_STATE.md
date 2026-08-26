@@ -1,7 +1,10 @@
-# Current State — 2026-08-23
+# Current State — 2026-08-27
 
 ## Phase
-Prototype architecture and Project/CAD v0.3 package prepared; next phase is risk-retirement bench rigs / safe commissioning prototypes before bulk component purchase, followed by electronics schematics/PCB and firmware integration.
+Prototype architecture and Project/CAD v0.3 package are prepared. Phase 2A now has a
+transport-independent motion command lifecycle foundation; controller-link protocol,
+production bindings, and bench commissioning remain next. Physical risk-retirement
+bench rigs are still required before bulk component purchase.
 
 ## What is substantially defined
 - Overall structural architecture and service philosophy.
@@ -20,6 +23,9 @@ Prototype architecture and Project/CAD v0.3 package prepared; next phase is risk
   capabilities, and bench-minimal/stage1/full-prototype profile requirements.
 - Host-side architecture tests cover profile validation, commissioning gating, and
   invalid high-level motion requests. Production hardware bindings are not implemented.
+- Phase 2A adds source/session/sequence command identity, single-owner lease
+  arbitration, legal motion-state transitions, duplicate/stale rejection, and local
+  lease-expiry detection. It is not yet integrated with a physical safe-stop path.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.
@@ -33,3 +39,10 @@ See `OPEN_ITEMS_AND_FREEZE_GATES.md` and `OPEN_SOURCE_HARVEST_AUDIT.md`: display
 
 ## Rule for future work
 Every new answer/change must use the Memory/Inventory Loop + full engineering loop + Open-Source Harvest Loop, and update repository source-of-truth docs when approved.
+
+## Next exact firmware step
+
+Run the host C++17 build/tests in an environment with CMake and a compiler, then begin
+Phase 2B only if the Phase 2A contract passes review. Phase 2B must define session
+negotiation, versioned semantic messages, heartbeat/link-loss behavior, bounded
+serialization, and reboot/replay fault tests before production driver binding.

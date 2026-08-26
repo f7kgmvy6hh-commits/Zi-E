@@ -294,3 +294,16 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   guessed or silent production fallback.
 - Production motion remains gated by verified low-power commissioning and actual-state
   confirmation. The initial code is an architecture scaffold, not a hardware freeze.
+
+## 2026-08-27 — Phase 2A motion lifecycle foundation
+
+- Establish the command lifecycle as a transport-independent core before selecting a
+  CAN/TWAI wire encoding.
+- Identify motion commands by source, boot/session, and sequence; never use receipt
+  order alone as proof of a new command.
+- Permit one active motion command owner per subsystem. Duplicates are idempotent and
+  do not renew leases; implicit replacement of an in-flight command is rejected.
+- Check the monotonic lease on every state-changing call. Expiry is a local fault that
+  requires a physical safe stop and later state confirmation by STM32.
+- Defer cross-session authority negotiation, replay history, wire framing, heartbeat,
+  and controller-reboot handling to Phase 2B.
