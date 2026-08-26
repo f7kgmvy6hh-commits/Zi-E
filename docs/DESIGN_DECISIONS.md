@@ -307,3 +307,24 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   requires a physical safe stop and later state confirmation by STM32.
 - Defer cross-session authority negotiation, replay history, wire framing, heartbeat,
   and controller-reboot handling to Phase 2B.
+
+## 2026-08-27 — Phase 2B1 controller session and liveness
+
+- Negotiate controller compatibility by independently versioned protocol major/minor;
+  a major mismatch fails closed and the negotiated minor is the lower supported value.
+- Bind an active link to the configured peer controller and its nonzero boot session.
+  A changed boot session removes motion authority and requires explicit local
+  renegotiation; receipt of a new hello alone cannot silently replace the peer.
+- A compatible expected-peer Hello establishes only a candidate session. Motion
+  authority remains unavailable until the first valid bound heartbeat proves liveness;
+  every renegotiated session requires a fresh heartbeat.
+- Reject malformed, unexpected-controller, retired-session, and incompatible-version
+  Hellos without mutating a healthy established session. Only a different boot session
+  from the configured expected peer triggers a restart fault. This reduces trivial
+  unauthenticated Hello denial of service without claiming authentication.
+- Duplicate, stale, wrong-session, and invalid heartbeats do not renew liveness.
+- Supply the monotonic heartbeat timeout from verified configuration. Do not invent a
+  production timeout in reusable protocol code.
+- Defer wire encoding, CAN/TWAI framing, integrity selection, and physical safe-stop
+  binding until bus analysis and bench evidence exist. Long-lived authenticated replay
+  protection remains explicitly open for Phase 2B2.

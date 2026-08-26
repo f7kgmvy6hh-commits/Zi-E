@@ -4,6 +4,7 @@
 #include "zie/api/SafeRobotCommands.hpp"
 #include "zie/core/HardwareProfile.hpp"
 #include "zie/core/MotionCommandLifecycle.hpp"
+#include "zie/link/ControllerLinkSession.hpp"
 int main() {
   zie::profiles::BenchMinimalProfile profile;
   auto validation = zie::core::validate_profile(
@@ -122,4 +123,110 @@ int main() {
          LifecycleResult::transitioned);
   assert(fault_reason.snapshot().stop_reason ==
          zie::hal::StopReason::hardware_fault);
+
+  using zie::link::ControllerLinkSession;
+  using zie::link::Heartbeat;
+  using zie::link::LinkFault;
+  using zie::link::LinkResult;
+  using zie::link::LinkState;
+  using zie::link::PeerHello;
+  using zie::link::ProtocolVersion;
+
+  ControllerLinkSession link(2, ProtocolVersion{1, 3}, 50);
+  assert(link.accept_hello(PeerHello{3, 10, {1, 2}}, 100) ==
+         LinkResult::rejected_unexpected_peer);
+  assert(link.snapshot().state == LinkState::disconnected);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 10, {2, 0}}, 100) ==
+         LinkResult::rejected_incompatible);
+  assert(link.snapshot().state == LinkState::disconnected);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 10, {1, 2}}, 100) ==
+         LinkResult::activated);
+  assert(link.snapshot().negotiated_minor == 2);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 10, {1, 2}}, 101) ==
+         LinkResult::duplicate);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{3, 10, 1}, 110) ==
+         LinkResult::rejected_session);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 11, 1}, 111) ==
+         LinkResult::rejected_session);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 0}, 112) ==
+         LinkResult::rejected_invalid);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 1}, 120) ==
+         LinkResult::accepted);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 1}, 130) ==
+         LinkResult::duplicate);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 3}, 140) ==
+         LinkResult::accepted);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 2}, 141) ==
+         LinkResult::rejected_stale);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 11, 4}, 142) ==
+         LinkResult::rejected_session);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{3, 99, {1, 2}}, 142) ==
+         LinkResult::rejected_unexpected_peer);
+  assert(link.snapshot().state == LinkState::active);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 10, {2, 0}}, 142) ==
+         LinkResult::rejected_incompatible);
+  assert(link.snapshot().state == LinkState::active);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{0, 0, {0, 0}}, 142) ==
+         LinkResult::rejected_invalid);
+  assert(link.snapshot().state == LinkState::active);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 11, {1, 2}}, 143) ==
+         LinkResult::peer_restart_detected);
+  assert(link.snapshot().fault == LinkFault::peer_restarted);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 11, {1, 2}}, 144) ==
+         LinkResult::rejected_not_active);
+  link.begin_renegotiation();
+  assert(link.accept_hello(PeerHello{2, 10, {1, 2}}, 199) ==
+         LinkResult::rejected_session);
+  assert(link.accept_hello(PeerHello{2, 11, {1, 3}}, 200) ==
+         LinkResult::activated);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 10, 1}, 201) ==
+         LinkResult::rejected_session);
+  assert(!link.snapshot().motion_authority_available);
+  assert(link.observe_heartbeat(Heartbeat{2, 11, 1}, 202) ==
+         LinkResult::accepted);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.accept_hello(PeerHello{2, 10, {1, 2}}, 203) ==
+         LinkResult::rejected_session);
+  assert(link.snapshot().state == LinkState::active);
+  assert(link.snapshot().motion_authority_available);
+  assert(link.poll(251) == LinkResult::no_change);
+  assert(link.poll(252) == LinkResult::expired);
+  assert(link.snapshot().fault == LinkFault::heartbeat_expired);
+  assert(!link.snapshot().motion_authority_available);
+
+  ControllerLinkSession duplicate_deadline(2, ProtocolVersion{1, 0}, 50);
+  assert(duplicate_deadline.accept_hello(PeerHello{2, 1, {1, 0}}, 100) ==
+         LinkResult::activated);
+  assert(duplicate_deadline.observe_heartbeat(Heartbeat{2, 1, 1}, 110) ==
+         LinkResult::accepted);
+  assert(duplicate_deadline.observe_heartbeat(Heartbeat{2, 1, 1}, 159) ==
+         LinkResult::duplicate);
+  assert(duplicate_deadline.poll(160) == LinkResult::expired);
+
+  ControllerLinkSession link_rollover(2, ProtocolVersion{1, 0}, 20);
+  assert(link_rollover.accept_hello(PeerHello{2, 1, {1, 0}},
+                                    0xFFFFFFF5U) ==
+         LinkResult::activated);
+  assert(link_rollover.observe_heartbeat(
+             Heartbeat{2, 1, 0xFFFFFFFFU}, 0xFFFFFFF6U) ==
+         LinkResult::accepted);
+  assert(link_rollover.observe_heartbeat(Heartbeat{2, 1, 1}, 2) ==
+         LinkResult::accepted);
+  assert(link_rollover.poll(22) == LinkResult::expired);
 }

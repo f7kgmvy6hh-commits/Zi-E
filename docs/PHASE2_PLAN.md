@@ -47,6 +47,31 @@ frames. Heartbeat loss and peer reboot must lead to a deterministic local safe s
 Cross-session replay rejection is a 2B responsibility: 2A distinguishes session IDs
 but does not decide which newly negotiated session is authoritative.
 
+### Phase 2B1 — Session and liveness contract
+
+Inputs: committed Phase 2A identity/lifecycle contract and verified logical controller
+ownership. Expected output: transport-independent protocol-version compatibility,
+expected-peer identity, boot-session binding, ordered heartbeat observation,
+deterministic link expiry, explicit renegotiation, and removal of motion authority on
+link fault. Hello establishes a candidate only; the first valid heartbeat grants
+authority, and renegotiation requires fresh liveness. Stray/incompatible Hellos must
+not mutate a healthy session. The timeout is injected verified configuration, not a
+platform default.
+
+Allowed files: `firmware/include/zie/link/`, `firmware/src/`, firmware host tests/build
+files, and related source-of-truth documentation. Validation covers wrong peer,
+incompatible version, duplicate/stale heartbeat, wraparound, expiry, peer restart, and
+explicit renegotiation, including authority remaining unavailable before fresh
+liveness proof.
+
+### Phase 2B2 — Bounded wire contract and transport adapter
+
+Define semantic command/report/fault/state payloads, fixed bounds, canonical encoding,
+integrity protection, golden vectors, parser fuzzing, and the verified CAN/TWAI mapping.
+This stage depends on bus-load analysis and measured timing. It must connect link loss
+to STM32 local safe stop without treating a heartbeat as proof every safety task is
+alive.
+
 Freeze gate: select CAN/TWAI framing and timeout values only after bus-load analysis
 and bench measurements.
 
@@ -65,8 +90,11 @@ accepted never means executed.
 
 Freeze gate: no autonomous motion or batch purchase based only on host simulation.
 
-## First coherent foundation
+## Completed foundations
 
-Implement only the Phase 2A command lifecycle core and its host tests. Integration
-into `MotionService`, wire encoding, heartbeat transport, production profiles, and
-hardware drivers remain deliberately out of scope for this commit.
+- Phase 2A: command lifecycle core and host contract tests.
+- Phase 2B1: controller session/liveness core and host contract tests.
+
+Integration into `MotionService`, wire encoding, heartbeat transport, production
+profiles, and hardware drivers remains deliberately out of scope until the relevant
+freeze gates are satisfied.

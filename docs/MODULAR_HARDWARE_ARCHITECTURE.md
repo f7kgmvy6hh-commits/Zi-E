@@ -88,6 +88,15 @@ Every transition checks a caller-supplied monotonic time and an expired lease fa
 locally. The lifecycle report does not replace the STM32 safe-stop actuator path or
 actual-state confirmation.
 
+Phase 2B1 adds a separate controller-link session guard. It binds liveness to the
+configured peer controller, compatible protocol major version, peer boot session, and
+ordered heartbeat sequence. Hello creates only a candidate session; the first valid
+bound heartbeat grants motion authority. Duplicate/stale frames do not extend liveness.
+Timeout or expected-peer restart removes authority, and renegotiation requires a fresh
+heartbeat. Stray or incompatible Hellos cannot replace or fault a healthy session.
+This is not yet a wire protocol and does not provide authenticated replay protection or
+select CAN identifiers, payload layout, integrity mechanism, or timing values.
+
 String identifiers are semantic catalog keys, not vendor commands. Drivers must
 validate supported identifiers synchronously and must copy any value retained after
 the call; future frozen catalogs may replace them with typed enums.

@@ -89,3 +89,15 @@ Phase 2 references:
 - OpenCyphal specification: https://specification.opencyphal.org/Cyphal_Specification.pdf
 - libcanard transfer-ID behavior: https://github.com/OpenCyphal/libcanard/blob/master/libcanard/canard.h
 - Zephyr task watchdog: https://docs.zephyrproject.org/latest/services/task_wdt/index.html
+
+### Phase 2B1 delta — 2026-08-27
+
+| Project/source | Concept and real failure | Adapted ZI-E idea | Fit, provenance, security, decision |
+|---|---|---|---|
+| micro-ROS Arduino issue #1809 | A client reconnects initially but fails on later attempts, showing that reconnect state cannot be assumed clean | Treat peer restart as an explicit fault; remove motion authority and require local renegotiation instead of silently replacing the active session | Failure evidence only; no code copied. micro-ROS's dynamic entity model is not adopted. Prevents stale authority but needs denial-of-service testing. **ADAPT** |
+| OpenCyphal Specification v1.0 | Transfer ordering uses bounded identifiers and anonymous sources cannot provide enforceable uniqueness/ordering | Require configured nonzero controller identity, boot-session identity, and serial-number arithmetic for heartbeat order | Specification concept only; no code copied. Zi-E is not adopting the full Cyphal stack. **ADAPT** |
+
+Additional references:
+
+- micro-ROS Arduino issue #1809: https://github.com/micro-ROS/micro_ros_arduino/issues/1809
+- OpenCyphal Specification v1.0 (2025-05-16): https://specification.opencyphal.org/Cyphal_Specification.pdf

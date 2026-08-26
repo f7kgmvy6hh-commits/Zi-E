@@ -2,7 +2,8 @@
 
 ## Phase
 Prototype architecture and Project/CAD v0.3 package are prepared. Phase 2A now has a
-transport-independent motion command lifecycle foundation; controller-link protocol,
+transport-independent motion command lifecycle foundation plus a Phase 2B1
+controller-session/liveness scaffold. Bounded wire encoding, transport binding,
 production bindings, and bench commissioning remain next. Physical risk-retirement
 bench rigs are still required before bulk component purchase.
 
@@ -26,6 +27,12 @@ bench rigs are still required before bulk component purchase.
 - Phase 2A adds source/session/sequence command identity, single-owner lease
   arbitration, legal motion-state transitions, duplicate/stale rejection, and local
   lease-expiry detection. It is not yet integrated with a physical safe-stop path.
+- Phase 2B1 adds protocol-major compatibility, expected-peer and boot-session binding,
+  ordered heartbeat liveness, explicit renegotiation, and fail-closed motion-authority
+  removal. Hello alone grants no motion authority; each candidate/renegotiated session
+  needs a fresh valid heartbeat. Stray/incompatible Hellos are rejected without
+  destroying a healthy session. It has no wire codec, authentication, or physical
+  transport binding yet.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.
@@ -42,7 +49,7 @@ Every new answer/change must use the Memory/Inventory Loop + full engineering lo
 
 ## Next exact firmware step
 
-Run the host C++17 build/tests in an environment with CMake and a compiler, then begin
-Phase 2B only if the Phase 2A contract passes review. Phase 2B must define session
-negotiation, versioned semantic messages, heartbeat/link-loss behavior, bounded
-serialization, and reboot/replay fault tests before production driver binding.
+Run the host C++17 build/tests in an environment with CMake and a compiler, review and
+commit Phase 2B1, then perform bus-load/timing analysis before Phase 2B2 freezes bounded
+serialization, integrity checks, or CAN/TWAI framing. Production driver binding remains
+later work.

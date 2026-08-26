@@ -39,6 +39,27 @@ STM32 integration must poll it from the local safety loop and execute/confirm th
 physical stop. Cross-session authority, wire encoding, and link heartbeat behavior
 remain Phase 2B work.
 
+## Controller-link session
+
+`link/ControllerLinkSession` is the transport-independent Phase 2B1 boundary. A valid
+Hello establishes only a candidate session; motion authority remains unavailable until
+the first valid heartbeat proves current liveness. It selects the lower compatible
+protocol minor, binds liveness to an expected controller and peer boot session, rejects
+duplicate/stale heartbeats without refreshing the deadline, and removes authority on
+timeout or peer restart. A restarted peer requires explicit local renegotiation and a
+fresh heartbeat, and the immediately retired boot session cannot be reactivated by a
+delayed Hello.
+
+Malformed, unexpected-controller, retired-session, and incompatible-version Hellos
+are rejected without changing a healthy established session. Only a different boot
+session presented as the configured expected peer is treated as a restart fault. This
+limits unauthenticated Hello denial of service but is not authenticated replay defense.
+
+The heartbeat timeout is verified configuration supplied by the composition root;
+this scaffold does not choose one. Wire framing, payload bounds, integrity checks,
+CAN/TWAI mapping, retry policy, and physical safe-stop integration remain Phase 2B2
+and Phase 2C work.
+
 ## Hardware profiles
 
 - `bench-minimal`: stub display, motion controller, battery, range sensor, and audio.
