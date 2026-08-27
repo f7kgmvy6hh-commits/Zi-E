@@ -7,8 +7,12 @@ driver, persistence, UI, or AI provider.
 ## Command
 
 `SemanticCommand` is a typed intent envelope containing package/logical-device source,
-nonzero session and sequence identity, command type, and matching variant payload. The
-fixed command catalog covers normalized motion, semantic stop, expression/presentation,
+nonzero session and sequence identity, command type, and matching variant payload. A
+numeric session carried by a command is not authority. `AuthoritativeRobotCore` must
+explicitly bind the active session to the exact registry package and logical device
+before submission. Replacement retires the prior session, retired IDs cannot be
+rebound, and sequence ordering restarts only for a newly core-bound session. The fixed
+command catalog covers normalized motion, semantic stop, expression/presentation,
 audio/speech, and sensor query. Command type selects its required capability internally;
 the caller cannot substitute a weaker capability string.
 
@@ -41,3 +45,9 @@ This layer is intended to authorize semantic intents before a later authoritativ
 dispatcher invokes existing Safe Robot services. Acceptance is not execution or
 completion. STM32 remains owner of motion/safety interlocks, physical limits,
 commissioning, actual-state confirmation, and protected operations.
+
+Accepted commands cross into a later core adapter only as an opaque
+`AcceptedSemanticCommand` token constructed by `SemanticRobotApi`; callers cannot
+manufacture that token or bypass authorization by invoking the virtual adapter. The
+`AuthoritativeRobotCore` definition is kept outside the public `include/zie` API tree;
+it is an internal composition authority and must not be included in a plugin SDK.

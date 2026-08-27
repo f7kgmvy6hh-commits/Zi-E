@@ -56,8 +56,14 @@ bench rigs are still required before bulk component purchase.
 - A semantic Robot API contract now separates authorized command intents, immutable
   event occurrences, and read-only versioned state. Commands require an active
   registry package/device provider and fixed active capability; protected safety and
-  raw-control requests have no plugin path. This stage validates but does not dispatch
-  or execute commands.
+  raw-control requests have no plugin path. Command sessions are explicitly bound by
+  authoritative core context, replacement retires the prior session, and plugins
+  cannot rotate a self-selected session to reset replay ordering.
+- A bounded synchronous event bus now provides typed filtering, registry/capability
+  subscriber checks, deterministic drop-newest backpressure, lifecycle delivery
+  revocation, and callback-failure isolation. A deterministic virtual robot consumes
+  only accepted semantic-command tokens and separates acceptance from simulated
+  execution, authoritative state updates, and immutable result events.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

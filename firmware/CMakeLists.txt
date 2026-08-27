@@ -13,9 +13,11 @@ add_library(zie_firmware
     src/HardwareProfile.cpp
     src/MotionCommandLifecycle.cpp
     src/RobotServices.cpp
+    src/ResilientEventBus.cpp
     src/SafeRobotCommands.cpp
     src/SemanticRobotApi.cpp
     src/TransactionalConfiguration.cpp
+    src/VirtualRobot.cpp
     drivers/stub/BenchHardware.cpp
     profiles/BenchMinimalProfile.cpp
 )
@@ -28,6 +30,7 @@ add_executable(zie_architecture_tests
     tests/extension_registry_tests.cpp
     tests/transactional_configuration_tests.cpp
     tests/semantic_robot_api_tests.cpp
+    tests/event_bus_virtual_robot_tests.cpp
 )
 target_link_libraries(zie_architecture_tests PRIVATE zie_firmware)
 

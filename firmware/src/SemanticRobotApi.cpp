@@ -106,7 +106,7 @@ CommandResult SemanticRobotApi::submit(const SemanticCommand& command) {
   }
   if (command.source.package_id.empty() ||
       command.source.logical_device_instance_id.empty() ||
-      command.source.session_id == 0 || command.source.sequence == 0) {
+      command.source.sequence == 0) {
     return CommandResult::rejected_invalid_identity;
   }
   const auto* record = registry_.find(command.source.package_id);
@@ -118,6 +118,17 @@ CommandResult SemanticRobotApi::submit(const SemanticCommand& command) {
   if (record->lifecycle != extensions::LifecycleState::active) {
     return CommandResult::rejected_inactive_issuer;
   }
+  const auto session = std::find_if(
+      sessions_.begin(), sessions_.end(),
+      [&command](const SessionState& state) {
+        return state.active && state.package_id == command.source.package_id &&
+               state.logical_device_instance_id ==
+                   command.source.logical_device_instance_id;
+      });
+  if (command.source.session_id == 0 || session == sessions_.end() ||
+      session->session_id != command.source.session_id) {
+    return CommandResult::rejected_invalid_session;
+  }
   const char* const capability = required_capability(command.type);
   if (capability == nullptr ||
       std::find(record->active_capabilities.begin(),
@@ -127,26 +138,55 @@ CommandResult SemanticRobotApi::submit(const SemanticCommand& command) {
   }
   if (!valid_payload(command)) return CommandResult::rejected_invalid_payload;
 
-  auto sequence = std::find_if(
-      sequences_.begin(), sequences_.end(),
-      [&command](const SequenceState& state) {
-        return state.package_id == command.source.package_id &&
-               state.logical_device_instance_id ==
-                   command.source.logical_device_instance_id &&
-               state.session_id == command.source.session_id;
-      });
-  if (sequence != sequences_.end() &&
-      command.source.sequence <= sequence->last_sequence) {
+  if (command.source.sequence <= session->last_sequence) {
     return CommandResult::rejected_stale_sequence;
   }
-  if (sequence == sequences_.end()) {
-    sequences_.push_back({command.source.package_id,
-                          command.source.logical_device_instance_id,
-                          command.source.session_id, command.source.sequence});
-  } else {
-    sequence->last_sequence = command.source.sequence;
-  }
+  session->last_sequence = command.source.sequence;
+  accepted_commands_.push_back(AcceptedSemanticCommand(command));
   return CommandResult::accepted;
+}
+
+CommandSessionResult SemanticRobotApi::bind_session_authoritative(
+    const std::string& package_id,
+    const std::string& logical_device_instance_id,
+    const std::uint64_t session_id) {
+  if (package_id.empty() || logical_device_instance_id.empty()) {
+    return CommandSessionResult::rejected_invalid_identity;
+  }
+  if (session_id == 0) return CommandSessionResult::rejected_zero_session;
+  const auto* record = registry_.find(package_id);
+  if (record == nullptr || record->device_identity.logical.instance_id !=
+                               logical_device_instance_id) {
+    return CommandSessionResult::rejected_invalid_identity;
+  }
+  if (record->lifecycle != extensions::LifecycleState::active) {
+    return CommandSessionResult::rejected_inactive_extension;
+  }
+  if (std::any_of(sessions_.begin(), sessions_.end(),
+                  [session_id](const SessionState& state) {
+                    return state.session_id == session_id;
+                  })) {
+    return CommandSessionResult::rejected_retired_session;
+  }
+  bool replaced = false;
+  for (auto& state : sessions_) {
+    if (state.active && state.package_id == package_id &&
+        state.logical_device_instance_id == logical_device_instance_id) {
+      state.active = false;
+      replaced = true;
+    }
+  }
+  sessions_.push_back(
+      {package_id, logical_device_instance_id, session_id, 0, true});
+  return replaced ? CommandSessionResult::replaced
+                  : CommandSessionResult::bound;
+}
+
+std::optional<AcceptedSemanticCommand> SemanticRobotApi::take_next_accepted() {
+  if (accepted_commands_.empty()) return std::nullopt;
+  AcceptedSemanticCommand command = std::move(accepted_commands_.front());
+  accepted_commands_.erase(accepted_commands_.begin());
+  return command;
 }
 
 EventResult EventJournal::publish(const RobotEvent& event) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -52,27 +53,58 @@ enum class CommandResult {
   rejected_unknown_command,
   rejected_invalid_payload,
   rejected_invalid_identity,
+  rejected_invalid_session,
   rejected_inactive_issuer,
   rejected_missing_capability,
   rejected_stale_sequence,
   rejected_protected_operation,
 };
 
+enum class CommandSessionResult {
+  bound,
+  replaced,
+  rejected_invalid_identity,
+  rejected_inactive_extension,
+  rejected_zero_session,
+  rejected_retired_session,
+};
+
+class AcceptedSemanticCommand {
+ public:
+  const SemanticCommand& command() const { return command_; }
+
+ private:
+  friend class SemanticRobotApi;
+  explicit AcceptedSemanticCommand(const SemanticCommand& command)
+      : command_(command) {}
+  SemanticCommand command_;
+};
+
+class AuthoritativeRobotCore;
+
 class SemanticRobotApi {
  public:
   explicit SemanticRobotApi(const extensions::ExtensionRegistry& registry)
       : registry_(registry) {}
   CommandResult submit(const SemanticCommand& command);
+  std::optional<AcceptedSemanticCommand> take_next_accepted();
 
  private:
-  struct SequenceState {
+  friend class AuthoritativeRobotCore;
+  struct SessionState {
     std::string package_id;
     std::string logical_device_instance_id;
     std::uint64_t session_id{0};
     std::uint64_t last_sequence{0};
+    bool active{false};
   };
+  CommandSessionResult bind_session_authoritative(
+      const std::string& package_id,
+      const std::string& logical_device_instance_id,
+      std::uint64_t session_id);
   const extensions::ExtensionRegistry& registry_;
-  std::vector<SequenceState> sequences_;
+  std::vector<SessionState> sessions_;
+  std::vector<AcceptedSemanticCommand> accepted_commands_;
 };
 
 enum class EventCategory {
@@ -129,8 +161,6 @@ enum class StateResult {
   rejected_stale_generation,
 };
 
-class AuthoritativeRobotCore;
-
 class RobotStateStore {
  public:
   const RobotStateSnapshot* current(RobotStateCategory category) const;
@@ -139,14 +169,6 @@ class RobotStateStore {
   friend class AuthoritativeRobotCore;
   StateResult update_authoritative(const RobotStateSnapshot& snapshot);
   std::vector<RobotStateSnapshot> snapshots_;
-};
-
-class AuthoritativeRobotCore {
- public:
-  StateResult update_state(RobotStateStore& store,
-                           const RobotStateSnapshot& snapshot) const {
-    return store.update_authoritative(snapshot);
-  }
 };
 
 }  // namespace zie::api

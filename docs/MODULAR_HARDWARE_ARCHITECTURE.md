@@ -126,10 +126,17 @@ remain with the registry.
 
 The semantic Robot API sits above registry authorization and below a future core
 dispatcher. It separates command intent, event occurrence, and current state. Plugin
-commands carry stable source/session/sequence identity and require a fixed active
-capability; events cannot dispatch work; consumers can only read generation-ordered
-state snapshots. An accepted intent is not execution or actual-state confirmation, and
-no semantic type exposes a driver or protected safety operation.
+commands carry stable source/session/sequence identity, but only an authoritative core
+binding establishes a valid active session. Commands require a fixed active capability;
+events cannot dispatch work; consumers can only read generation-ordered state snapshots.
+An accepted intent is not execution or actual-state confirmation, and no semantic type
+exposes a driver or protected safety operation.
+
+The host event bus adds bounded per-subscriber queues, typed filtering, lifecycle and
+capability rechecks, deterministic overflow reporting, and callback-failure isolation.
+The virtual robot sits behind the same semantic authorization boundary and consumes
+only accepted tokens. It is a deterministic contract-test adapter, not a hardware
+driver or physical safety simulation.
 
 ## Adding or replacing hardware
 

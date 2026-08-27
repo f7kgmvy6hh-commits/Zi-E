@@ -412,3 +412,20 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   authoritative core path.
 - Keep raw motor setpoints, PWM, GPIO, registers, actuator ownership, raw CAN frames,
   and safety bypass outside the semantic command vocabulary.
+
+## 2026-08-27 — Authoritative sessions, resilient events, and virtual robot
+
+- Treat a command-carried session number as an identifier, never as authority. Only an
+  authoritative core operation can bind or replace the active session for an exact
+  registry package/logical-device pair; replacement permanently retires the prior ID.
+- Keep replay ordering per authoritative session. Unknown, zero, mismatched, retired,
+  duplicate, and stale session/sequence combinations fail closed.
+- Bound every subscriber queue and expose deterministic `drop_newest` overflow instead
+  of allowing silent memory growth. Recheck lifecycle/capability eligibility at publish
+  and delivery, and isolate callback exceptions from other subscribers.
+- Allow the virtual robot to consume only opaque accepted-command tokens. Acceptance,
+  simulated execution, authoritative state mutation, and immutable event publication
+  remain distinct steps; simulated failures preserve relevant state.
+- Keep this host-only model outside physical safety claims. STM32 interlocks,
+  commissioning, drivers, actual-state confirmation, scheduling, transport, and CAN
+  remain separate future work.

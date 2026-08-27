@@ -180,6 +180,18 @@ Decision: adopt the closed semantic command catalog and explicit command/event/s
 separation. Dispatch, execution feedback, transport, runtime sandboxing, and physical
 safety enforcement remain deferred.
 
+### Resilient event bus and virtual robot delta — 2026-08-27
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [ROS 2 QoS keep-last API](https://docs.ros.org/en/ros2_packages/rolling/api/rclcpp/generated/classrclcpp_1_1QoS.html) | History depth is explicit; bounded keep-last and unbounded keep-all are different policies | Require a nonzero fixed queue depth and expose only deterministic `drop_newest` in this foundation | Depth-one overflow host test proves the old queued event is preserved and overflow is surfaced. Concepts only; no ROS code copied. **ADAPT** |
+| [rclcpp callback exception issue #2196](https://github.com/ros2/rclcpp/issues/2196) | An exception escaping executor callback handling can terminate processing and is difficult for the application to contain | Catch subscriber callback exceptions at the synchronous delivery boundary and return a typed failure without touching peer queues | Throwing-subscriber test followed by successful peer delivery. No executor/thread model copied. **ADAPT** |
+| [ros2_control mock components](https://control.ros.org/master/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html) and [mock velocity failure #998](https://github.com/ros-controls/ros2_control/issues/998) | Mock hardware enables offline pipeline tests, but reported controller/interface mismatches show that a mock can create false confidence when it does not exercise the production boundary | Consume only opaque commands accepted by the stable Semantic Robot API; keep acceptance separate from deterministic execution/state/event results; make physical/safety limits explicit | Accepted/rejected, stop, failure, state generation, and event tests. No ros2_control code or raw joint/GPIO interface copied. **ADAPT** |
+
+Decision: adopt the bounded synchronous bus and contract-level virtual adapter for host
+tests. Threads, scheduling, persistence, authentication, physical dynamics, drivers,
+actual-state confirmation, and safety validation remain deferred.
+
 References:
 
 - Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/

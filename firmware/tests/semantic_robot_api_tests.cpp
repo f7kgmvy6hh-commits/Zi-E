@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "zie/api/SemanticRobotApi.hpp"
+#include "core/AuthoritativeRobotCore.hpp"
 
 namespace {
 using namespace zie::api;
@@ -80,17 +81,56 @@ void run_semantic_robot_api_tests() {
                   {"semantic.motion", "semantic.presentation",
                    "semantic.audio", "semantic.sensor-query"});
   SemanticRobotApi api(active_registry);
+  const AuthoritativeRobotCore core;
+  assert(core.bind_command_session(api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   10) == CommandSessionResult::bound);
+  assert(core.bind_command_session(api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   0) ==
+         CommandSessionResult::rejected_zero_session);
   SemanticCommand motion{SemanticCommandType::motion_intent, source(owner),
                          MotionIntent{0.2F, -0.1F, 100}};
   assert(api.submit(motion) == CommandResult::accepted);
   assert(api.submit(motion) == CommandResult::rejected_stale_sequence);
+  auto arbitrary_session = motion;
+  arbitrary_session.source.session_id = 11;
+  arbitrary_session.source.sequence = 1;
+  assert(api.submit(arbitrary_session) ==
+         CommandResult::rejected_invalid_session);
+
+  assert(core.bind_command_session(api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   20) == CommandSessionResult::replaced);
+  auto retired_session = motion;
+  retired_session.source.sequence = 2;
+  assert(api.submit(retired_session) == CommandResult::rejected_invalid_session);
+  auto replacement_session = motion;
+  replacement_session.source.session_id = 20;
+  replacement_session.source.sequence = 1;
+  assert(api.submit(replacement_session) == CommandResult::accepted);
+  assert(api.submit(replacement_session) ==
+         CommandResult::rejected_stale_sequence);
+  assert(core.bind_command_session(api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   10) ==
+         CommandSessionResult::rejected_retired_session);
+  assert(core.bind_command_session(api, "zie.wrong-package",
+                                   owner.device_identity.logical.instance_id,
+                                   30) ==
+         CommandSessionResult::rejected_invalid_identity);
+  assert(core.bind_command_session(api, owner.manifest.id, "wrong.device", 30) ==
+         CommandSessionResult::rejected_invalid_identity);
 
   ExtensionRegistry inactive_registry;
   register_active(inactive_registry, owner, {"semantic.motion"});
+  SemanticRobotApi inactive_api(inactive_registry);
+  assert(core.bind_command_session(inactive_api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   10) == CommandSessionResult::bound);
   assert(inactive_registry.transition(owner.manifest.id,
                                       LifecycleState::inactive) ==
          RegistryResult::transitioned);
-  SemanticRobotApi inactive_api(inactive_registry);
   assert(inactive_api.submit(motion) ==
          CommandResult::rejected_inactive_issuer);
 
@@ -98,6 +138,9 @@ void run_semantic_robot_api_tests() {
   register_active(missing_capability_registry, owner,
                   {"semantic.presentation"});
   SemanticRobotApi missing_capability_api(missing_capability_registry);
+  assert(core.bind_command_session(missing_capability_api, owner.manifest.id,
+                                   owner.device_identity.logical.instance_id,
+                                   10) == CommandSessionResult::bound);
   assert(missing_capability_api.submit(motion) ==
          CommandResult::rejected_missing_capability);
 
@@ -121,7 +164,6 @@ void run_semantic_robot_api_tests() {
 
   EventJournal events;
   RobotStateStore state;
-  const AuthoritativeRobotCore core;
   assert(core.update_state(state,
                            {RobotStateCategory::motion, 1, "stopped"}) ==
          StateResult::accepted);
