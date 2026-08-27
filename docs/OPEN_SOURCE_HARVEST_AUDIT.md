@@ -122,6 +122,25 @@ criteria in `PHASE2B2_BUS_TIMING_ANALYSIS.md` are satisfied.
 | VS Code extension runtime security | Signatures, blocklists, publisher controls, and secret scanning complement manifests; declarations alone do not create a sandbox | Keep signature/revocation/provenance and secret scanning as later mandatory registry/package work; do not claim current permission requests are enforced | Documentation concepts only; no code copied. **INVESTIGATE** |
 | ESPHome schema deprecation guidance | External components can break across schema/API evolution | Version Plugin API and manifest schema independently and reject unsupported required versions | Documentation concepts only; no code copied. ESPHome code generation is not adopted wholesale. **ADAPT** |
 
+### Device identity foundation delta — 2026-08-27
+
+Problem: device identity becomes unsafe when names or transport locations are treated as
+permanent, when physical and logical identity collapse into one key, or when extensions
+can claim protected ownership.
+
+| Comparable project / failure report | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [Home Assistant device registry](https://developers.home-assistant.io/docs/device_registry_index/) and [collision implementation](https://github.com/home-assistant/core/blob/dev/homeassistant/helpers/device_registry.py) | External identifiers/connections and registry-generated device IDs are separate; identifier/connection collision errors are explicit | Separate physical identity from registry-generated logical instance and fail the whole candidate set on collision | Focused duplicate physical/logical host tests. Concepts only; no code copied. **ADAPT** |
+| [Home Assistant entity-registry RFC and failure motivation](https://github.com/home-assistant/core/issues/11533) | Name-derived IDs change or swap when equal names load in different orders | Exclude display name and discovery order from stable identity | Type has no display-name field; discovery-order provenance is explicitly ephemeral and rejected. **ADAPT** |
+| [ROS 2 composition design](https://github.com/ros2/design/blob/gh-pages/articles/150_roslaunch.md) | A loaded logical node instance receives an immutable unique ID and duplicate full names are rejected | Give logical device instances their own registry-generated ID and reject mutation after activation | Positive identity and post-activation mutation tests. Concepts only; no code copied. **ADAPT** |
+| [systemd machine ID setup](https://www.freedesktop.org/software/systemd/man/250/systemd-machine-id-setup.html) | Transient identity is explicitly distinct from committed persistent identity | Model untrustworthy hardware serial absence as explicit provisional-local state, never as a transport-derived permanent ID | Positive provisional and negative source/provenance tests. **ADAPT** |
+
+Decision: adopt the typed, in-memory validation boundary. Defer persistence and explicit
+migration/rebind mechanics. This is host simulation only; bench verification remains
+required before identity participates in commissioning or motion ownership. Package,
+controller, profile, and trust assignments are authoritative external validation
+context, not candidate claims.
+
 References:
 
 - Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/

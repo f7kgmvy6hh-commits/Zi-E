@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(zie_firmware
     src/ControllerLinkSession.cpp
+    src/DeviceIdentity.cpp
     src/ExtensionManifest.cpp
     src/HardwareProfile.cpp
     src/MotionCommandLifecycle.cpp
@@ -19,6 +20,7 @@ target_include_directories(zie_firmware PUBLIC include .)
 
 add_executable(zie_architecture_tests
     tests/architecture_tests.cpp
+    tests/device_identity_tests.cpp
     tests/extension_manifest_tests.cpp
 )
 target_link_libraries(zie_architecture_tests PRIVATE zie_firmware)

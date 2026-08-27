@@ -37,6 +37,12 @@ bench rigs are still required before bulk component purchase.
   categories, registry-assigned trust, typed permission requests, lifecycle/failure
   states, and declared/validated/active capability invariants. It is not yet a package
   schema, registry, loader, sandbox, or permission enforcement system.
+- A separate device-identity contract now distinguishes extension package, physical
+  hardware, logical instance, controller, and hardware-profile binding. It rejects
+  ephemeral transport/location values as stable identity, represents hardware without
+  a trustworthy serial as explicitly provisional/local, rejects collisions, preserves
+  registry-assigned trust/ownership, and freezes identity after activation pending a
+  future explicit migration/rebind workflow.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

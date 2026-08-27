@@ -344,3 +344,22 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Keep the current implementation as an in-memory validation contract. Parsing,
   loading, sandboxing, signatures, registry state transitions, and configuration
   activation require later reviewed foundations.
+
+## 2026-08-27 — Device identity foundation
+
+- Keep extension/package identity, physical manufacturer/model/serial identity,
+  registry-generated logical instance identity, controller identity, and hardware
+  profile binding as separate typed domains.
+- Never derive stable identity from display name, USB path, COM port, IP address, CAN
+  address, discovery order, or another transport/location observation.
+- Represent devices without trustworthy serials using explicit registry-generated
+  provisional-local identity and provisional trust. Promotion/rebinding is deferred to
+  a future explicit migration workflow.
+- Fail closed on duplicate physical or logical identities, conflicting provenance,
+  unknown enum values, plugin-assigned controller/profile bindings, or changes after
+  activation.
+- Reserve protected STM32 safety-controller identity for registry assignment to
+  built-in-trust extensions. Identity does not confer capabilities or permissions.
+- Treat owning package, controller assignment, hardware-profile assignment, and
+  extension trust as external registry validation context. Candidate records carry no
+  authority flag and must exactly match that context.
