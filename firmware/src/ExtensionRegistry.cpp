@@ -66,8 +66,7 @@ bool legal_transition(const LifecycleState from, const LifecycleState to) {
              to == LifecycleState::quarantined ||
              to == LifecycleState::disabled || to == LifecycleState::removed;
     case LifecycleState::activating:
-      return to == LifecycleState::active || to == LifecycleState::inactive ||
-             to == LifecycleState::failed ||
+      return to == LifecycleState::inactive || to == LifecycleState::failed ||
              to == LifecycleState::quarantined ||
              to == LifecycleState::disabled || to == LifecycleState::removed;
     case LifecycleState::active:
@@ -76,8 +75,7 @@ bool legal_transition(const LifecycleState from, const LifecycleState to) {
              to == LifecycleState::quarantined ||
              to == LifecycleState::disabled || to == LifecycleState::removed;
     case LifecycleState::degraded:
-      return to == LifecycleState::active || to == LifecycleState::inactive ||
-             to == LifecycleState::failed ||
+      return to == LifecycleState::inactive || to == LifecycleState::failed ||
              to == LifecycleState::quarantined ||
              to == LifecycleState::disabled || to == LifecycleState::removed;
     case LifecycleState::failed:
@@ -175,6 +173,9 @@ RegistryResult ExtensionRegistry::transition(const std::string& package_id,
   }
   if (!known(target) || !known(failure)) {
     return RegistryResult::rejected_unknown_lifecycle;
+  }
+  if (target == LifecycleState::active) {
+    return RegistryResult::rejected_illegal_transition;
   }
   if (!legal_transition(record->lifecycle, target) ||
       (failure_state(target) != (failure != FailureClass::none))) {

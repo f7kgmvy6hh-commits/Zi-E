@@ -117,6 +117,13 @@ actuator, vendor-driver, or safety-bypass permission exists. Loading, sandboxing
 runtime permission enforcement, persistence, and commissioning binding remain future
 layers.
 
+Transactional configuration is a separate in-memory snapshot boundary. It binds a
+candidate to the registry's package, logical device, and profile identity, then stages,
+validates, and atomically replaces only the configuration snapshot. Semantic hardware
+settings do not receive driver handles and are not applied by this layer. Failed or
+blocked updates preserve the previous snapshot; lifecycle and capability authority
+remain with the registry.
+
 ## Adding or replacing hardware
 
 1. Confirm the capability and controller owner.

@@ -7,6 +7,7 @@
 #include "zie/link/ControllerLinkSession.hpp"
 void run_extension_manifest_tests();
 void run_extension_registry_tests();
+void run_transactional_configuration_tests();
 void run_device_identity_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
@@ -236,5 +237,6 @@ int main() {
 
   run_extension_manifest_tests();
   run_extension_registry_tests();
+  run_transactional_configuration_tests();
   run_device_identity_tests();
 }

@@ -379,3 +379,19 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   or removal. Capability ownership includes package and logical device instance.
 - Registry acceptance grants no permission and exposes no raw hardware-control path;
   plugin motion remains semantic Safe Robot API requests only.
+- Forbid generic lifecycle transition into `ACTIVE`. Both initial activation and
+  degraded recovery must enter through capability activation after explicit
+  inactive/activating states.
+
+## 2026-08-27 — Transactional configuration foundation
+
+- Separate declared, staged, validated, and active configuration. A failed candidate
+  never mutates the prior active snapshot; rollback removes only staged/validated work.
+- Bind every request to external authoritative package, logical device instance, and
+  hardware-profile identity. Reject stale/nonzero revisions; assign a new registry
+  generation only on successful commit.
+- Permit commit only for inactive, active, or degraded owners. Quarantined, disabled,
+  failed, activating, installed, and removed extensions cannot activate configuration.
+- Configuration cannot grant permissions, trust, capabilities, controller/profile
+  ownership, or safety authority. Reject raw GPIO/PWM/register/actuator/driver/safety
+  bypass/CAN namespaces; hardware-affecting values remain semantic only.

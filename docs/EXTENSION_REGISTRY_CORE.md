@@ -35,6 +35,11 @@ remain as in-memory tombstones so the same package or identity cannot silently r
 them. Quarantine, disable, inactive, failed, and removal synchronously clear active
 capabilities.
 
+Generic `transition()` can never enter `active`, including from `activating` or
+`degraded`. Initial activation and degraded recovery must pass through
+`activate_capabilities()` after the explicit inactive/activating path, so subset and
+provider-ambiguity checks cannot be bypassed.
+
 ## Capability ownership and resolution
 
 Capabilities follow `declared -> validated -> active`. Existing manifest state

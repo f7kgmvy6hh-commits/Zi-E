@@ -48,6 +48,11 @@ bench rigs are still required before bulk component purchase.
   conflicting registrations, owns explicit lifecycle transitions, and resolves only
   validated active capabilities. Quarantine, disable, failure, inactivity, and removal
   synchronously revoke capability exposure. It does not load or execute extensions.
+- Transactional configuration now separates declared, staged, validated, and active
+  snapshots; binds requests to registry package/device/profile identity; rejects stale
+  revisions and authority/raw-control namespaces; and preserves the prior active
+  snapshot on every failed update. This is in-memory model state only and does not
+  apply configuration to hardware.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

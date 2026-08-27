@@ -160,6 +160,9 @@ void run_extension_registry_tests() {
   assert(unvalidated_active.transition(host.manifest.id,
                                        LifecycleState::activating) ==
          RegistryResult::transitioned);
+  assert(unvalidated_active.transition(host.manifest.id,
+                                       LifecycleState::active) ==
+         RegistryResult::rejected_illegal_transition);
   assert(unvalidated_active.activate_capabilities(
              host.manifest.id, {"semantic.range"}) ==
          RegistryResult::rejected_capability_state);
@@ -204,6 +207,29 @@ void run_extension_registry_tests() {
                                        FailureClass::temporary) ==
          RegistryResult::transitioned);
   assert(failure_revocation.resolve("semantic.range").empty());
+
+  ExtensionRegistry degraded_reactivation;
+  assert(degraded_reactivation.register_extension(host, host_assignment) ==
+         RegistryResult::accepted);
+  validate_and_activate(degraded_reactivation, host.manifest.id);
+  assert(degraded_reactivation.transition(host.manifest.id,
+                                          LifecycleState::degraded,
+                                          FailureClass::temporary) ==
+         RegistryResult::transitioned);
+  assert(degraded_reactivation.transition(host.manifest.id,
+                                          LifecycleState::active) ==
+         RegistryResult::rejected_illegal_transition);
+  assert(degraded_reactivation.find(host.manifest.id)->lifecycle ==
+         LifecycleState::degraded);
+  assert(degraded_reactivation.transition(host.manifest.id,
+                                          LifecycleState::inactive) ==
+         RegistryResult::transitioned);
+  assert(degraded_reactivation.transition(host.manifest.id,
+                                          LifecycleState::activating) ==
+         RegistryResult::transitioned);
+  assert(degraded_reactivation.activate_capabilities(
+             host.manifest.id, {"semantic.range"}) ==
+         RegistryResult::capabilities_activated);
 
   ExtensionRegistry ambiguous;
   assert(ambiguous.register_extension(host, host_assignment) ==

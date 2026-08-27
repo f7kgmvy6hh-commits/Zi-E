@@ -154,6 +154,19 @@ Decision: adopt the in-memory registry/lifecycle/capability boundary. Persistenc
 loader callbacks, crash recovery, runtime permission enforcement, commissioning, and
 hardware binding remain future verification stages.
 
+### Transactional configuration delta — 2026-08-27
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [ROS 2 atomic parameter API](https://github.com/ros2/rclcpp/blob/rolling/rclcpp/include/rclcpp/node.hpp) and [implementation](https://github.com/ros2/rclcpp/blob/rolling/rclcpp/src/rclcpp/node_interfaces/node_parameters.cpp) | Declared/type constraints and callbacks are checked for the complete parameter set before values are written; successful post callbacks occur after the set | Keep staged and validated snapshots separate and replace active only after whole-candidate validation | Invalid candidate/commit and immutable-active-snapshot host tests. Concepts only; no code copied. **ADAPT** |
+| [ROS 2 parameter callback mismatch report](https://github.com/ros2/rclcpp/issues/1550) | Per-parameter callback behavior can conflict with an API that appears to validate a vector as one transaction | Validate one complete candidate snapshot and return one aggregate result; do not expose per-key partial commit | Duplicate/undeclared/unknown/forbidden key corpus. **ADAPT** |
+| [Kubernetes API update/resourceVersion semantics](https://kubernetes.io/docs/reference/using-api/api-concepts/) | Conditional updates reject stale `resourceVersion` to prevent lost updates | Require positive monotonically newer candidate revision and assign commit generation only after success | Stale/equal revision and generation tests. Concepts only; no code copied. **ADAPT** |
+| [Home Assistant config-entry migration states](https://github.com/home-assistant/core/blob/dev/homeassistant/config_entries.py) | Migration/setup failures are explicit states rather than silently treating a partial update as active | Keep failed candidate state separate and preserve the prior active snapshot; lifecycle blocks activation for quarantined/disabled/removed owners | Rollback and blocked-lifecycle tests. No migration code copied. **ADAPT** |
+
+Decision: adopt the in-memory transaction/snapshot contract. Parsing, persistent
+transactions, process-crash recovery, runtime application callbacks, and physical
+hardware rollback remain explicitly deferred.
+
 References:
 
 - Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/
