@@ -429,3 +429,19 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Keep this host-only model outside physical safety claims. STM32 interlocks,
   commissioning, drivers, actual-state confirmation, scheduling, transport, and CAN
   remain separate future work.
+
+## 2026-08-27 — Event delivery repair and provider resilience foundation
+
+- Retain a failed event at the head of its subscriber queue for a configured bounded
+  number of delivery attempts. Dead-letter it exactly once at exhaustion and expose a
+  saturating per-subscriber count; never consume another subscriber's copy.
+- Define LLM, STT, TTS, and wake contracts as vendor-neutral semantic values. Real
+  networking, secrets, audio data/drivers/codecs, and provider SDKs remain excluded.
+- Bind every provider to an exact registry package, logical device, manifest category,
+  and unique kind-prefixed active capability. Recheck authorization at every call so
+  lifecycle or capability revocation fails closed.
+- Preserve unambiguous exact-capability ownership with distinct provider-instance
+  capabilities. Provider order is explicit, provider count and attempts are bounded,
+  and malformed responses or exceptions cannot bypass validation or extend failover.
+- Provider outputs confer no Robot API, state mutation, safety, hardware, or raw
+  actuator authority.

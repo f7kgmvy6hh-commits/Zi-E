@@ -10,6 +10,7 @@ void run_extension_registry_tests();
 void run_transactional_configuration_tests();
 void run_semantic_robot_api_tests();
 void run_event_bus_virtual_robot_tests();
+void run_provider_foundation_tests();
 void run_device_identity_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
@@ -242,5 +243,6 @@ int main() {
   run_transactional_configuration_tests();
   run_semantic_robot_api_tests();
   run_event_bus_virtual_robot_tests();
+  run_provider_foundation_tests();
   run_device_identity_tests();
 }

@@ -16,10 +16,10 @@ extension delivery rather than leaking old events.
 Each subscriber has a fixed-depth queue. The sole current policy is deterministic
 `drop_newest`: the queued event is preserved, the incoming event is dropped for that
 subscriber, and `published_with_overflow` is returned. There is no unbounded queue.
-Delivery copies immutable `RobotEvent` data and catches callback exceptions, returning
-`subscriber_failed` without corrupting other queues or subscribers. Publishing has no
-reference to command submission or `RobotStateStore`, so it cannot execute a command or
-authoritatively mutate state.
+Delivery passes immutable `RobotEvent` data and catches callback exceptions, returning
+an explicit retry-pending or dead-letter result without corrupting other queues or
+subscribers. Publishing has no reference to command submission or `RobotStateStore`,
+so it cannot execute a command or authoritatively mutate state.
 
 ## Virtual robot contract
 
@@ -37,3 +37,13 @@ The adapter exposes no GPIO, PWM, register, CAN, raw motor setpoint, actuator ow
 or protected safety operation. It does not weaken registry authorization and does not
 simulate STM32 safety ownership, physical dynamics, actual-state confirmation, or
 autonomous motion.
+
+## Subscriber failure delivery repair
+
+Each queued subscriber event retains a deterministic failed-attempt count. A callback
+exception leaves the event at the head of that subscriber's queue while the configured
+attempt budget remains. At the exact attempt ceiling, the event is removed, the
+subscriber's saturating dead-letter counter is incremented once, and delivery returns
+a distinct dead-letter result. Successful retry removes the event without changing the
+counter. Subscriber queues, retries, and accounting remain isolated; registry
+lifecycle and capability checks still run before every delivery.

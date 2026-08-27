@@ -61,9 +61,16 @@ bench rigs are still required before bulk component purchase.
   cannot rotate a self-selected session to reset replay ordering.
 - A bounded synchronous event bus now provides typed filtering, registry/capability
   subscriber checks, deterministic drop-newest backpressure, lifecycle delivery
-  revocation, and callback-failure isolation. A deterministic virtual robot consumes
+  revocation, bounded retry, saturating per-subscriber dead-letter accounting, and
+  callback-failure isolation. A deterministic virtual robot consumes
   only accepted semantic-command tokens and separates acceptance from simulated
   execution, authoritative state updates, and immutable result events.
+- A vendor-neutral provider foundation now models LLM, STT, TTS, and wake requests and
+  responses behind exact registry package/device/category/capability authorization.
+  Ordered failover is provider-count and attempt bounded, authorization is rechecked
+  per call, and deterministic mocks cover malformed, throwing, revoked, and exhausted
+  providers. No real provider, network, secret, audio path, persistence, or scheduler
+  is implemented.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

@@ -1,6 +1,7 @@
 #include "zie/api/ResilientEventBus.hpp"
 
 #include <algorithm>
+#include <limits>
 
 namespace zie::api {
 namespace {
@@ -42,7 +43,9 @@ bool ResilientEventBus::eligible(const Subscription& subscription) const {
 
 EventBusResult ResilientEventBus::subscribe(
     const EventSubscriptionRequest& request) {
-  if (queue_depth_ == 0) return EventBusResult::rejected_invalid_bus;
+  if (queue_depth_ == 0 || max_delivery_attempts_ == 0) {
+    return EventBusResult::rejected_invalid_bus;
+  }
   if (!known(policy_)) return EventBusResult::rejected_unknown_policy;
   if (request.identity.subscriber_id.empty() ||
       request.identity.package_id.empty() ||
@@ -77,7 +80,7 @@ EventBusResult ResilientEventBus::subscribe(
       record->active_capabilities.end()) {
     return EventBusResult::rejected_missing_capability;
   }
-  subscriptions_.push_back({request, {}});
+  subscriptions_.push_back({request, {}, 0});
   return EventBusResult::subscribed;
 }
 
@@ -124,7 +127,7 @@ EventBusResult ResilientEventBus::publish(const RobotEvent& event) {
       overflow = true;
       continue;
     }
-    subscription.queue.push_back(event);
+    subscription.queue.push_back({event, 0});
   }
   if (overflow) return EventBusResult::published_with_overflow;
   if (ineligible) {
@@ -149,13 +152,22 @@ EventBusResult ResilientEventBus::deliver_next(
     return EventBusResult::rejected_inactive_subscriber;
   }
   if (found->queue.empty()) return EventBusResult::rejected_no_event;
-  const RobotEvent event = found->queue.front();
-  found->queue.pop_front();
+  auto& pending = found->queue.front();
   try {
-    subscriber(event);
+    subscriber(pending.event);
   } catch (...) {
-    return EventBusResult::subscriber_failed;
+    ++pending.failed_attempts;
+    if (pending.failed_attempts < max_delivery_attempts_) {
+      return EventBusResult::subscriber_failed_retry_pending;
+    }
+    found->queue.pop_front();
+    if (found->dead_letter_count !=
+        std::numeric_limits<std::size_t>::max()) {
+      ++found->dead_letter_count;
+    }
+    return EventBusResult::subscriber_dead_lettered;
   }
+  found->queue.pop_front();
   return EventBusResult::delivered;
 }
 
@@ -167,6 +179,16 @@ std::size_t ResilientEventBus::queued(
         return subscription.request.identity.subscriber_id == subscriber_id;
       });
   return found == subscriptions_.end() ? 0 : found->queue.size();
+}
+
+std::size_t ResilientEventBus::dead_lettered(
+    const std::string& subscriber_id) const {
+  const auto found = std::find_if(
+      subscriptions_.begin(), subscriptions_.end(),
+      [&subscriber_id](const Subscription& subscription) {
+        return subscription.request.identity.subscriber_id == subscriber_id;
+      });
+  return found == subscriptions_.end() ? 0 : found->dead_letter_count;
 }
 
 }  // namespace zie::api

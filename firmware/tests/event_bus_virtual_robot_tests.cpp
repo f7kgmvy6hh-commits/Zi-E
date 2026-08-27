@@ -143,7 +143,7 @@ void run_event_bus_virtual_robot_tests() {
          "query-complete");
 
   ResilientEventBus isolation_bus(registry, 2,
-                                  BackpressurePolicy::drop_newest);
+                                  BackpressurePolicy::drop_newest, 2);
   assert(isolation_bus.subscribe(subscription(owner, "subscriber.failing")) ==
          EventBusResult::subscribed);
   assert(isolation_bus.subscribe(subscription(owner, "subscriber.healthy")) ==
@@ -154,7 +154,9 @@ void run_event_bus_virtual_robot_tests() {
   assert(isolation_bus.deliver_next(
              "subscriber.failing", [](const RobotEvent&) {
                throw std::runtime_error("simulated subscriber failure");
-             }) == EventBusResult::subscriber_failed);
+             }) == EventBusResult::subscriber_failed_retry_pending);
+  assert(isolation_bus.queued("subscriber.failing") == 1);
+  assert(isolation_bus.dead_lettered("subscriber.failing") == 0);
   bool healthy_received = false;
   const auto state_before_delivery =
       state.current(RobotStateCategory::motion)->generation;
@@ -165,6 +167,28 @@ void run_event_bus_virtual_robot_tests() {
   assert(healthy_received);
   assert(state.current(RobotStateCategory::motion)->generation ==
          state_before_delivery);
+  assert(isolation_bus.deliver_next(
+             "subscriber.failing", [](const RobotEvent&) {
+               throw std::runtime_error("second deterministic failure");
+             }) == EventBusResult::subscriber_dead_lettered);
+  assert(isolation_bus.queued("subscriber.failing") == 0);
+  assert(isolation_bus.dead_lettered("subscriber.failing") == 1);
+
+  assert(isolation_bus.publish({11, EventCategory::command_accepted,
+                                EventSourceType::authoritative_core, "core",
+                                "retry-then-success"}) ==
+         EventBusResult::published);
+  assert(isolation_bus.deliver_next(
+             "subscriber.failing", [](const RobotEvent&) {
+               throw std::runtime_error("transient failure");
+             }) == EventBusResult::subscriber_failed_retry_pending);
+  std::string retried_detail;
+  assert(isolation_bus.deliver_next(
+             "subscriber.failing", [&retried_detail](const RobotEvent& event) {
+               retried_detail = event.detail;
+             }) == EventBusResult::delivered);
+  assert(retried_detail == "retry-then-success");
+  assert(isolation_bus.dead_lettered("subscriber.failing") == 1);
 
   ResilientEventBus bounded_bus(registry, 1,
                                 BackpressurePolicy::drop_newest);
@@ -219,6 +243,10 @@ void run_event_bus_virtual_robot_tests() {
                                 static_cast<BackpressurePolicy>(999));
   assert(unknown_bus.subscribe(subscription(owner, "subscriber.unknown")) ==
          EventBusResult::rejected_unknown_policy);
+  ResilientEventBus zero_retry_bus(registry, 1,
+                                   BackpressurePolicy::drop_newest, 0);
+  assert(zero_retry_bus.subscribe(subscription(owner, "subscriber.zero")) ==
+         EventBusResult::rejected_invalid_bus);
   auto unknown_category = subscription(owner, "subscriber.category");
   unknown_category.categories = {static_cast<EventCategory>(999)};
   ResilientEventBus category_bus(registry, 1,

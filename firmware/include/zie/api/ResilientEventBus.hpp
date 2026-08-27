@@ -31,7 +31,8 @@ enum class EventBusResult {
   published_with_overflow,
   published_with_ineligible_subscriber,
   delivered,
-  subscriber_failed,
+  subscriber_failed_retry_pending,
+  subscriber_dead_lettered,
   rejected_invalid_bus,
   rejected_invalid_subscription,
   rejected_duplicate_subscriber,
@@ -49,8 +50,12 @@ class ResilientEventBus {
  public:
   ResilientEventBus(const extensions::ExtensionRegistry& registry,
                     std::size_t queue_depth,
-                    BackpressurePolicy policy)
-      : registry_(registry), queue_depth_(queue_depth), policy_(policy) {}
+                    BackpressurePolicy policy,
+                    std::size_t max_delivery_attempts = 3)
+      : registry_(registry),
+        queue_depth_(queue_depth),
+        policy_(policy),
+        max_delivery_attempts_(max_delivery_attempts) {}
 
   EventBusResult subscribe(const EventSubscriptionRequest& request);
   EventBusResult unsubscribe(const std::string& subscriber_id);
@@ -59,16 +64,23 @@ class ResilientEventBus {
       const std::string& subscriber_id,
       const std::function<void(const RobotEvent&)>& subscriber);
   std::size_t queued(const std::string& subscriber_id) const;
+  std::size_t dead_lettered(const std::string& subscriber_id) const;
 
  private:
   struct Subscription {
     EventSubscriptionRequest request;
-    std::deque<RobotEvent> queue;
+    struct PendingEvent {
+      RobotEvent event;
+      std::size_t failed_attempts{0};
+    };
+    std::deque<PendingEvent> queue;
+    std::size_t dead_letter_count{0};
   };
   bool eligible(const Subscription& subscription) const;
   const extensions::ExtensionRegistry& registry_;
   std::size_t queue_depth_{0};
   BackpressurePolicy policy_{BackpressurePolicy::drop_newest};
+  std::size_t max_delivery_attempts_{0};
   std::vector<Subscription> subscriptions_;
 };
 
