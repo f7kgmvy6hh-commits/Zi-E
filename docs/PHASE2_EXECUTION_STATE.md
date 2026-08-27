@@ -1,9 +1,9 @@
 # Phase 2 Execution State
 
-- Current phase: Phase 2B2 pre-implementation bus-load/timing analysis complete; wire freeze blocked
-- Last completed step: Derived Classical CAN frame/load bounds, audited controller capabilities and protocol failure modes, and documented the missing physical/timing/message inputs required by the Phase 2B2 freeze gate
-- Next exact step: Produce and verify the physical CAN/transceiver timing inputs plus complete message rate/deadline inventory, then run priority-aware utilization/response-time analysis before selecting any wire format
-- Last validated commit: `3008987` (`test: correct motion lease rollover boundary`)
-- Blockers: Transceiver/topology/clock/bitrate evidence, message rates/bursts/deadlines, arbitration priorities, queue/ISR timing, safe-stop timing, fragmentation bounds, and integrity/authentication scope are TODO / UNVERIFIED
-- Validation: Fresh MSYS2 UCRT64 GNU g++ 16.1.0 C++17 configure/build passed with CMake/CTest 4.3.3 and Ninja 1.13.2; CTest passed 1/1 with zero failures; this analysis adds no firmware implementation
-- Validation limitations: Calculated serialization bounds exclude arbitration, software latency, retransmission/error frames, and physical effects until the missing inputs are measured; no transport, bench, HIL, or commissioning validation
+- Current phase: Independent extensible-platform foundation; extension manifest/capability contract implementation complete at validation boundary
+- Last completed step: Repaired independent-review fail-open defect by explicitly rejecting out-of-domain values for every enum-bearing manifest/trust/state input and replacing ordinal hardware-category classification with exhaustive classification
+- Next exact step: Review and commit this extension manifest foundation; choose one later independent stage only after commit
+- Last validated commit: `95484e5` (`docs: analyze phase 2b2 CAN timing freeze gate`)
+- Blockers: Phase 2B2 implementation path is `WAITING_FOR_VERIFIED_INPUTS` listed in `PHASE2B2_BUS_TIMING_ANALYSIS.md`; it does not block independent host software foundations
+- Validation: Fresh MSYS2 UCRT64 GNU g++ 16.1.0 C++17 configure/build passed with CMake/CTest 4.3.3 and Ninja 1.13.2, including `-Wall -Wextra -Wpedantic -Wswitch-enum`; CTest passed 1/1 with focused out-of-domain negative tests for extension class, category, permission, assigned trust, controller target, lifecycle, and failure class
+- Validation limitations: In-memory model only; no untrusted-file parser, JSON schema, registry, loader, sandbox, permission enforcement, signature verification, device identity, configuration activation, hardware, transport, bench, HIL, or commissioning validation

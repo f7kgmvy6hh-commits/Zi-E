@@ -15,6 +15,7 @@ AI / behavior
 
 - `include/zie/hal/`: stable hardware interfaces and shared value types.
 - `include/zie/core/`: capability registry and hardware-profile declarations.
+- `include/zie/extensions/`: centralized versioned extension manifest and capability-state contracts.
 - `include/zie/services/`: reusable robot logic that depends only on interfaces.
 - `include/zie/api/`: the only intended behavior/AI-facing command surface.
 - `drivers/esp32/`: multimedia/presence bindings.
@@ -59,6 +60,24 @@ The heartbeat timeout is verified configuration supplied by the composition root
 this scaffold does not choose one. Wire framing, payload bounds, integrity checks,
 CAN/TWAI mapping, retry policy, and physical safe-stop integration remain Phase 2B2
 and Phase 2C work.
+
+## Extension manifest foundation
+
+`extensions/ExtensionManifest` separates `HOST_PLUGIN`, `ASSET_PACK`,
+`EMBEDDED_MODULE`, and `PROTECTED_SAFETY_MODULE` validation. Trust is supplied by the
+future registry rather than claimed by a manifest. Typed permissions are requests, not
+runtime grants; embedded and protected modules cannot request host permissions, and
+asset packs cannot contain an entrypoint or permissions.
+
+Declared, validated, and active capabilities are distinct sets. Validation requires
+each set to be a subset of the preceding trust stage and prevents inactive, failed,
+quarantined, disabled, or removed extensions from exposing active capabilities. This
+is an in-memory contract only; loading, schema parsing, sandboxing, registry behavior,
+and permission enforcement are not implemented.
+
+All enum-bearing manifest, trust-context, and capability-state inputs are checked
+against explicit supported domains before class/lifecycle semantics. Out-of-range enum
+values fail closed; category trust boundaries do not rely on enum ordinal ranges.
 
 ## Hardware profiles
 

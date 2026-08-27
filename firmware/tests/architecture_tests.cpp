@@ -5,6 +5,7 @@
 #include "zie/core/HardwareProfile.hpp"
 #include "zie/core/MotionCommandLifecycle.hpp"
 #include "zie/link/ControllerLinkSession.hpp"
+void run_extension_manifest_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
   auto validation = zie::core::validate_profile(
@@ -230,4 +231,6 @@ int main() {
   assert(link_rollover.observe_heartbeat(Heartbeat{2, 1, 1}, 2) ==
          LinkResult::accepted);
   assert(link_rollover.poll(22) == LinkResult::expired);
+
+  run_extension_manifest_tests();
 }

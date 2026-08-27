@@ -328,3 +328,19 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Defer wire encoding, CAN/TWAI framing, integrity selection, and physical safe-stop
   binding until bus analysis and bench evidence exist. Long-lived authenticated replay
   protection remains explicitly open for Phase 2B2.
+
+## 2026-08-27 — Extension manifest and capability trust foundation
+
+- Treat `HOST_PLUGIN`, `ASSET_PACK`, `EMBEDDED_MODULE`, and
+  `PROTECTED_SAFETY_MODULE` as separate execution models with class-specific validation.
+- Assign trust from the registry/install source; never accept a manifest's claim that it
+  is built-in, signed, or otherwise trusted.
+- Treat requested permissions as declarations for a future deny-by-default enforcement
+  layer, not grants. No raw actuator/safety-bypass permission exists; host motion access
+  means Safe Robot API requests only.
+- Keep declared, validated, and active capabilities separate. A manifest claim cannot
+  populate either validated or active state, and inactive lifecycle states expose none.
+- Version extension package, Plugin API, and manifest schema independently.
+- Keep the current implementation as an in-memory validation contract. Parsing,
+  loading, sandboxing, signatures, registry state transitions, and configuration
+  activation require later reviewed foundations.

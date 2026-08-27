@@ -112,3 +112,20 @@ Additional references:
 
 Decision: **DEFER** Phase 2B2 wire/framing implementation until the bus/timing freeze
 criteria in `PHASE2B2_BUS_TIMING_ANALYSIS.md` are satisfied.
+
+### Extension manifest foundation delta — 2026-08-27
+
+| Project/source | Concept and failure | Adapted Zi-E idea | Fit, provenance, security, decision |
+|---|---|---|---|
+| Home Assistant config flows/unique IDs | Stable integration-scoped identity prevents duplicate setup; versioned config entries support migration rather than startup-time guesswork | Keep manifest/plugin identity distinct from future physical device and instance identity; defer device identity to its own foundation | Documentation concepts only; no code copied. Home Assistant's Python runtime model is not suitable for deterministic embedded modules. **ADAPT** |
+| VS Code extension manifest and Workspace Trust | Executable entrypoints and data contributions have different risk; opening untrusted content can trigger unintended code execution unless trust gates activation | Separate executable host plugins from data-only packs; registry assigns trust and later runtime policy must enforce it | Documentation concepts only; no code copied. Desktop extension permissions are not robot safety authority. **ADAPT** |
+| VS Code extension runtime security | Signatures, blocklists, publisher controls, and secret scanning complement manifests; declarations alone do not create a sandbox | Keep signature/revocation/provenance and secret scanning as later mandatory registry/package work; do not claim current permission requests are enforced | Documentation concepts only; no code copied. **INVESTIGATE** |
+| ESPHome schema deprecation guidance | External components can break across schema/API evolution | Version Plugin API and manifest schema independently and reject unsupported required versions | Documentation concepts only; no code copied. ESPHome code generation is not adopted wholesale. **ADAPT** |
+
+References:
+
+- Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/
+- VS Code extension manifest: https://code.visualstudio.com/api/references/extension-manifest
+- VS Code Workspace Trust: https://code.visualstudio.com/api/extension-guides/workspace-trust
+- VS Code extension runtime security: https://code.visualstudio.com/docs/configure/extensions/extension-runtime-security
+- ESPHome schema deprecation guidance: https://developers.esphome.io/blog/2025/05/14/schema-deprecations/

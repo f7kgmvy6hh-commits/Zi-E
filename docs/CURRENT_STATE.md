@@ -33,6 +33,10 @@ bench rigs are still required before bulk component purchase.
   needs a fresh valid heartbeat. Stray/incompatible Hellos are rejected without
   destroying a healthy session. It has no wire codec, authentication, or physical
   transport binding yet.
+- The first extensible-platform contract now centralizes versioned extension classes,
+  categories, registry-assigned trust, typed permission requests, lifecycle/failure
+  states, and declared/validated/active capability invariants. It is not yet a package
+  schema, registry, loader, sandbox, or permission enforcement system.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.
@@ -49,8 +53,9 @@ Every new answer/change must use the Memory/Inventory Loop + full engineering lo
 
 ## Next exact firmware step
 
-Phase 2A and Phase 2B1 are committed and host validated. The Phase 2B2 pre-implementation
-analysis in `PHASE2B2_BUS_TIMING_ANALYSIS.md` blocks wire implementation until physical
+Phase 2A and Phase 2B1 are committed and host validated. The implementation-dependent
+Phase 2B2 path is `WAITING_FOR_VERIFIED_INPUTS`; its analysis in
+`PHASE2B2_BUS_TIMING_ANALYSIS.md` blocks wire implementation until physical
 timing, message inventory, priority, queue-latency, fragmentation, and security inputs
 are verified. Complete those inputs and rerun priority-aware utilization/response-time
 analysis before freezing serialization, integrity checks, or CAN/TWAI framing.
