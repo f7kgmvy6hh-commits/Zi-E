@@ -101,3 +101,14 @@ Additional references:
 
 - micro-ROS Arduino issue #1809: https://github.com/micro-ROS/micro_ros_arduino/issues/1809
 - OpenCyphal Specification v1.0 (2025-05-16): https://specification.opencyphal.org/Cyphal_Specification.pdf
+
+### Phase 2B2 bus-load/timing delta — 2026-08-27
+
+| Project/source | Concept and failure | Adapted Zi-E idea | Fit, provenance, security, decision |
+|---|---|---|---|
+| Espressif ESP32-S3 TWAI documentation and FAQ | ESP32-S3 has Classical TWAI, not integrated CAN-FD; frames are limited to 8 data bytes. Driver alerts expose arbitration loss, RX queue full, errors, error-passive, and bus-off | Keep the approved Classical CAN boundary, but require bounded fragmentation, queue/error telemetry, and bus-off fault injection before wire freeze | Primary vendor documentation; no code copied. CAN fault confinement is useful but does not authenticate peers. **ADOPT facts / ADAPT handling** |
+| Bosch CAN Specification 2.0 | Variable bit stuffing and non-preemptive arbitration make data-dependent frame time and priority interference unavoidable | Use conservative stuffed-frame bounds plus priority-aware response-time analysis, not average payload bandwidth | Protocol specification; calculation only. Does not supply Zi-E physical timing or security. **ADAPT** |
+| STM32G0B1 datasheet and ST AN5348 | STM32G0B1 FDCAN can support the chosen Classical CAN peer, but controller capability does not prove board timing or physical-layer validity | Verify Classic-mode timing, clock, pins, transceiver, filters, and measured queue/ISR latency on the selected board | Primary vendor documentation; no code copied. **ADAPT** |
+
+Decision: **DEFER** Phase 2B2 wire/framing implementation until the bus/timing freeze
+criteria in `PHASE2B2_BUS_TIMING_ANALYSIS.md` are satisfied.

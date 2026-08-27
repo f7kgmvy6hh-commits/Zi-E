@@ -72,6 +72,12 @@ This stage depends on bus-load analysis and measured timing. It must connect lin
 to STM32 local safe stop without treating a heartbeat as proof every safety task is
 alive.
 
+Pre-implementation analysis is recorded in `PHASE2B2_BUS_TIMING_ANALYSIS.md`. It
+confirms Classical CAN compatibility but does not support a wire freeze: physical
+timing, complete traffic/deadline inventory, arbitration priorities, measured software
+latency, fragmentation bounds, and integrity/authentication scope remain unverified.
+Phase 2B2 code must not begin until its documented freeze criteria are satisfied.
+
 Freeze gate: select CAN/TWAI framing and timeout values only after bus-load analysis
 and bench measurements.
 

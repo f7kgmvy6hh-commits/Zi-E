@@ -49,7 +49,9 @@ Every new answer/change must use the Memory/Inventory Loop + full engineering lo
 
 ## Next exact firmware step
 
-Run the host C++17 build/tests in an environment with CMake and a compiler, review and
-commit Phase 2B1, then perform bus-load/timing analysis before Phase 2B2 freezes bounded
-serialization, integrity checks, or CAN/TWAI framing. Production driver binding remains
-later work.
+Phase 2A and Phase 2B1 are committed and host validated. The Phase 2B2 pre-implementation
+analysis in `PHASE2B2_BUS_TIMING_ANALYSIS.md` blocks wire implementation until physical
+timing, message inventory, priority, queue-latency, fragmentation, and security inputs
+are verified. Complete those inputs and rerun priority-aware utilization/response-time
+analysis before freezing serialization, integrity checks, or CAN/TWAI framing.
+Production driver binding remains later work.
