@@ -43,6 +43,11 @@ bench rigs are still required before bulk component purchase.
   a trustworthy serial as explicitly provisional/local, rejects collisions, preserves
   registry-assigned trust/ownership, and freezes identity after activation pending a
   future explicit migration/rebind workflow.
+- The in-memory extension registry now binds manifests and device identities to
+  externally assigned package/controller/profile/trust context, rejects duplicate or
+  conflicting registrations, owns explicit lifecycle transitions, and resolves only
+  validated active capabilities. Quarantine, disable, failure, inactivity, and removal
+  synchronously revoke capability exposure. It does not load or execute extensions.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

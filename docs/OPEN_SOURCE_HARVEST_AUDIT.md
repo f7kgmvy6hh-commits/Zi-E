@@ -141,6 +141,19 @@ required before identity participates in commissioning or motion ownership. Pack
 controller, profile, and trust assignments are authoritative external validation
 context, not candidate claims.
 
+### Extension registry/lifecycle delta — 2026-08-27
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [Home Assistant entity platform](https://github.com/home-assistant/core/blob/dev/homeassistant/helpers/entity_platform.py) and [entity-registry RFC](https://github.com/home-assistant/core/issues/11533) | Duplicate stable IDs are ignored rather than assigned by load order; name/discovery order is not authoritative ownership | Reject duplicate package/physical/logical identity and retain removal tombstones; bind resolution to package plus logical device identity | Duplicate, impersonation, identity-conflict, and ambiguity host tests. Concepts only; no code copied. **ADAPT** |
+| [ROS 2 lifecycle invalid-transition crash report](https://github.com/ros2/rclpy/issues/1209) | An externally requested invalid transition can throw and terminate a managed node instead of returning a contained failure | Reject unknown/unlisted transitions as result values without mutating registry state | Illegal and out-of-domain transition tests. Concepts only; no code copied. **ADAPT** |
+| [ROS 2 lifecycle partial-transition failure report](https://github.com/ros2/rclcpp/issues/1880) | Mutating state before a transition operation succeeds can strand the system in an intermediate state | Validate the complete in-memory transition and failure-domain request before mutating lifecycle; activation commits state/capabilities only after subset and ambiguity checks | Failed activation/transition tests confirm prior record state and exposure remain unchanged. No callbacks or distributed transaction are claimed. **ADAPT** |
+| [ROS 2 managed lifecycle demo](https://github.com/ros2/demos/blob/rolling/lifecycle/README.rst) | Managed functionality is exposed only while active; activation/deactivation callbacks prepare and tear down resources | Resolve only active/degraded capabilities and synchronously clear exposure on inactive/failure/quarantine/disable/removal | Positive host/embedded lifecycles and synchronous revocation tests. Concepts only; no code copied. **ADAPT** |
+
+Decision: adopt the in-memory registry/lifecycle/capability boundary. Persistence,
+loader callbacks, crash recovery, runtime permission enforcement, commissioning, and
+hardware binding remain future verification stages.
+
 References:
 
 - Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/

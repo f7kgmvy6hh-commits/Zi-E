@@ -74,13 +74,13 @@ configuration, health checks, and commissioning must populate later state explic
 
 ## Lifecycle and failures
 
-Lifecycle values are `DISCOVERED`, `VALIDATING`, `INSTALLED`, `CONFIGURED`,
-`COMMISSIONING`, `ACTIVE`, `DEGRADED`, `FAILED`, `QUARANTINED`, `DISABLED`, and
-`REMOVED`. Failure classes are `TEMPORARY`, `CONFIGURATION`, `AUTHENTICATION`,
+Lifecycle values are `DISCOVERED`, `VALIDATING`, `INSTALLED`, `VALIDATED`, `INACTIVE`,
+`ACTIVATING`, `CONFIGURED`, `COMMISSIONING`, `ACTIVE`, `DEGRADED`, `FAILED`,
+`QUARANTINED`, `DISABLED`, and `REMOVED`. Failure classes are `TEMPORARY`, `CONFIGURATION`, `AUTHENTICATION`,
 `INCOMPATIBLE`, `HARDWARE_FAULT`, and `SECURITY`, plus `NONE` when no failure applies.
 
-This foundation validates state snapshots only. Transition authorization and side
-effects belong to the future registry/lifecycle controller.
+The later in-memory registry foundation now authorizes explicit transitions and owns
+capability revocation. This manifest layer still validates snapshots independently.
 
 ## Validation coverage
 
@@ -107,7 +107,7 @@ permission value that a later enforcement layer could accidentally grant.
 - configuration schemas, secret references, migration, staging, and rollback;
 - stable physical-device/plugin/instance/controller/bus identities;
 - dependency/conflict resolution and cycle detection;
-- registry install/enable separation and lifecycle transitions;
+- persistent registry storage, migration, and crash-atomic transactions;
 - actual host permission enforcement/sandboxing;
 - signatures, publisher identity, revocation, and provenance;
 - embedded composition-root generation and commissioning evidence;

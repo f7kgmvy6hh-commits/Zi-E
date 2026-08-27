@@ -101,6 +101,22 @@ String identifiers are semantic catalog keys, not vendor commands. Drivers must
 validate supported identifiers synchronously and must copy any value retained after
 the call; future frozen catalogs may replace them with typed enums.
 
+## Extension registry boundary
+
+The host-side in-memory registry binds every accepted manifest and device identity to
+an external package/trust/controller/profile assignment. It owns extension lifecycle
+and capability exposure, while hardware profiles continue to own actual driver
+composition. A capability resolves to an active/degraded registry record plus logical
+device instance; ambiguous live providers are rejected rather than selected by load
+order. Inactivity, failure, quarantine, disable, and removal clear exposure
+synchronously.
+
+Registry capability resolution grants no direct hardware handle. AI and plugins still
+cross only semantic service/Safe Robot API boundaries; no raw GPIO, PWM, register,
+actuator, vendor-driver, or safety-bypass permission exists. Loading, sandboxing,
+runtime permission enforcement, persistence, and commissioning binding remain future
+layers.
+
 ## Adding or replacing hardware
 
 1. Confirm the capability and controller owner.

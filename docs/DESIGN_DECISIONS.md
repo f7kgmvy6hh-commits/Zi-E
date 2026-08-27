@@ -363,3 +363,19 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Treat owning package, controller assignment, hardware-profile assignment, and
   extension trust as external registry validation context. Candidate records carry no
   authority flag and must exactly match that context.
+
+## 2026-08-27 — In-memory extension registry and activation
+
+- Accept an extension record only after manifest and device-identity validation under
+  external registry assignment of package ID, trust, controller, and hardware profile.
+- Reuse the shared lifecycle vocabulary and permit only explicit transition edges.
+  Invalid/unknown transitions do not mutate registry state.
+- Preserve removed records as in-memory tombstones. Duplicate packages and conflicting
+  physical/logical identities fail closed.
+- Resolve a capability only from active/degraded records after declared-to-validated-to-
+  active subset checks. Reject activation when another live provider would make
+  ownership ambiguous.
+- Clear active capabilities synchronously on inactivity, failure, quarantine, disable,
+  or removal. Capability ownership includes package and logical device instance.
+- Registry acceptance grants no permission and exposes no raw hardware-control path;
+  plugin motion remains semantic Safe Robot API requests only.

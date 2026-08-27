@@ -137,6 +137,9 @@ bool is_known(const LifecycleState value) {
     case LifecycleState::discovered:
     case LifecycleState::validating:
     case LifecycleState::installed:
+    case LifecycleState::validated:
+    case LifecycleState::inactive:
+    case LifecycleState::activating:
     case LifecycleState::configured:
     case LifecycleState::commissioning:
     case LifecycleState::active:

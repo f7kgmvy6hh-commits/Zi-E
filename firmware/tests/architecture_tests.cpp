@@ -6,6 +6,7 @@
 #include "zie/core/MotionCommandLifecycle.hpp"
 #include "zie/link/ControllerLinkSession.hpp"
 void run_extension_manifest_tests();
+void run_extension_registry_tests();
 void run_device_identity_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
@@ -234,5 +235,6 @@ int main() {
   assert(link_rollover.poll(22) == LinkResult::expired);
 
   run_extension_manifest_tests();
+  run_extension_registry_tests();
   run_device_identity_tests();
 }
