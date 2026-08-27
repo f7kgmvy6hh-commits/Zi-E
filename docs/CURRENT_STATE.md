@@ -53,6 +53,11 @@ bench rigs are still required before bulk component purchase.
   revisions and authority/raw-control namespaces; and preserves the prior active
   snapshot on every failed update. This is in-memory model state only and does not
   apply configuration to hardware.
+- A semantic Robot API contract now separates authorized command intents, immutable
+  event occurrences, and read-only versioned state. Commands require an active
+  registry package/device provider and fixed active capability; protected safety and
+  raw-control requests have no plugin path. This stage validates but does not dispatch
+  or execute commands.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

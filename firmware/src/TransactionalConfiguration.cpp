@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
+#include <system_error>
 
 namespace zie::extensions {
 namespace {
@@ -77,6 +79,30 @@ bool may_commit(const LifecycleState state) {
          state == LifecycleState::degraded;
 }
 
+bool valid_value(const ConfigurationValue& value,
+                 const ConfigurationDeclaration& declaration) {
+  switch (value.domain) {
+    case ConfigurationValueDomain::semantic_text:
+      return !value.value.empty();
+    case ConfigurationValueDomain::boolean:
+      return value.value == "true" || value.value == "false";
+    case ConfigurationValueDomain::bounded_integer: {
+      if (!declaration.minimum.has_value() ||
+          !declaration.maximum.has_value() || value.value.empty()) {
+        return false;
+      }
+      std::int64_t parsed{0};
+      const char* const begin = value.value.data();
+      const char* const end = begin + value.value.size();
+      const auto result = std::from_chars(begin, end, parsed, 10);
+      return result.ec == std::errc{} && result.ptr == end &&
+             parsed >= *declaration.minimum &&
+             parsed <= *declaration.maximum;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 ConfigurationResult TransactionalConfiguration::declare_configuration(
@@ -102,6 +128,16 @@ ConfigurationResult TransactionalConfiguration::declare_configuration(
     }
     if (authority_or_raw_key(declaration.key)) {
       return ConfigurationResult::rejected_authority_escalation;
+    }
+    if (declaration.domain == ConfigurationValueDomain::bounded_integer) {
+      if (!declaration.minimum.has_value() ||
+          !declaration.maximum.has_value() ||
+          *declaration.minimum > *declaration.maximum) {
+        return ConfigurationResult::rejected_invalid_declaration;
+      }
+    } else if (declaration.minimum.has_value() ||
+               declaration.maximum.has_value()) {
+      return ConfigurationResult::rejected_invalid_declaration;
     }
   }
   ConfigurationRecord record;
@@ -165,7 +201,8 @@ ConfigurationResult TransactionalConfiguration::validate_staged(
     if (declaration == record->declared_configuration.end()) {
       return ConfigurationResult::rejected_undeclared_key;
     }
-    if (declaration->domain != value.domain || value.value.empty()) {
+    if (declaration->domain != value.domain ||
+        !valid_value(value, *declaration)) {
       return ConfigurationResult::rejected_invalid_value;
     }
   }

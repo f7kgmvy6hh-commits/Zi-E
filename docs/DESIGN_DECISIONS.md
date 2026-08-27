@@ -395,3 +395,20 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Configuration cannot grant permissions, trust, capabilities, controller/profile
   ownership, or safety authority. Reject raw GPIO/PWM/register/actuator/driver/safety
   bypass/CAN namespaces; hardware-affecting values remain semantic only.
+- Require explicit inclusive signed 64-bit bounds for every bounded integer. Parse
+  exact base-10 text without coercion; accept booleans only as lowercase `true` or
+  `false`.
+
+## 2026-08-27 — Semantic Robot API and command/event/state separation
+
+- Define plugin-facing operations as typed semantic intents with package/device,
+  session, and sequence identity. Map each command type to a fixed active capability;
+  callers cannot choose their authorization requirement.
+- Accept commands only from exact active registry providers. Quarantined, disabled,
+  removed, failed, degraded, or inactive issuers cannot submit. Protected STM32 safety
+  operations remain internal.
+- Treat events as immutable occurrence records with no command or state side effect.
+  Treat state as generation-ordered read-only snapshots written only through an
+  authoritative core path.
+- Keep raw motor setpoints, PWM, GPIO, registers, actuator ownership, raw CAN frames,
+  and safety bypass outside the semantic command vocabulary.

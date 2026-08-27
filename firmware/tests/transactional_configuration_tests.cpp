@@ -66,10 +66,15 @@ ConfigurationBinding binding(const ExtensionCandidate& candidate) {
 
 std::vector<ConfigurationDeclaration> declarations() {
   return {{"behavior.response-style", ConfigurationValueDomain::semantic_text,
-           ConfigurationEffect::semantic_behavior},
+           ConfigurationEffect::semantic_behavior, {}, {}},
           {"hardware.range.operating-mode",
            ConfigurationValueDomain::semantic_text,
-           ConfigurationEffect::semantic_hardware}};
+           ConfigurationEffect::semantic_hardware, {}, {}},
+          {"behavior.response-limit",
+           ConfigurationValueDomain::bounded_integer,
+           ConfigurationEffect::semantic_behavior, -10, 10},
+          {"behavior.confirmation-enabled", ConfigurationValueDomain::boolean,
+           ConfigurationEffect::semantic_behavior, {}, {}}};
 }
 
 ConfigurationCandidate config(const ExtensionCandidate& owner,
@@ -80,7 +85,11 @@ ConfigurationCandidate config(const ExtensionCandidate& owner,
           {{"behavior.response-style", ConfigurationValueDomain::semantic_text,
             std::move(response_style)},
            {"hardware.range.operating-mode",
-            ConfigurationValueDomain::semantic_text, "high-accuracy"}}};
+            ConfigurationValueDomain::semantic_text, "high-accuracy"},
+           {"behavior.response-limit",
+            ConfigurationValueDomain::bounded_integer, "0"},
+           {"behavior.confirmation-enabled", ConfigurationValueDomain::boolean,
+            "true"}}};
 }
 }  // namespace
 
@@ -142,6 +151,79 @@ void run_transactional_configuration_tests() {
          ConfigurationResult::staged);
   assert(configurations.validate_staged(owner.manifest.id) ==
          ConfigurationResult::rejected_authority_escalation);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto integer_underflow = config(owner, 3, "integer-test");
+  integer_underflow.values[2].value = "-9223372036854775809";
+  assert(configurations.stage(integer_underflow, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto malformed_integer = config(owner, 3, "integer-test");
+  malformed_integer.values[2].value = "12x";
+  assert(configurations.stage(malformed_integer, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto below_minimum = config(owner, 3, "integer-test");
+  below_minimum.values[2].value = "-11";
+  assert(configurations.stage(below_minimum, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto above_maximum = config(owner, 3, "integer-test");
+  above_maximum.values[2].value = "11";
+  assert(configurations.stage(above_maximum, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto integer_overflow = config(owner, 3, "integer-test");
+  integer_overflow.values[2].value = "9223372036854775808";
+  assert(configurations.stage(integer_overflow, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto malformed_boolean = config(owner, 3, "boolean-test");
+  malformed_boolean.values[3].value = "True";
+  assert(configurations.stage(malformed_boolean, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::rejected_invalid_value);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto minimum_boundary = config(owner, 3, "integer-test");
+  minimum_boundary.values[2].value = "-10";
+  minimum_boundary.values[3].value = "false";
+  assert(configurations.stage(minimum_boundary, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::validated);
+  assert(configurations.rollback(owner.manifest.id) ==
+         ConfigurationResult::rolled_back);
+
+  auto maximum_boundary = config(owner, 3, "integer-test");
+  maximum_boundary.values[2].value = "10";
+  assert(configurations.stage(maximum_boundary, trusted) ==
+         ConfigurationResult::staged);
+  assert(configurations.validate_staged(owner.manifest.id) ==
+         ConfigurationResult::validated);
   assert(configurations.rollback(owner.manifest.id) ==
          ConfigurationResult::rolled_back);
 
@@ -217,8 +299,16 @@ void run_transactional_configuration_tests() {
   TransactionalConfiguration forbidden_declaration(declaration_registry);
   const std::vector<ConfigurationDeclaration> raw_declaration{
       {"gpio.pin", ConfigurationValueDomain::bounded_integer,
-       ConfigurationEffect::semantic_hardware}};
+       ConfigurationEffect::semantic_hardware, {}, {}}};
   assert(forbidden_declaration.declare_configuration(owner.manifest.id,
                                                      raw_declaration) ==
          ConfigurationResult::rejected_authority_escalation);
+
+  TransactionalConfiguration reversed_bounds(declaration_registry);
+  const std::vector<ConfigurationDeclaration> invalid_bounds{
+      {"behavior.invalid-limit", ConfigurationValueDomain::bounded_integer,
+       ConfigurationEffect::semantic_behavior, 5, -5}};
+  assert(reversed_bounds.declare_configuration(owner.manifest.id,
+                                               invalid_bounds) ==
+         ConfigurationResult::rejected_invalid_declaration);
 }

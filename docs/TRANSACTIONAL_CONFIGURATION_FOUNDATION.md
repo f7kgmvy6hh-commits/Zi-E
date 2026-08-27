@@ -17,8 +17,11 @@ Configuration is separated into:
 The trusted request context, candidate binding, stored declaration owner, and live
 registry record must agree on package, logical device instance, and hardware profile.
 Stale/nonzero revision checks occur before staging. Validation checks unique declared
-keys, known domains, declaration/type matching, nonempty values, and forbidden
-authority/raw-control namespaces.
+keys, known domains, declaration/type matching, typed values, and forbidden
+authority/raw-control namespaces. `bounded_integer` declarations require signed
+64-bit inclusive minimum and maximum with `minimum <= maximum`; values use exact
+base-10 `from_chars` parsing and reject malformed, trailing, overflow, underflow, and
+out-of-range input. Booleans accept only canonical lowercase `true` or `false`.
 
 ## Commit and rollback
 

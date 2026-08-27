@@ -24,6 +24,8 @@ struct ConfigurationDeclaration {
   std::string key;
   ConfigurationValueDomain domain{ConfigurationValueDomain::semantic_text};
   ConfigurationEffect effect{ConfigurationEffect::semantic_behavior};
+  std::optional<std::int64_t> minimum;
+  std::optional<std::int64_t> maximum;
 };
 
 struct ConfigurationValue {

@@ -124,6 +124,13 @@ settings do not receive driver handles and are not applied by this layer. Failed
 blocked updates preserve the previous snapshot; lifecycle and capability authority
 remain with the registry.
 
+The semantic Robot API sits above registry authorization and below a future core
+dispatcher. It separates command intent, event occurrence, and current state. Plugin
+commands carry stable source/session/sequence identity and require a fixed active
+capability; events cannot dispatch work; consumers can only read generation-ordered
+state snapshots. An accepted intent is not execution or actual-state confirmation, and
+no semantic type exposes a driver or protected safety operation.
+
 ## Adding or replacing hardware
 
 1. Confirm the capability and controller owner.

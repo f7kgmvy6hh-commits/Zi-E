@@ -167,6 +167,19 @@ Decision: adopt the in-memory transaction/snapshot contract. Parsing, persistent
 transactions, process-crash recovery, runtime application callbacks, and physical
 hardware rollback remain explicitly deferred.
 
+### Semantic Robot API and command/event/state delta — 2026-08-27
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [ROS 2 action design](https://design.ros2.org/articles/actions.html) | Goal request, acceptance/rejection, feedback/status, and result are distinct; a request is not execution completion | Keep semantic command intent separate from later execution/result, with source session/sequence identity and explicit acceptance result | Valid/stale/invalid intent tests. Concepts only; no transport or ROS code copied. **ADAPT** |
+| [ROS 2 managed lifecycle](https://docs.ros.org/en/rolling/p/lifecycle/) | Managed publishers expose functionality only in active state | Authorize plugin commands only for registry lifecycle `active` with required active capability | Inactive/failed/quarantined/disabled/removed behavior derives from registry revocation plus active-only command tests. **ADAPT** |
+| [Home Assistant unexpected service-call report](https://github.com/home-assistant/core/issues/78050) | Dynamically generated service names can produce unintended/unknown calls | Use a closed typed semantic command catalog and fixed capability mapping rather than caller-generated service names | Unknown/raw-style command test. **ADAPT** |
+| [Home Assistant external state-event injection report](https://github.com/home-assistant/core/issues/111197) and [state-change semantics report](https://github.com/home-assistant/core/issues/6299) | Treating externally published events as authoritative state changes creates ambiguous state/event semantics and automation side effects | Event journal has no state mutation path; state is written through a separate authoritative writer with monotonic generation | Event-isolation, extension-state denial by interface separation, stale/unknown state tests. **ADAPT** |
+
+Decision: adopt the closed semantic command catalog and explicit command/event/state
+separation. Dispatch, execution feedback, transport, runtime sandboxing, and physical
+safety enforcement remain deferred.
+
 References:
 
 - Home Assistant config flow and unique ID guidance: https://developers.home-assistant.io/docs/core/integration/config_flow/
