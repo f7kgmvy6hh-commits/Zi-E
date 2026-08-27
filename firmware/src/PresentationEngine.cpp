@@ -138,12 +138,19 @@ PackResult PackCatalog::validate(const std::string& id) {
   return PackResult::validated;
 }
 
-PackCatalog::Context* PackCatalog::context(const std::string& id) {
+PackCatalog::Context* PackCatalog::ensure_context(const std::string& id) {
   auto found = std::find_if(contexts_.begin(), contexts_.end(), [&id](const Context& c) { return c.id == id; });
   if (found != contexts_.end()) return &*found;
   if (id.empty() || contexts_.size() >= max_contexts_) return nullptr;
   contexts_.push_back({id, {}, {}});
   return &contexts_.back();
+}
+
+PackCatalog::Context* PackCatalog::find_context(const std::string& id) {
+  const auto found = std::find_if(
+      contexts_.begin(), contexts_.end(),
+      [&id](const Context& selected) { return selected.id == id; });
+  return found == contexts_.end() ? nullptr : &*found;
 }
 
 PackResult PackCatalog::activate_face(const std::string& context_id,
@@ -153,11 +160,10 @@ PackResult PackCatalog::activate_face(const std::string& context_id,
   if (found->state != PackState::validated) return PackResult::rejected_wrong_state;
   const auto auth = authorize(found->pack.identity, extensions::ExtensionCategory::face_pack, true);
   if (auth != PackResult::validated) return auth;
-  auto* selected = context(context_id);
+  auto* selected = ensure_context(context_id);
   if (selected == nullptr) return PackResult::rejected_invalid_catalog;
   const bool replaced = !selected->face_pack.empty() && selected->face_pack != id;
-  for (auto& record : faces_) if (record.pack.identity.pack_id == selected->face_pack) record.state = PackState::validated;
-  selected->face_pack = id; found->state = PackState::active;
+  selected->face_pack = id;
   return replaced ? PackResult::replaced : PackResult::activated;
 }
 
@@ -168,30 +174,35 @@ PackResult PackCatalog::activate_sound(const std::string& context_id,
   if (found->state != PackState::validated) return PackResult::rejected_wrong_state;
   const auto auth = authorize(found->pack.identity, extensions::ExtensionCategory::sound_pack, true);
   if (auth != PackResult::validated) return auth;
-  auto* selected = context(context_id);
+  auto* selected = ensure_context(context_id);
   if (selected == nullptr) return PackResult::rejected_invalid_catalog;
   const bool replaced = !selected->sound_pack.empty() && selected->sound_pack != id;
-  for (auto& record : sounds_) if (record.pack.identity.pack_id == selected->sound_pack) record.state = PackState::validated;
-  selected->sound_pack = id; found->state = PackState::active;
+  selected->sound_pack = id;
   return replaced ? PackResult::replaced : PackResult::activated;
 }
 
 const FacePack* PackCatalog::active_face(const std::string& context_id) {
-  auto* selected = context(context_id);
+  auto* selected = find_context(context_id);
   if (selected == nullptr || selected->face_pack.empty()) return nullptr;
   auto found = std::find_if(faces_.begin(), faces_.end(), [selected](const FaceRecord& r) { return r.pack.identity.pack_id == selected->face_pack; });
   if (found == faces_.end() || authorize(found->pack.identity, extensions::ExtensionCategory::face_pack, true) != PackResult::validated) {
-    selected->face_pack.clear(); return nullptr;
+    const auto revoked_id = selected->face_pack;
+    for (auto& context : contexts_)
+      if (context.face_pack == revoked_id) context.face_pack.clear();
+    return nullptr;
   }
   return &found->pack;
 }
 
 const SoundPack* PackCatalog::active_sound(const std::string& context_id) {
-  auto* selected = context(context_id);
+  auto* selected = find_context(context_id);
   if (selected == nullptr || selected->sound_pack.empty()) return nullptr;
   auto found = std::find_if(sounds_.begin(), sounds_.end(), [selected](const SoundRecord& r) { return r.pack.identity.pack_id == selected->sound_pack; });
   if (found == sounds_.end() || authorize(found->pack.identity, extensions::ExtensionCategory::sound_pack, true) != PackResult::validated) {
-    selected->sound_pack.clear(); return nullptr;
+    const auto revoked_id = selected->sound_pack;
+    for (auto& context : contexts_)
+      if (context.sound_pack == revoked_id) context.sound_pack.clear();
+    return nullptr;
   }
   return &found->pack;
 }

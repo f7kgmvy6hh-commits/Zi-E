@@ -462,3 +462,13 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Route only accepted semantic expression, speech, and cue tokens into the presentation
   engine. State changes use the authoritative core; display/audio implementations and
   all raw hardware interfaces remain outside the layer.
+
+## 2026-08-27 — Context-authoritative pack activation correction
+
+- Keep pack declaration/validation state global to the data record and keep activation
+  exclusively in bounded per-context selections. A pack may serve multiple contexts;
+  replacing one selection cannot alter another.
+- Make missing-context queries read-only and fail closed. When use-time registry
+  reauthorization detects revocation, purge the affected pack from every context.
+- Require explicit contextual activation after valid registry lifecycle recovery;
+  never infer or restore selection from global pack state.

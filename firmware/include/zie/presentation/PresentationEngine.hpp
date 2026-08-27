@@ -14,7 +14,7 @@ namespace zie::presentation {
 
 enum class PackDomain { face, sound };
 enum class SoundCueKind { speech, non_speech };
-enum class PackState { declared, validated, active };
+enum class PackState { declared, validated };
 
 struct PackIdentity {
   std::string pack_id;
@@ -98,7 +98,8 @@ class PackCatalog {
   PackResult authorize(const PackIdentity& identity,
                        extensions::ExtensionCategory category,
                        bool require_active) const;
-  Context* context(const std::string& id);
+  Context* ensure_context(const std::string& id);
+  Context* find_context(const std::string& id);
   const extensions::ExtensionRegistry& registry_;
   std::size_t max_packs_{0};
   std::size_t max_contexts_{0};

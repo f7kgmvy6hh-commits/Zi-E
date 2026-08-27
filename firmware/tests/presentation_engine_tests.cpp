@@ -112,22 +112,49 @@ void run_presentation_engine_tests() {
   register_and_activate(registry, face_two);
   register_and_activate(registry, sound);
 
-  PackCatalog catalog(registry, 12, 3);
+  PackCatalog catalog(registry, 12, 8);
   auto soft = face_pack(face_one);
   auto bold = face_pack(face_two);
   bold.expressions[1].asset_handle = "asset.face.bold-happy";
   const auto basic_sound = sound_pack(sound);
   assert(catalog.declare_pack(soft) == PackResult::declared);
   assert(catalog.validate(soft.identity.pack_id) == PackResult::validated);
+  PackCatalog query_catalog(registry, 1, 1);
+  assert(query_catalog.declare_pack(soft) == PackResult::declared);
+  assert(query_catalog.validate(soft.identity.pack_id) == PackResult::validated);
+  assert(query_catalog.active_face("missing") == nullptr);
+  assert(query_catalog.active_sound("missing") == nullptr);
+  assert(query_catalog.activate_face("real", soft.identity.pack_id) ==
+         PackResult::activated);
+  assert(catalog.activate_face("face-a", soft.identity.pack_id) ==
+         PackResult::activated);
+  assert(catalog.activate_face("face-b", soft.identity.pack_id) ==
+         PackResult::activated);
   assert(catalog.activate_face("main", soft.identity.pack_id) == PackResult::activated);
   assert(catalog.active_face("main")->identity.pack_id == soft.identity.pack_id);
   assert(catalog.declare_pack(bold) == PackResult::declared);
   assert(catalog.validate(bold.identity.pack_id) == PackResult::validated);
+  assert(catalog.activate_face("face-a", bold.identity.pack_id) ==
+         PackResult::replaced);
+  assert(catalog.active_face("face-a")->identity.pack_id ==
+         bold.identity.pack_id);
+  assert(catalog.active_face("face-b")->identity.pack_id ==
+         soft.identity.pack_id);
+  assert(catalog.activate_face("face-c", soft.identity.pack_id) ==
+         PackResult::activated);
   assert(catalog.activate_face("main", bold.identity.pack_id) == PackResult::replaced);
   assert(catalog.active_face("main")->identity.pack_id == bold.identity.pack_id);
   assert(catalog.declare_pack(basic_sound) == PackResult::declared);
   assert(catalog.validate(basic_sound.identity.pack_id) == PackResult::validated);
   assert(catalog.activate_sound("main", basic_sound.identity.pack_id) == PackResult::activated);
+  assert(catalog.activate_sound("sound-a", basic_sound.identity.pack_id) ==
+         PackResult::activated);
+  assert(catalog.activate_sound("sound-b", basic_sound.identity.pack_id) ==
+         PackResult::activated);
+  assert(catalog.active_sound("sound-a")->identity.pack_id ==
+         basic_sound.identity.pack_id);
+  assert(catalog.active_sound("sound-b")->identity.pack_id ==
+         basic_sound.identity.pack_id);
 
   const auto duplicate_candidate = asset_candidate("zie.face.duplicate", "face.duplicate", "face-003",
       ExtensionCategory::face_pack, "presentation.face-pack.duplicate");
@@ -222,6 +249,36 @@ void run_presentation_engine_tests() {
   assert(registry.transition(face_two.manifest.id, LifecycleState::quarantined,
                              FailureClass::security) == RegistryResult::transitioned);
   assert(catalog.active_face("main") == nullptr);
+  assert(catalog.active_face("face-a") == nullptr);
+  assert(catalog.active_face("face-b")->identity.pack_id ==
+         soft.identity.pack_id);
   assert(registry.transition(sound.manifest.id, LifecycleState::disabled) == RegistryResult::transitioned);
   assert(catalog.active_sound("main") == nullptr);
+  assert(catalog.active_sound("sound-a") == nullptr);
+  assert(catalog.active_sound("sound-b") == nullptr);
+
+  assert(registry.transition(face_two.manifest.id, LifecycleState::disabled) ==
+         RegistryResult::transitioned);
+  assert(registry.transition(face_two.manifest.id, LifecycleState::inactive) ==
+         RegistryResult::transitioned);
+  assert(registry.transition(face_two.manifest.id, LifecycleState::activating) ==
+         RegistryResult::transitioned);
+  assert(registry.activate_capabilities(
+             face_two.manifest.id, face_two.manifest.declared_capabilities) ==
+         RegistryResult::capabilities_activated);
+  assert(catalog.active_face("main") == nullptr);
+  assert(catalog.activate_face("main", bold.identity.pack_id) ==
+         PackResult::activated);
+  assert(catalog.active_face("main")->identity.pack_id == bold.identity.pack_id);
+
+  assert(registry.transition(sound.manifest.id, LifecycleState::inactive) ==
+         RegistryResult::transitioned);
+  assert(registry.transition(sound.manifest.id, LifecycleState::activating) ==
+         RegistryResult::transitioned);
+  assert(registry.activate_capabilities(
+             sound.manifest.id, sound.manifest.declared_capabilities) ==
+         RegistryResult::capabilities_activated);
+  assert(catalog.active_sound("main") == nullptr);
+  assert(catalog.activate_sound("main", basic_sound.identity.pack_id) ==
+         PackResult::activated);
 }

@@ -71,7 +71,10 @@ bench rigs are still required before bulk component purchase.
   diagnostic history are bounded, authorization is rechecked per attempt, and mocks
   cover malformed, throwing, revoked, mismatched, and exhausted providers.
 - A bounded data-only presentation catalog validates and selects registry-owned face
-  and sound packs per context. The presentation engine consumes only accepted semantic
+  and sound packs per context. Declaration/validation is pack-global while activation
+  is context-authoritative, supports shared selection, purges every affected selection
+  on detected registry revocation, and requires explicit reactivation after recovery.
+  Missing-context reads do not create state. The presentation engine consumes only accepted semantic
   expression/audio tokens, applies deterministic default/fallback/transition behavior,
   and updates state through authoritative core access. Virtual rendering is semantic
   only; no graphics, audio, asset loader, persistence, or hardware backend exists.

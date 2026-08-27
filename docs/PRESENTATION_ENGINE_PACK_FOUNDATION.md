@@ -24,11 +24,15 @@ missing defaults/fallbacks, and non-abstract asset handles fail closed.
 
 ## Selection and execution
 
-The bounded in-memory catalog enforces `declared -> validated -> active`. Each context
-has at most one active face pack and one active sound pack. Activation requires the
-pack's exact active registry capability; replacement is deterministic. Every lookup
-rechecks registry lifecycle and capability state, so failed, quarantined, disabled, or
-removed packs are synchronously unavailable.
+The bounded in-memory catalog keeps pack declaration/validation state separate from
+contextual selection. A validated pack may be selected by zero, one, or many contexts;
+each context has at most one selected face pack and one selected sound pack. Replacing
+one context does not affect another. Activation requires the pack's exact active
+registry capability and replacement is deterministic. Read lookup never creates a
+context. Every selected-pack lookup rechecks registry lifecycle and capability state;
+detected failure, quarantine, disablement, removal, or capability loss purges that pack
+from every affected context. Registry recovery does not restore selections implicitly:
+each desired context requires explicit activation.
 
 The presentation engine seeds a new pack transition from its declared default
 expression, resolves unknown expression names to its declared fallback, selects named
