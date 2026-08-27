@@ -21,6 +21,11 @@ struct WakeRequest { std::string observation_id; };
 using ProviderRequest =
     std::variant<LlmRequest, SttRequest, TtsRequest, WakeRequest>;
 
+struct ProviderInvocation {
+  std::string requested_capability;
+  ProviderRequest request;
+};
+
 struct LlmResponse { std::string text; };
 struct SttResponse { std::string transcript; };
 struct TtsResponse { std::string utterance_id; };
@@ -45,7 +50,8 @@ class Provider {
 struct ProviderIdentity {
   std::string package_id;
   std::string logical_device_instance_id;
-  std::string capability;
+  std::string registry_capability;
+  std::string semantic_capability;
 };
 
 struct ProviderBinding {
@@ -70,23 +76,45 @@ enum class ProviderResult {
   rejected_unknown_kind,
 };
 
+enum class ProviderFailure {
+  none,
+  temporary_failure,
+  permanent_failure,
+  malformed_response,
+  provider_exception,
+  authorization_loss,
+  capability_mismatch,
+};
+
+struct ProviderDiagnostic {
+  std::string provider_package_id;
+  std::string semantic_capability;
+  ProviderFailure failure{ProviderFailure::none};
+  bool provider_called{false};
+};
+
 struct ProviderOutcome {
   ProviderResult result{ProviderResult::exhausted};
   ProviderResponse response{LlmResponse{}};
   std::string provider_package_id;
   std::size_t attempts{0};
+  ProviderFailure last_failure{ProviderFailure::none};
+  std::vector<ProviderDiagnostic> diagnostics;
+  bool diagnostics_truncated{false};
 };
 
 class ProviderRouter {
  public:
   ProviderRouter(const extensions::ExtensionRegistry& registry,
-                 std::size_t max_providers, std::size_t max_attempts)
+                 std::size_t max_providers, std::size_t max_attempts,
+                 std::size_t max_diagnostics)
       : registry_(registry),
         max_providers_(max_providers),
-        max_attempts_(max_attempts) {}
+        max_attempts_(max_attempts),
+        max_diagnostics_(max_diagnostics) {}
 
   ProviderResult add(const ProviderBinding& binding);
-  ProviderOutcome invoke(const ProviderRequest& request);
+  ProviderOutcome invoke(const ProviderInvocation& invocation);
   std::size_t provider_count() const { return bindings_.size(); }
 
  private:
@@ -94,6 +122,7 @@ class ProviderRouter {
   const extensions::ExtensionRegistry& registry_;
   std::size_t max_providers_{0};
   std::size_t max_attempts_{0};
+  std::size_t max_diagnostics_{0};
   std::vector<ProviderBinding> bindings_;
 };
 

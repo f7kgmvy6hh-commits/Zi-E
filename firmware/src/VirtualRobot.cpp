@@ -1,6 +1,7 @@
 #include "zie/api/VirtualRobot.hpp"
 
 #include "core/AuthoritativeRobotCore.hpp"
+#include "zie/presentation/PresentationEngine.hpp"
 
 #include <algorithm>
 
@@ -73,6 +74,7 @@ VirtualExecutionResult VirtualRobot::execute_next() {
       state_value = std::get<ExpressionIntent>(command.payload).expression;
       break;
     case SemanticCommandType::audio_speech_intent:
+    case SemanticCommandType::audio_cue_intent:
       operation = VirtualOperation::audio;
       category = RobotStateCategory::audio;
       state_value = "speaking";
@@ -90,6 +92,29 @@ VirtualExecutionResult VirtualRobot::execute_next() {
                      EventSourceType::authoritative_core, "virtual-robot",
                      "simulated-device-failure"});
     return VirtualExecutionResult::simulated_failure;
+  }
+  if (presentation_ != nullptr &&
+      (operation == VirtualOperation::presentation ||
+       operation == VirtualOperation::audio)) {
+    const auto result = presentation_->consume(*accepted);
+    switch (result) {
+      case presentation::PresentationResult::expression_rendered:
+      case presentation::PresentationResult::sound_rendered:
+      case presentation::PresentationResult::speech_presented:
+        events_.publish({next_event_id_++, EventCategory::command_accepted,
+                         EventSourceType::authoritative_core, "virtual-robot",
+                         presentation_->current().expression.empty()
+                             ? presentation_->current().sound_cue
+                             : presentation_->current().expression});
+        return VirtualExecutionResult::executed;
+      case presentation::PresentationResult::state_update_failed:
+        return VirtualExecutionResult::state_update_failed;
+      case presentation::PresentationResult::rejected_unsupported_intent:
+      case presentation::PresentationResult::rejected_no_active_pack:
+      case presentation::PresentationResult::rejected_unknown_expression:
+      case presentation::PresentationResult::rejected_unknown_sound_cue:
+        return VirtualExecutionResult::presentation_rejected;
+    }
   }
   if (core_.update_state(
           state_, {category, next_generation(category), state_value}) !=

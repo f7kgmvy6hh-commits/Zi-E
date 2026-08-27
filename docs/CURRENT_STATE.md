@@ -66,11 +66,15 @@ bench rigs are still required before bulk component purchase.
   only accepted semantic-command tokens and separates acceptance from simulated
   execution, authoritative state updates, and immutable result events.
 - A vendor-neutral provider foundation now models LLM, STT, TTS, and wake requests and
-  responses behind exact registry package/device/category/capability authorization.
-  Ordered failover is provider-count and attempt bounded, authorization is rechecked
-  per call, and deterministic mocks cover malformed, throwing, revoked, and exhausted
-  providers. No real provider, network, secret, audio path, persistence, or scheduler
-  is implemented.
+  responses behind explicit semantic-capability routing and exact registry
+  package/device/category/capability authorization. Ordered failover and typed
+  diagnostic history are bounded, authorization is rechecked per attempt, and mocks
+  cover malformed, throwing, revoked, mismatched, and exhausted providers.
+- A bounded data-only presentation catalog validates and selects registry-owned face
+  and sound packs per context. The presentation engine consumes only accepted semantic
+  expression/audio tokens, applies deterministic default/fallback/transition behavior,
+  and updates state through authoritative core access. Virtual rendering is semantic
+  only; no graphics, audio, asset loader, persistence, or hardware backend exists.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

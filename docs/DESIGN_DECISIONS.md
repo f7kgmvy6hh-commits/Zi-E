@@ -445,3 +445,20 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   and malformed responses or exceptions cannot bypass validation or extend failover.
 - Provider outputs confer no Robot API, state mutation, safety, hardware, or raw
   actuator authority.
+
+## 2026-08-27 — Typed provider routing and data-only presentation packs
+
+- Require every provider invocation to name an exact semantic capability. Separate
+  shared semantic routing capability from each provider's unique registry capability,
+  preserving both deterministic failover and unambiguous registry ownership.
+- Preserve bounded typed diagnostics for temporary/permanent failure, malformed
+  response, provider exception, authorization loss, and capability mismatch. A
+  successful fallback retains earlier failures; exhaustion retains its final cause.
+- Keep face and sound packs data-only `asset_pack` records with authoritative package,
+  version, logical-device, profile, schema, category, lifecycle, and capability checks.
+  Packs cannot declare executable entrypoints, permissions, trust, or hardware control.
+- Permit one selected face and one selected sound pack per presentation context.
+  Replacement is deterministic and every use rechecks lifecycle/capability revocation.
+- Route only accepted semantic expression, speech, and cue tokens into the presentation
+  engine. State changes use the authoritative core; display/audio implementations and
+  all raw hardware interfaces remain outside the layer.

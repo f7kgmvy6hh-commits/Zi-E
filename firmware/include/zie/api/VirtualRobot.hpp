@@ -5,6 +5,8 @@
 
 #include "zie/api/ResilientEventBus.hpp"
 
+namespace zie::presentation { class PresentationEngine; }
+
 namespace zie::api {
 
 enum class VirtualOperation { motion, stop, presentation, audio, sensor_query };
@@ -15,13 +17,16 @@ enum class VirtualExecutionResult {
   no_accepted_command,
   rejected_unknown_command,
   state_update_failed,
+  presentation_rejected,
 };
 
 class VirtualRobot {
  public:
   VirtualRobot(SemanticRobotApi& api, const AuthoritativeRobotCore& core,
-               RobotStateStore& state, ResilientEventBus& events)
-      : api_(api), core_(core), state_(state), events_(events) {}
+               RobotStateStore& state, ResilientEventBus& events,
+               presentation::PresentationEngine* presentation = nullptr)
+      : api_(api), core_(core), state_(state), events_(events),
+        presentation_(presentation) {}
 
   VirtualConfigurationResult set_success(VirtualOperation operation,
                                          bool succeeds);
@@ -37,6 +42,7 @@ class VirtualRobot {
   ResilientEventBus& events_;
   std::vector<Outcome> outcomes_;
   std::uint64_t next_event_id_{1};
+  presentation::PresentationEngine* presentation_{nullptr};
 };
 
 }  // namespace zie::api

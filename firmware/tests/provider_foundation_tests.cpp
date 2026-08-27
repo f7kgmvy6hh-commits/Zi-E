@@ -61,9 +61,11 @@ void activate(ExtensionRegistry& registry, const ExtensionCandidate& value) {
 }
 
 ProviderBinding binding(const ExtensionCandidate& value,
-                        const std::shared_ptr<Provider>& provider) {
+                        const std::shared_ptr<Provider>& provider,
+                        const std::string& semantic_capability) {
   return {{value.manifest.id, value.device_identity.logical.instance_id,
-           value.manifest.declared_capabilities.front()}, provider};
+           value.manifest.declared_capabilities.front(), semantic_capability},
+          provider};
 }
 
 class ThrowingProvider final : public Provider {
@@ -72,6 +74,22 @@ class ThrowingProvider final : public Provider {
   ProviderCall invoke(const ProviderRequest&) override {
     throw std::runtime_error("adversarial provider");
   }
+};
+
+class RevokingProvider final : public Provider {
+ public:
+  RevokingProvider(ExtensionRegistry& registry, std::string target)
+      : registry_(registry), target_(std::move(target)) {}
+  ProviderKind kind() const override { return ProviderKind::llm; }
+  ProviderCall invoke(const ProviderRequest&) override {
+    const auto result = registry_.transition(target_, LifecycleState::quarantined,
+                                             FailureClass::security);
+    assert(result == RegistryResult::transitioned);
+    return {ProviderCallStatus::temporary_failure, LlmResponse{}};
+  }
+ private:
+  ExtensionRegistry& registry_;
+  std::string target_;
 };
 }  // namespace
 
@@ -115,41 +133,45 @@ void run_provider_foundation_tests() {
       ProviderKind::wake, std::deque<ProviderCall>{{
           ProviderCallStatus::success, WakeResponse{true}}});
 
-  ProviderRouter router(registry, 5, 2);
-  assert(router.add(binding(llm_bad, temporary)) == ProviderResult::registered);
-  assert(router.add(binding(llm_good, good)) == ProviderResult::registered);
-  assert(router.add(binding(stt, stt_mock)) == ProviderResult::registered);
-  assert(router.add(binding(tts, tts_mock)) == ProviderResult::registered);
-  assert(router.add(binding(wake, wake_mock)) == ProviderResult::registered);
-  const auto llm_outcome = router.invoke(LlmRequest{"hello"});
+  ProviderRouter router(registry, 5, 2, 5);
+  assert(router.add(binding(llm_bad, temporary, "provider.llm.chat")) == ProviderResult::registered);
+  assert(router.add(binding(llm_good, good, "provider.llm.chat")) == ProviderResult::registered);
+  assert(router.add(binding(stt, stt_mock, "provider.stt.transcribe")) == ProviderResult::registered);
+  assert(router.add(binding(tts, tts_mock, "provider.tts.speak")) == ProviderResult::registered);
+  assert(router.add(binding(wake, wake_mock, "provider.wake.detect")) == ProviderResult::registered);
+  const auto llm_outcome = router.invoke({"provider.llm.chat", LlmRequest{"hello"}});
   assert(llm_outcome.result == ProviderResult::succeeded);
   assert(llm_outcome.attempts == 2);
   assert(llm_outcome.provider_package_id == llm_good.manifest.id);
+  assert(llm_outcome.diagnostics.size() == 1);
+  assert(llm_outcome.diagnostics.front().failure == ProviderFailure::temporary_failure);
+  assert(llm_outcome.last_failure == ProviderFailure::temporary_failure);
   assert(std::get<LlmResponse>(llm_outcome.response).text ==
          "deterministic reply");
-  assert(router.invoke(SttRequest{"utterance.input"}).result ==
+  assert(router.invoke({"provider.stt.transcribe", SttRequest{"utterance.input"}}).result ==
          ProviderResult::succeeded);
-  assert(router.invoke(TtsRequest{"speak"}).result == ProviderResult::succeeded);
-  assert(std::get<WakeResponse>(router.invoke(WakeRequest{"wake.input"}).response)
+  assert(router.invoke({"provider.tts.speak", TtsRequest{"speak"}}).result == ProviderResult::succeeded);
+  assert(std::get<WakeResponse>(router.invoke({"provider.wake.detect", WakeRequest{"wake.input"}}).response)
              .detected);
 
-  ProviderRouter bounded(registry, 2, 1);
+  ProviderRouter bounded(registry, 2, 1, 2);
   auto first_failure = std::make_shared<DeterministicMockProvider>(
       ProviderKind::llm, std::deque<ProviderCall>{{
           ProviderCallStatus::temporary_failure, LlmResponse{}}});
   auto forbidden_second = std::make_shared<DeterministicMockProvider>(
       ProviderKind::llm, std::deque<ProviderCall>{{
           ProviderCallStatus::success, LlmResponse{"must-not-run"}}});
-  assert(bounded.add(binding(llm_bad, first_failure)) ==
+  assert(bounded.add(binding(llm_bad, first_failure, "provider.llm.chat")) ==
          ProviderResult::registered);
-  assert(bounded.add(binding(llm_good, forbidden_second)) ==
+  assert(bounded.add(binding(llm_good, forbidden_second, "provider.llm.chat")) ==
          ProviderResult::registered);
-  const auto bounded_outcome = bounded.invoke(LlmRequest{"bounded"});
+  const auto bounded_outcome = bounded.invoke({"provider.llm.chat", LlmRequest{"bounded"}});
   assert(bounded_outcome.result == ProviderResult::exhausted);
   assert(bounded_outcome.attempts == 1);
+  assert(bounded_outcome.last_failure == ProviderFailure::temporary_failure);
   assert(forbidden_second->call_count() == 0);
 
-  ProviderRouter adversarial(registry, 3, 3);
+  ProviderRouter adversarial(registry, 3, 3, 3);
   auto throwing = std::make_shared<ThrowingProvider>();
   auto malformed = std::make_shared<DeterministicMockProvider>(
       ProviderKind::llm, std::deque<ProviderCall>{{
@@ -157,40 +179,86 @@ void run_provider_foundation_tests() {
   auto final_good = std::make_shared<DeterministicMockProvider>(
       ProviderKind::llm, std::deque<ProviderCall>{{
           ProviderCallStatus::success, LlmResponse{"recovered"}}});
-  assert(adversarial.add(binding(llm_bad, throwing)) ==
+  assert(adversarial.add(binding(llm_bad, throwing, "provider.llm.chat")) ==
          ProviderResult::registered);
-  assert(adversarial.add(binding(llm_good, malformed)) ==
+  assert(adversarial.add(binding(llm_good, malformed, "provider.llm.chat")) ==
          ProviderResult::registered);
   const auto third = candidate("zie.mock.llm-third", "provider.llm.third",
                                "provider-006", ExtensionCategory::ai_provider,
                                "provider.llm.mock-third");
   activate(registry, third);
-  assert(adversarial.add(binding(third, final_good)) ==
+  assert(adversarial.add(binding(third, final_good, "provider.llm.chat")) ==
          ProviderResult::registered);
-  const auto recovered = adversarial.invoke(LlmRequest{"recover"});
+  const auto recovered = adversarial.invoke({"provider.llm.chat", LlmRequest{"recover"}});
   assert(recovered.result == ProviderResult::succeeded);
   assert(recovered.attempts == 3);
+  assert(recovered.diagnostics.size() == 2);
+  assert(recovered.diagnostics[0].failure == ProviderFailure::provider_exception);
+  assert(recovered.diagnostics[1].failure == ProviderFailure::malformed_response);
 
-  ProviderRouter rejection(registry, 2, 2);
-  assert(rejection.add(binding(stt, good)) ==
+  ProviderRouter permanent_router(registry, 1, 1, 1);
+  auto permanent = std::make_shared<DeterministicMockProvider>(
+      ProviderKind::llm, std::deque<ProviderCall>{{
+          ProviderCallStatus::permanent_failure, LlmResponse{}}});
+  assert(permanent_router.add(binding(llm_bad, permanent,
+                                      "provider.llm.chat")) ==
+         ProviderResult::registered);
+  const auto permanent_outcome = permanent_router.invoke(
+      {"provider.llm.chat", LlmRequest{"permanent"}});
+  assert(permanent_outcome.result == ProviderResult::exhausted);
+  assert(permanent_outcome.last_failure == ProviderFailure::permanent_failure);
+
+  ProviderRouter mismatch_router(registry, 3, 3, 2);
+  auto mismatch_one = std::make_shared<DeterministicMockProvider>(ProviderKind::llm, std::deque<ProviderCall>{});
+  auto mismatch_two = std::make_shared<DeterministicMockProvider>(ProviderKind::llm, std::deque<ProviderCall>{});
+  auto mismatch_three = std::make_shared<DeterministicMockProvider>(ProviderKind::llm, std::deque<ProviderCall>{});
+  assert(mismatch_router.add(binding(llm_bad, mismatch_one, "provider.llm.alpha")) == ProviderResult::registered);
+  assert(mismatch_router.add(binding(llm_good, mismatch_two, "provider.llm.beta")) == ProviderResult::registered);
+  assert(mismatch_router.add(binding(third, mismatch_three, "provider.llm.gamma")) == ProviderResult::registered);
+  const auto mismatch_outcome = mismatch_router.invoke({"provider.llm.other", LlmRequest{"wrong-capability"}});
+  assert(mismatch_outcome.result == ProviderResult::rejected_no_provider);
+  assert(mismatch_outcome.last_failure == ProviderFailure::capability_mismatch);
+  assert(mismatch_outcome.diagnostics.size() == 2);
+  assert(mismatch_outcome.diagnostics_truncated);
+  assert(mismatch_one->call_count() == 0 && mismatch_two->call_count() == 0 && mismatch_three->call_count() == 0);
+
+  const auto revocable = candidate("zie.mock.llm-revocable", "provider.llm.revocable",
+                                   "provider-007", ExtensionCategory::ai_provider,
+                                   "provider.llm.mock-revocable");
+  activate(registry, revocable);
+  ProviderRouter revoke_path(registry, 2, 2, 2);
+  auto revoker = std::make_shared<RevokingProvider>(registry, revocable.manifest.id);
+  auto must_not_run = std::make_shared<DeterministicMockProvider>(ProviderKind::llm,
+      std::deque<ProviderCall>{{ProviderCallStatus::success, LlmResponse{"unsafe"}}});
+  assert(revoke_path.add(binding(llm_bad, revoker, "provider.llm.chat")) == ProviderResult::registered);
+  assert(revoke_path.add(binding(revocable, must_not_run, "provider.llm.chat")) == ProviderResult::registered);
+  const auto revoked_path = revoke_path.invoke({"provider.llm.chat", LlmRequest{"revoke"}});
+  assert(revoked_path.result == ProviderResult::exhausted);
+  assert(revoked_path.last_failure == ProviderFailure::authorization_loss);
+  assert(revoked_path.diagnostics.size() == 2);
+  assert(!revoked_path.diagnostics.back().provider_called);
+  assert(must_not_run->call_count() == 0);
+
+  ProviderRouter rejection(registry, 2, 2, 2);
+  assert(rejection.add(binding(stt, good, "provider.stt.transcribe")) ==
          ProviderResult::rejected_kind_mismatch);
-  auto wrong_identity = binding(llm_good, good);
+  auto wrong_identity = binding(llm_good, good, "provider.llm.chat");
   wrong_identity.identity.logical_device_instance_id = "impersonated";
   assert(rejection.add(wrong_identity) ==
          ProviderResult::rejected_registry_identity);
-  auto missing_capability = binding(llm_good, good);
-  missing_capability.identity.capability = "provider.llm.not-active";
+  auto missing_capability = binding(llm_good, good, "provider.llm.chat");
+  missing_capability.identity.registry_capability = "provider.llm.not-active";
   assert(rejection.add(missing_capability) ==
          ProviderResult::rejected_missing_capability);
-  assert(rejection.invoke(LlmRequest{"no provider"}).result ==
+  assert(rejection.invoke({"provider.llm.chat", LlmRequest{"no provider"}}).result ==
          ProviderResult::rejected_no_provider);
-  assert(router.invoke(LlmRequest{""}).result ==
+  assert(router.invoke({"provider.llm.chat", LlmRequest{""}}).result ==
          ProviderResult::rejected_invalid_request);
 
   assert(registry.transition(llm_good.manifest.id, LifecycleState::quarantined,
                              FailureClass::security) ==
          RegistryResult::transitioned);
-  ProviderRouter revoked(registry, 1, 1);
-  assert(revoked.add(binding(llm_good, good)) ==
+  ProviderRouter revoked(registry, 1, 1, 1);
+  assert(revoked.add(binding(llm_good, good, "provider.llm.chat")) ==
          ProviderResult::rejected_inactive_provider);
 }

@@ -12,6 +12,7 @@ bool known(const SemanticCommandType value) {
     case SemanticCommandType::stop_motion:
     case SemanticCommandType::expression_intent:
     case SemanticCommandType::audio_speech_intent:
+    case SemanticCommandType::audio_cue_intent:
     case SemanticCommandType::sensor_query:
     case SemanticCommandType::protected_safety_operation:
       return true;
@@ -57,6 +58,7 @@ const char* required_capability(const SemanticCommandType type) {
     case SemanticCommandType::expression_intent:
       return "semantic.presentation";
     case SemanticCommandType::audio_speech_intent:
+    case SemanticCommandType::audio_cue_intent:
       return "semantic.audio";
     case SemanticCommandType::sensor_query:
       return "semantic.sensor-query";
@@ -86,6 +88,10 @@ bool valid_payload(const SemanticCommand& command) {
     case SemanticCommandType::audio_speech_intent: {
       const auto* value = std::get_if<AudioSpeechIntent>(&command.payload);
       return value != nullptr && !value->utterance.empty();
+    }
+    case SemanticCommandType::audio_cue_intent: {
+      const auto* value = std::get_if<AudioCueIntent>(&command.payload);
+      return value != nullptr && !value->cue.empty();
     }
     case SemanticCommandType::sensor_query: {
       const auto* value = std::get_if<SensorQueryIntent>(&command.payload);

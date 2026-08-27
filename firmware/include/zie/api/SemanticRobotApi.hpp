@@ -15,6 +15,7 @@ enum class SemanticCommandType {
   stop_motion,
   expression_intent,
   audio_speech_intent,
+  audio_cue_intent,
   sensor_query,
   protected_safety_operation,
 };
@@ -27,12 +28,13 @@ struct MotionIntent {
 struct StopMotionIntent {};
 struct ExpressionIntent { std::string expression; };
 struct AudioSpeechIntent { std::string utterance; };
+struct AudioCueIntent { std::string cue; };
 struct SensorQueryIntent { std::string semantic_sensor; };
 struct ProtectedSafetyOperation { std::string operation; };
 
 using SemanticCommandPayload =
     std::variant<MotionIntent, StopMotionIntent, ExpressionIntent,
-                 AudioSpeechIntent, SensorQueryIntent,
+                 AudioSpeechIntent, AudioCueIntent, SensorQueryIntent,
                  ProtectedSafetyOperation>;
 
 struct CommandSourceIdentity {

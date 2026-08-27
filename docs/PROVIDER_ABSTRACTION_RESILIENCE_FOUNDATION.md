@@ -10,10 +10,13 @@ scheduling, UI, transport, CAN, or hardware drivers.
 
 ## Authorization boundary
 
-Every provider binding carries a package ID, logical device instance ID, and a unique
-kind-prefixed capability. The router accepts and invokes a provider only when the
+Every provider binding carries a package ID, logical device instance ID, a unique
+registry authorization capability, and a semantic routing capability. Each invocation
+names its requested semantic capability explicitly; providers of the same kind with a
+different semantic capability are skipped and never called. The router invokes a
+matching provider only when the
 package/device exactly matches an active extension-registry record, the exact binding
-capability is active, the capability prefix matches the provider kind, and the
+registry capability is active, both capability prefixes match the provider kind, and the
 manifest category is the corresponding AI/voice provider category.
 
 Authorization is rechecked immediately before every attempted call, so later
@@ -24,12 +27,16 @@ of swappable providers.
 
 ## Bounded resilience
 
-The router has fixed maximum provider and attempt counts. It evaluates matching
+The router has fixed maximum provider, attempt, and diagnostic counts. It evaluates matching
 providers in registration order, calls each eligible provider at most once per
 invocation, catches provider exceptions, rejects empty or wrong-kind successful
 responses, and stops when a valid result is returned or the attempt bound is reached.
 It never calls the Semantic Robot API, mutates robot state, grants capabilities, or
-exposes hardware control.
+exposes hardware control. Outcomes retain typed temporary, permanent, malformed,
+exception, authorization-loss, and capability-mismatch diagnostics. Successful
+fallback retains prior failures; exhausted outcomes retain the final typed cause.
+When diagnostic capacity is reached, the oldest record is deterministically removed
+and truncation is reported.
 
 The deterministic mock consumes a finite scripted result sequence and exposes its call
 count. Tests cover all four kinds, failure, exhaustion, exception isolation, malformed
