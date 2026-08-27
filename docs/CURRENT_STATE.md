@@ -1,4 +1,4 @@
-# Current State — 2026-08-27
+# Current State — 2026-08-28
 
 ## Phase
 Prototype architecture and Project/CAD v0.3 package are prepared. Phase 2A now has a
@@ -78,6 +78,17 @@ bench rigs are still required before bulk component purchase.
   expression/audio tokens, applies deterministic default/fallback/transition behavior,
   and updates state through authoritative core access. Virtual rendering is semantic
   only; no graphics, audio, asset loader, persistence, or hardware backend exists.
+
+- A public in-memory Plugin SDK now defines explicit `1.0.0` contract-range
+  compatibility, abstract host-issued immutable contexts, and narrow semantic command,
+  event, read-only state, transactional configuration staging, provider invocation,
+  and presentation-state services. The internal host issues package/device/profile/
+  trust/capability identity and fresh registry-generation-bound activation epochs;
+  initialization grants no services, callback exceptions are contained, and
+  suspension/failure/quarantine/removal permanently revoke old handles.
+  Asset packs and protected/embedded modules receive no executable context; provider/
+  wake categories cannot receive motion; no raw-control or protected-safety SDK type
+  exists. This is not a loader or runtime sandbox.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

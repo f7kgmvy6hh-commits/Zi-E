@@ -43,9 +43,11 @@ bool begins_with(const std::string& value, const std::string& prefix) {
 
 bool authority_or_raw_key(const std::string& key) {
   static const std::vector<std::string> forbidden{
-      "trust.",       "permissions.", "capabilities.", "controller.",
-      "safety.",      "safety_bypass.", "gpio.",       "pwm.",
-      "register.",    "actuator.",    "driver.",       "can."};
+      "trust.",       "permissions.", "capabilities.",  "package.",
+      "device.",      "identity.",    "controller.",    "profile.",
+      "hardware_profile.", "safety.", "safety_bypass.", "gpio.",
+      "pwm.",         "register.",    "actuator.",      "driver.",
+      "can."};
   return std::any_of(forbidden.begin(), forbidden.end(),
                      [&key](const std::string& prefix) {
                        return begins_with(key, prefix);

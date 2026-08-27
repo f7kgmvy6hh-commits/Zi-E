@@ -13,10 +13,14 @@ separate trusted `RegistryAssignment`. The external assignment owns package ID,
 - manifest validation under registry-assigned trust;
 - exact package binding across assignment, manifest, and device identity;
 - device identity validation against the authoritative controller/profile/trust;
-- no duplicate package tombstone, physical identity, or logical instance identity.
+- no duplicate live package, physical identity, or logical instance identity.
 
-Candidates have no trust field and cannot overwrite an existing package. Protected
-STM32 safety modules require both a built-in trust assignment and matching external
+Candidates have no trust field and cannot overwrite a live package. A removed record
+may be replaced only by a new registration with a new logical instance identity that
+passes the complete manifest, identity, assignment, and collision checks. A monotonic
+registry authorization generation changes on activation and every revocation; host
+epochs keep every old context and session retired. Protected STM32 safety modules
+require both a built-in trust assignment and matching external
 STM32 safety-controller assignment.
 
 ## Lifecycle
@@ -31,9 +35,9 @@ installed -> validated -> inactive -> activating -> active
 Explicit edges support degradation, failure, quarantine, disable, deactivation, and
 removal. Unknown states, unknown failure classes, failure metadata on non-failure
 states, and unlisted edges fail closed without changing the record. Removed records
-remain as in-memory tombstones so the same package or identity cannot silently replace
-them. Quarantine, disable, inactive, failed, and removal synchronously clear active
-capabilities.
+remain tombstones until an explicit fully validated replacement registration; they
+cannot regain lifecycle or capability state. Quarantine, disable, inactive, failed,
+and removal synchronously clear active capabilities.
 
 Generic `transition()` can never enter `active`, including from `activating` or
 `degraded`. Initial activation and degraded recovery must pass through

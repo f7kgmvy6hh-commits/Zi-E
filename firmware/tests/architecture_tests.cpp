@@ -12,6 +12,7 @@ void run_semantic_robot_api_tests();
 void run_event_bus_virtual_robot_tests();
 void run_provider_foundation_tests();
 void run_presentation_engine_tests();
+void run_plugin_sdk_host_tests();
 void run_device_identity_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
@@ -246,5 +247,6 @@ int main() {
   run_event_bus_virtual_robot_tests();
   run_provider_foundation_tests();
   run_presentation_engine_tests();
+  run_plugin_sdk_host_tests();
   run_device_identity_tests();
 }

@@ -34,6 +34,8 @@ bool ResilientEventBus::eligible(const Subscription& subscription) const {
   return record != nullptr &&
          record->device_identity.logical.instance_id ==
              subscription.request.identity.logical_device_instance_id &&
+         record->authorization_generation ==
+             subscription.authorization_generation &&
          record->lifecycle == extensions::LifecycleState::active &&
          std::find(record->active_capabilities.begin(),
                    record->active_capabilities.end(),
@@ -80,7 +82,8 @@ EventBusResult ResilientEventBus::subscribe(
       record->active_capabilities.end()) {
     return EventBusResult::rejected_missing_capability;
   }
-  subscriptions_.push_back({request, {}, 0});
+  subscriptions_.push_back(
+      {request, record->authorization_generation, {}, 0});
   return EventBusResult::subscribed;
 }
 

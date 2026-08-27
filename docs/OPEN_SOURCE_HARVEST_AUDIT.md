@@ -199,3 +199,18 @@ References:
 - VS Code Workspace Trust: https://code.visualstudio.com/api/extension-guides/workspace-trust
 - VS Code extension runtime security: https://code.visualstudio.com/docs/configure/extensions/extension-runtime-security
 - ESPHome schema deprecation guidance: https://developers.esphome.io/blog/2025/05/14/schema-deprecations/
+
+### Plugin SDK and extension-host boundary delta — 2026-08-28
+
+Problem: a stable plugin API can accidentally turn a declared capability into ambient
+authority, retain usable handles after reload/removal, or let one faulty extension
+damage the whole host.
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [VS Code extension manifest](https://code.visualstudio.com/api/references/extension-manifest) and [Workspace Trust](https://code.visualstudio.com/api/extension-guides/workspace-trust) | Extensions declare an explicit compatible engine range; commands hidden by UI still need execution-time blocking, and data contributions without an entrypoint have a different execution risk | Require an explicit SDK min/max range, recheck every call, and issue no executable context to asset packs | Range/domain, inactive-call, service-scope, and asset-pack tests. Concepts only; no code copied. **ADAPT** |
+| [VS Code extension-host crash issue #79782](https://github.com/microsoft/vscode/issues/79782) and [host implementation](https://github.com/microsoft/vscode/blob/main/src/vs/workbench/api/common/extHostExtensionService.ts) | A faulty in-process extension can terminate a shared host; shutdown explicitly invalidates proxies and bounded deactivation precedes exit | Invalidate all Zi-E service epochs synchronously on revoke/remove and state clearly that this in-process foundation is not a sandbox | Failure/quarantine/removal stale-handle tests. Process/runtime isolation remains future work. **ADAPT / DEFER isolation** |
+| [ROS class_loader API](https://docs.ros.org/en/ros2_packages/rolling/api/class_loader/generated/classclass__loader_1_1ClassLoader.html) | Managed instance lifetime gates safe unloading; live/unmanaged instances prevent unload and load/unload counts must balance | Keep host-owned shared extension instances, reject duplicate object identity, and permanently retire old instance epochs before replacement | Duplicate-instance and remove/re-register tests. Dynamic loading/unloading is excluded, so no code copied. **ADAPT** |
+
+Decision: adopt the versioned, capability-scoped in-memory SDK/host boundary. Defer
+dynamic loading, process/WASM sandboxing, crash isolation, signing, and persistence.

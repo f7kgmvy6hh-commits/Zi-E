@@ -9,11 +9,13 @@ add_library(zie_firmware
     src/ControllerLinkSession.cpp
     src/DeviceIdentity.cpp
     src/ExtensionManifest.cpp
+    src/ExtensionHost.cpp
     src/ExtensionRegistry.cpp
     src/HardwareProfile.cpp
     src/MotionCommandLifecycle.cpp
     src/ProviderFoundation.cpp
     src/PresentationEngine.cpp
+    src/PluginSdk.cpp
     src/RobotServices.cpp
     src/ResilientEventBus.cpp
     src/SafeRobotCommands.cpp
@@ -23,7 +25,7 @@ add_library(zie_firmware
     drivers/stub/BenchHardware.cpp
     profiles/BenchMinimalProfile.cpp
 )
-target_include_directories(zie_firmware PUBLIC include .)
+target_include_directories(zie_firmware PUBLIC include PRIVATE .)
 
 add_executable(zie_architecture_tests
     tests/architecture_tests.cpp
@@ -35,8 +37,10 @@ add_executable(zie_architecture_tests
     tests/event_bus_virtual_robot_tests.cpp
     tests/provider_foundation_tests.cpp
     tests/presentation_engine_tests.cpp
+    tests/plugin_sdk_host_tests.cpp
 )
 target_link_libraries(zie_architecture_tests PRIVATE zie_firmware)
+target_include_directories(zie_architecture_tests PRIVATE .)
 
 enable_testing()
 add_test(NAME zie_architecture_tests COMMAND zie_architecture_tests)

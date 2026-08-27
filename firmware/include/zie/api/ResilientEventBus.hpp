@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <string>
@@ -69,6 +70,7 @@ class ResilientEventBus {
  private:
   struct Subscription {
     EventSubscriptionRequest request;
+    std::uint64_t authorization_generation{0};
     struct PendingEvent {
       RobotEvent event;
       std::size_t failed_attempts{0};

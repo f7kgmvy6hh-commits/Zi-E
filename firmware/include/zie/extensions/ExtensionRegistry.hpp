@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct ExtensionRecord {
   TrustClass assigned_trust{TrustClass::community_untrusted};
   LifecycleState lifecycle{LifecycleState::installed};
   FailureClass failure{FailureClass::none};
+  std::uint64_t authorization_generation{0};
   std::vector<std::string> validated_capabilities;
   std::vector<std::string> active_capabilities;
 };
@@ -52,6 +54,7 @@ enum class RegistryResult {
   rejected_illegal_transition,
   rejected_capability_state,
   rejected_ambiguous_capability,
+  rejected_generation_exhausted,
 };
 
 class ExtensionRegistry {
@@ -75,7 +78,9 @@ class ExtensionRegistry {
 
  private:
   ExtensionRecord* find_mutable(const std::string& package_id);
+  bool assign_new_authorization_generation(ExtensionRecord& record);
   std::vector<ExtensionRecord> records_;
+  std::uint64_t next_authorization_generation_{1};
 };
 
 }  // namespace zie::extensions

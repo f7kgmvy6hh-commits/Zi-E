@@ -472,3 +472,36 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   reauthorization detects revocation, purge the affected pack from every context.
 - Require explicit contextual activation after valid registry lifecycle recovery;
   never infer or restore selection from global pack state.
+
+## 2026-08-28 — Plugin SDK and stable extension host boundary
+
+- Publish only independent SDK DTOs and abstract semantic service/context interfaces.
+  Keep the extension host and `AuthoritativeRobotCore` internal.
+- Negotiate an explicit inclusive SDK contract range against the host-supported range.
+  Reject zero/reversed ranges, incompatible majors, unsupported future versions, and
+  unknown domains/capabilities; never infer future compatibility.
+- Issue identity, trust, profile, capabilities, command session, sequence, and
+  activation epoch from the host. Extension initialization receives no active
+  capabilities or services.
+- Reauthorize every SDK call against the live registry and fixed service capability,
+  then route through the existing subsystem checks. SDK adapters confer no extra
+  authority.
+- Invalidate an activation epoch before suspension, failure, quarantine, or removal.
+  Recovery returns only to inactive and requires a new activation/context/epoch.
+- Bind each SDK epoch to a monotonic registry authorization generation that changes on
+  activation and every revocation. Contain all extension callback exceptions; a
+  throwing activation is failed and cannot leave usable handles.
+- Revoke every issued context and tracked event subscription when the extension host
+  is destroyed, so a retained adapter cannot outlive host authority or dereference a
+  released backend.
+- Supersede the earlier permanent package-tombstone rule narrowly: explicit full
+  re-registration with a new logical instance identity may replace a removed registry
+  record, but never revive it. Old host objects, contexts, service handles, epochs, and
+  command sessions remain retired.
+- Give executable SDK contexts only to host plugins. Asset packs stay data-only;
+  embedded/protected modules stay outside the third-party host; provider/wake
+  categories cannot receive semantic motion; no protected-safety or raw-control SDK
+  domain exists.
+- Expose configuration only as copied reads and typed stage requests with a host-built
+  authoritative binding. Validation/commit remains transactional core authority, and
+  identity/authority/raw-control namespaces remain forbidden.

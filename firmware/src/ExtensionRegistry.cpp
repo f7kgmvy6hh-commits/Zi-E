@@ -1,6 +1,7 @@
 #include "zie/extensions/ExtensionRegistry.hpp"
 
 #include <algorithm>
+#include <limits>
 
 namespace zie::extensions {
 namespace {
@@ -112,9 +113,18 @@ bool conflicts(const ExtensionRecord& record,
          record.device_identity.logical.instance_id == identity.logical.instance_id;
 }
 
-void revoke(ExtensionRecord& record) { record.active_capabilities.clear(); }
-
 }  // namespace
+
+bool ExtensionRegistry::assign_new_authorization_generation(
+    ExtensionRecord& record) {
+  if (next_authorization_generation_ == 0 ||
+      next_authorization_generation_ ==
+          std::numeric_limits<std::uint64_t>::max()) {
+    return false;
+  }
+  record.authorization_generation = next_authorization_generation_++;
+  return true;
+}
 
 RegistryResult ExtensionRegistry::register_extension(
     const ExtensionCandidate& candidate, const RegistryAssignment& assignment) {
@@ -122,7 +132,8 @@ RegistryResult ExtensionRegistry::register_extension(
       candidate.device_identity.package.extension_id != assignment.package_id) {
     return RegistryResult::rejected_package_mismatch;
   }
-  if (find(assignment.package_id) != nullptr) {
+  const auto* existing = find(assignment.package_id);
+  if (existing != nullptr && existing->lifecycle != LifecycleState::removed) {
     return RegistryResult::rejected_duplicate_package;
   }
 
@@ -137,7 +148,8 @@ RegistryResult ExtensionRegistry::register_extension(
     return RegistryResult::rejected_invalid_identity;
   }
   for (const auto& record : records_) {
-    if (conflicts(record, candidate.device_identity)) {
+    if (record.lifecycle != LifecycleState::removed &&
+        conflicts(record, candidate.device_identity)) {
       return RegistryResult::rejected_identity_conflict;
     }
   }
@@ -146,7 +158,19 @@ RegistryResult ExtensionRegistry::register_extension(
   record.manifest = candidate.manifest;
   record.device_identity = candidate.device_identity;
   record.assigned_trust = assignment.assigned_trust;
-  records_.push_back(std::move(record));
+  if (existing != nullptr &&
+      existing->device_identity.logical.instance_id ==
+          candidate.device_identity.logical.instance_id) {
+    return RegistryResult::rejected_identity_conflict;
+  }
+  if (!assign_new_authorization_generation(record)) {
+    return RegistryResult::rejected_generation_exhausted;
+  }
+  if (existing != nullptr) {
+    *find_mutable(assignment.package_id) = std::move(record);
+  } else {
+    records_.push_back(std::move(record));
+  }
   return RegistryResult::accepted;
 }
 
@@ -157,7 +181,10 @@ RegistryResult ExtensionRegistry::unregister_extension(
   if (record->lifecycle == LifecycleState::removed) {
     return RegistryResult::rejected_removed;
   }
-  revoke(*record);
+  if (!assign_new_authorization_generation(*record)) {
+    return RegistryResult::rejected_generation_exhausted;
+  }
+  record->active_capabilities.clear();
   record->failure = FailureClass::none;
   record->lifecycle = LifecycleState::removed;
   return RegistryResult::removed;
@@ -181,10 +208,14 @@ RegistryResult ExtensionRegistry::transition(const std::string& package_id,
       (failure_state(target) != (failure != FailureClass::none))) {
     return RegistryResult::rejected_illegal_transition;
   }
+  if (target != LifecycleState::active && target != LifecycleState::degraded &&
+      !assign_new_authorization_generation(*record)) {
+    return RegistryResult::rejected_generation_exhausted;
+  }
   record->lifecycle = target;
   record->failure = failure;
   if (target != LifecycleState::active && target != LifecycleState::degraded) {
-    revoke(*record);
+    record->active_capabilities.clear();
   }
   return target == LifecycleState::removed ? RegistryResult::removed
                                             : RegistryResult::transitioned;
@@ -233,6 +264,9 @@ RegistryResult ExtensionRegistry::activate_capabilities(
     if (!resolve(capability).empty()) {
       return RegistryResult::rejected_ambiguous_capability;
     }
+  }
+  if (!assign_new_authorization_generation(*record)) {
+    return RegistryResult::rejected_generation_exhausted;
   }
   record->active_capabilities = active_capabilities;
   record->lifecycle = LifecycleState::active;
