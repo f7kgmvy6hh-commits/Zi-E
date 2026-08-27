@@ -26,7 +26,22 @@
 ## Validation status
 
 - Full diff review and `git diff --check` completed.
-- Compilation and CTest are unavailable in the current sandbox and are not claimed.
+- External host validation completed under MSYS2 UCRT64 with GNU g++ 16.1.0,
+  CMake/CTest 4.3.3, and Ninja 1.13.2.
+- `cmake --build "/tmp/zie-build-a2c6ef9"` passed, followed by
+  `ctest --test-dir "/tmp/zie-build-a2c6ef9" --output-on-failure`: 1/1 tests passed,
+  zero failed.
 - CAN/TWAI framing, integrity, timing, physical safe stop, bench, and HIL validation
   remain unresolved and unverified. Long-lived authenticated replay protection remains
   explicitly open for Phase 2B2.
+
+## Post-commit host-test correction
+
+- Phase 2B1 was committed as `a2c6ef9`.
+- The first available C++17/CTest run exposed an incorrect Phase 2A test expectation,
+  not a lifecycle implementation defect: from `0xFFFFFFF5` to `5`, unsigned elapsed
+  time is 16 ms, while `9` is the exact 20 ms lease boundary.
+- The test now asserts no expiry at `5`, expiry at `9`, and acceptance of the newer
+  wrapped sequence afterward. `MotionCommandLifecycle` was not changed.
+- The required external rebuild and CTest rerun passed with 1/1 tests and zero
+  failures. The correction is ready to commit.

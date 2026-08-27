@@ -102,8 +102,9 @@ int main() {
   const CommandIdentity near_wrap{1, 1, 0xFFFFFFFFU};
   assert(rollover.submit(near_wrap, 20, 0xFFFFFFF5U) ==
          LifecycleResult::accepted);
-  assert(rollover.poll_expiry(5) == LifecycleResult::expired);
-  assert(rollover.submit({1, 1, 1}, 20, 6) == LifecycleResult::accepted);
+  assert(rollover.poll_expiry(5) == LifecycleResult::no_change);
+  assert(rollover.poll_expiry(9) == LifecycleResult::expired);
+  assert(rollover.submit({1, 1, 1}, 20, 10) == LifecycleResult::accepted);
 
   MotionCommandLifecycle transition_expiry(100);
   const CommandIdentity expiring{3, 30, 1};
