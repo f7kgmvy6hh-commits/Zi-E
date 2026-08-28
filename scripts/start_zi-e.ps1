@@ -13,6 +13,24 @@ Get-Content -LiteralPath (Join-Path $Root '.env') | ForEach-Object {
         $Name = $Matches[1].Trim(); $Value = $Matches[2]
         $Values[$Name] = $Value
         [Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
+        Set-Item -Path "Env:$Name" -Value $Value
+    }
+}
+$HermesEnv = Join-Path $env:LOCALAPPDATA 'hermes\.env'
+if (-not $Values.ELEVENLABS_API_KEY -and (Test-Path -LiteralPath $HermesEnv)) {
+    Get-Content -LiteralPath $HermesEnv | ForEach-Object {
+        if ($_ -match '^\s*ELEVENLABS_API_KEY=(.+)$') {
+            $Values.ELEVENLABS_API_KEY = $Matches[1].Trim()
+            Set-Item -Path 'Env:ELEVENLABS_API_KEY' -Value $Values.ELEVENLABS_API_KEY
+        }
+    }
+}
+if (-not $Values.ZIE_VOICE_FALLBACK_COMMAND) {
+    $NanamiPython = Join-Path $env:LOCALAPPDATA 'hermes\voice\openvoice-env\Scripts\python.exe'
+    $NanamiScript = Join-Path $env:LOCALAPPDATA 'hermes\voice\zi_nanami_tts.py'
+    if ((Test-Path -LiteralPath $NanamiPython) -and (Test-Path -LiteralPath $NanamiScript)) {
+        $Values.ZIE_VOICE_FALLBACK_COMMAND = "`"$NanamiPython`" `"$NanamiScript`" `"{input_path}`" `"{output_path}`""
+        Set-Item -Path 'Env:ZIE_VOICE_FALLBACK_COMMAND' -Value $Values.ZIE_VOICE_FALLBACK_COMMAND
     }
 }
 New-Item -ItemType Directory -Force -Path $Runtime | Out-Null
