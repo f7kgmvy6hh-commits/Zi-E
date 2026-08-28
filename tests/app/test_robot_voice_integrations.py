@@ -75,6 +75,20 @@ def test_voice_chunks_are_redacted_cancellable_and_preserve_boundaries():
     assert calls == [("secret [REDACTED]", "voice-one", "eleven-turbo-test")]
 
 
+def test_voice_falls_back_to_local_provider_when_cloud_fails():
+    calls = []
+    def cloud(text, voice_id, model_id, cancelled):
+        calls.append("cloud")
+        raise RuntimeError("cloud unavailable")
+        yield b"never"
+    def local(text, voice_id, model_id, cancelled):
+        calls.append("local")
+        yield b"fallback-audio"
+    voice = VoiceService("voice-one", cloud, local)
+    assert list(voice.speak_chunks("hello")) == [b"fallback-audio"]
+    assert calls == ["cloud", "local"]
+
+
 def test_elevenlabs_payload_uses_central_model_and_reads_chunks(monkeypatch):
     captured = {}
     class Response:

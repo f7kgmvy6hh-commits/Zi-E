@@ -4,7 +4,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -19,6 +19,7 @@ from app.server.metrics import system_metrics
 from app.server.state import StateCore
 from app.voice.providers import command_synthesizer, elevenlabs_synthesizer
 from app.voice.service import VoiceService
+from app.voice.stt import LocalTranscriber
 
 
 class RobotCommandRequest(BaseModel):
@@ -51,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         command_synthesizer(cfg.voice_fallback_command) if cfg.voice_fallback_command else None,
         cfg.elevenlabs_model,
     )
+    transcriber = LocalTranscriber()
 
     async def deadman_loop():
         while True:
@@ -88,7 +90,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health", dependencies=[Depends(require_auth)])
     def health():
-        return {"status": "ok", "system": system_metrics(), "simulator": cfg.simulator}
+        return {
+            "status": "ok",
+            "system": system_metrics(),
+            "simulator": cfg.simulator,
+            "hermes": {"configured": bool(cfg.hermes_command), "session": cfg.hermes_session},
+            "model": cfg.hermes_main_model,
+            "voice": {
+                "provider": "elevenlabs" if cfg.elevenlabs_api_key else "zi-nanami-command" if cfg.voice_fallback_command else None,
+                "voice_id": cfg.voice_id,
+                "configured": bool(cfg.elevenlabs_api_key or cfg.voice_fallback_command),
+            },
+            "stt": {"provider": "local", "model": transcriber.model_name, "status": transcriber.status()},
+            "robot": {"state": robot.state.value, "simulator": cfg.simulator},
+        }
 
     @app.get("/api/state", dependencies=[Depends(require_auth)])
     def get_state():
@@ -103,6 +118,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "voice_fallback_configured": bool(cfg.voice_fallback_command),
             "hermes_configured": bool(cfg.hermes_command),
             "hermes_session": cfg.hermes_session,
+        }
+
+    @app.get("/api/plugins", dependencies=[Depends(require_auth)])
+    def plugins():
+        return {
+            "plugins": [
+                {"id": "chat", "status": "available", "permission": "read-write"},
+                {"id": "task", "status": "available", "permission": "read"},
+                {"id": "robot", "status": "simulation" if cfg.simulator else "disconnected", "permission": "safe-command"},
+                {"id": "voice", "status": "available" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable", "permission": "speak"},
+                {"id": "system", "status": "available", "permission": "read"},
+                {"id": "browser", "status": "available", "permission": "read"},
+                {"id": "memory", "status": "available", "permission": "read"},
+            ]
         }
 
     @app.post("/api/chat", dependencies=[Depends(require_auth)])
@@ -166,11 +195,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await events.publish("voice.stop", {"result": result.result})
         return result.__dict__
 
+    @app.post("/api/stt/transcribe", dependencies=[Depends(require_auth)])
+    async def stt_transcribe(request: Request):
+        audio = await request.body()
+        if len(audio) > 25 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="audio payload is too large")
+        result = transcriber.transcribe_bytes(audio, ".wav")
+        if not result["success"]:
+            raise HTTPException(status_code=422, detail=result["error"])
+        await events.publish("voice.transcript", {"provider": "local", "length": len(result["transcript"])})
+        return result
+
     @app.post("/api/robot/command", dependencies=[Depends(require_auth)])
     async def robot_command(request: RobotCommandRequest):
         result = robot.command("hud", request.target, request.timeout)
         state.update("robot", {"state": robot.state.value, "last_command": result.as_dict()})
         await events.publish("robot.command", result.as_dict())
+        await events.publish("robot.state", {"state": robot.state.value, "source": "simulator" if cfg.simulator else "physical"})
+        if cfg.simulator:
+            await events.publish("robot.telemetry", {"mode": "SIMULATION", "state": robot.state.value})
         audit.write("robot.command", command=result.as_dict())
         if result.result.startswith("rejected"):
             raise HTTPException(status_code=409, detail=result.as_dict())
@@ -181,6 +224,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         result = robot.emergency_stop("hud")
         state.update("robot", {"state": robot.state.value, "last_command": result.as_dict()})
         await events.publish("robot.estop", result.as_dict())
+        await events.publish("robot.state", {"state": robot.state.value, "source": "simulator" if cfg.simulator else "physical"})
         audit.write("robot.estop", command=result.as_dict())
         return result.as_dict()
 

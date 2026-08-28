@@ -597,3 +597,19 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   flags. `smart_model_routing` is only a setup placeholder and is not consumed.
 - Stream redacted TTS in bounded chunks, centralize ElevenLabs voice/model, retain
   Zi-Nanami fallback, and cancel remaining work wherever the generator can observe it.
+
+## 2026-08-28 — Zi-E HUD plugin presentation
+
+- Use an original cinematic robotics-control visual language: graphite surfaces,
+  cyan/ice-blue information, amber caution, and red emergency states. Do not copy
+  Marvel/JARVIS branding, assets, phrases, or layouts.
+- Treat HUD panels as host-registered plugins with declarative identity, permission,
+  status text, and event subscriptions. The current registry is intentionally a
+  lightweight browser presentation layer, not a privileged executable sandbox.
+- Keep privileged actions behind the authenticated Zi-E backend. Plugin panels cannot
+  access Hermes credentials, provider keys, arbitrary environment values, raw actuator
+  control, or safety bypasses.
+- Reserve port `8765` for the existing Zi-Nanami service and run Zi-E on loopback
+  port `8766`.
+- Enable `ZIE_SIMULATOR=true` for current host-only integration testing. Simulator
+  telemetry is not physical evidence and must remain clearly labeled.

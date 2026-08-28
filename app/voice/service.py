@@ -43,16 +43,31 @@ class VoiceService:
         def generate():
             try:
                 # Retain compatibility with small in-process/test adapters from V1.
-                if len(inspect.signature(synth).parameters) >= 4:
-                    output = synth(safe_text, self.voice_id, self.model_id, cancelled)
-                else:
-                    output = synth(safe_text, self.voice_id)
-                chunks = (output,) if isinstance(output, bytes) else output
-                for chunk in chunks:
-                    if cancelled.is_set():
-                        break
-                    if chunk:
-                        yield chunk
+                try:
+                    if len(inspect.signature(synth).parameters) >= 4:
+                        output = synth(safe_text, self.voice_id, self.model_id, cancelled)
+                    else:
+                        output = synth(safe_text, self.voice_id)
+                    chunks = (output,) if isinstance(output, bytes) else output
+                    for chunk in chunks:
+                        if cancelled.is_set():
+                            break
+                        if chunk:
+                            yield chunk
+                except Exception:
+                    if synth is not self._cloud_synth or self._fallback is None or cancelled.is_set():
+                        raise
+                    fallback = self._fallback
+                    if len(inspect.signature(fallback).parameters) >= 4:
+                        output = fallback(safe_text, self.voice_id, self.model_id, cancelled)
+                    else:
+                        output = fallback(safe_text, self.voice_id)
+                    chunks = (output,) if isinstance(output, bytes) else output
+                    for chunk in chunks:
+                        if cancelled.is_set():
+                            break
+                        if chunk:
+                            yield chunk
             finally:
                 with self._lock:
                     if self._cancelled is cancelled:

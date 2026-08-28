@@ -32,6 +32,12 @@ def test_state_and_robot_command_publish_websocket_event(tmp_path):
             event = websocket.receive_json()
             assert event["type"] == "robot.command"
             assert event["payload"]["target"] == "SAFE"
+            state_event = websocket.receive_json()
+            assert state_event["type"] == "robot.state"
+            assert state_event["payload"]["source"] == "simulator"
+            telemetry_event = websocket.receive_json()
+            assert telemetry_event["type"] == "robot.telemetry"
+            assert telemetry_event["payload"]["mode"] == "SIMULATION"
         state = client.get("/api/state", headers=headers).json()
         assert state["robot"]["state"] == "SAFE"
 
@@ -56,6 +62,19 @@ def test_estop_endpoint_is_available_from_disconnected(tmp_path):
         assert result["target"] == "EMERGENCY_STOP"
 
 
+def test_estop_publishes_estop_and_state_events(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        with client.websocket_connect("/api/events") as websocket:
+            websocket.send_json({"authorization": f"Bearer {TOKEN}"})
+            client.post("/api/robot/estop", headers=headers)
+            first = websocket.receive_json()
+            second = websocket.receive_json()
+            assert first["type"] == "robot.estop"
+            assert second["type"] == "robot.state"
+            assert second["payload"]["state"] == "EMERGENCY_STOP"
+
+
 def test_static_hud_contains_every_required_panel(tmp_path):
     with TestClient(create_app(settings(tmp_path))) as client:
         html = client.get("/").text
@@ -74,6 +93,21 @@ def test_settings_never_expose_secrets_and_voice_controls_work(tmp_path):
         assert body["voice_id"] == "voice-one"
         assert client.post("/api/voice/mute", headers=headers, json={"muted": True}).json()["result"] == "muted"
         assert client.post("/api/voice/stop", headers=headers).json()["result"] == "stopped"
+
+
+def test_plugins_api_is_authenticated_and_secret_free(tmp_path):
+    cfg = settings(tmp_path)
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(cfg)) as client:
+        assert client.get("/api/plugins").status_code == 401
+        response = client.get("/api/plugins", headers=headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["plugins"]) == 7
+        robot = next(plugin for plugin in body["plugins"] if plugin["id"] == "robot")
+        assert robot["status"] == "simulation"
+        serialized = str(body)
+        assert TOKEN not in serialized and "secret" not in serialized.lower()
 
 
 def test_voice_speak_streams_chunk_safe_audio_and_publishes_events(tmp_path, monkeypatch):

@@ -175,3 +175,43 @@ Production driver binding remains later work.
 - Strict CTest: 1/1 passed.
 - `git diff --check`: passed (Git emitted only line-ending conversion notices).
 - Verified base/unchanged HEAD: `da5143b83bacf33a5afcf99ab98ab17b2c694147`.
+
+## V1 continuation validation — 2026-08-28
+
+- Zi-E runs on loopback port `8766`; the existing Zi-Nanami service remains on
+  `8765`.
+- Hermes `0.20.6` is connected through the installed executable and a real chat
+  request succeeded through `/api/chat`.
+- Simulator mode is enabled for safe host-only testing; no physical transport is
+  enabled.
+- ElevenLabs Sarah voice with `eleven_flash_v2_5` returned real audio through the
+  Zi-E voice endpoint. The local Zi-Nanami command remains the fallback path.
+- The HUD now has an original cinematic Zi-E robotics presentation, functional
+  chat/control handlers, live event connection support, and an external plugin
+  registry served under `/hud/`.
+- Lifecycle scripts were validated through start, health, stop, and restart.
+- Full local fallback suite: 24 passed, 0 failed.
+
+## Voice fallback validation — 2026-08-28
+
+- ElevenLabs remains the primary TTS provider with centralized Sarah voice
+  configuration.
+- Cloud synthesis failure now falls back automatically to the local Zi-Nanami
+  command provider without exposing credentials or changing provider priority.
+- A regression test covers cloud failure, local fallback output, and call order.
+- Current suite result after the fallback change: 27 passed, 0 failed.
+
+## Final application integration checkpoint — 2026-08-28
+
+- Authenticated `/api/plugins` reports secret-free plugin health and permissions;
+  the HUD consumes those statuses instead of treating every panel as decorative.
+- Robot command, state, telemetry, and E-stop events are published through the
+  bounded event bus and consumed by the HUD reducer. Simulator telemetry is labeled
+  `SIMULATION`.
+- The HUD provides real chat, voice playback, stop-speech, simulator state controls,
+  E-stop, health refresh, and live WebSocket event display.
+- Health reporting includes Zi-E, Hermes session/model, voice, browser backend,
+  simulator/robot, and real local system metrics without secrets.
+- Full relevant application suite: 27 passed, 0 failed.
+- Live checks passed for server lifecycle, health, HUD delivery, plugin registry,
+  Hermes chat, ElevenLabs audio, simulator command, E-stop, and restart recovery.
