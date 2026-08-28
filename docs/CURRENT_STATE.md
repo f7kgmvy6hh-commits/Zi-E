@@ -89,6 +89,18 @@ bench rigs are still required before bulk component purchase.
   Asset packs and protected/embedded modules receive no executable context; provider/
   wake categories cannot receive motion; no raw-control or protected-safety SDK type
   exists. This is not a loader or runtime sandbox.
+- Plugin contexts are explicitly immutable issuance snapshots. Current-context reads
+  after suspend/failure/quarantine/recovery expose non-active metadata with no grants,
+  removal exposes no context, and retained old services fail stale. Only explicit
+  activation creates a fresh active context/epoch.
+- An in-memory hardware-profile manager now validates versioned semantic hardware
+  requirements and deterministically resolves them against exact registry-owned
+  device/profile/category/lifecycle/capability identity. Optional absence is reported;
+  missing required or ambiguous candidates fail activation. Active replacement is
+  atomic, selected-device revocation invalidates the profile without silent rebinding,
+  and explicit re-resolution/reactivation receives a fresh generation. Raw hardware
+  and protected-safety bypass namespaces have no profile path. Discovery, parsing,
+  drivers, commissioning, persistence, and physical validation remain deferred.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

@@ -9,11 +9,24 @@
 
 namespace zie::extensions {
 
+enum class SemanticAttributeDomain {
+  variant,
+  placement,
+  performance_class,
+  tool_class,
+};
+
+struct SemanticDeviceAttribute {
+  SemanticAttributeDomain domain{SemanticAttributeDomain::variant};
+  std::string value;
+};
+
 struct RegistryAssignment {
   std::string package_id;
   TrustClass assigned_trust{TrustClass::community_untrusted};
   devices::ControllerIdentity controller{devices::ControllerIdentity::none};
   std::string hardware_profile_id;
+  std::vector<SemanticDeviceAttribute> semantic_attributes;
 };
 
 struct ExtensionCandidate {
@@ -30,11 +43,28 @@ struct ExtensionRecord {
   std::uint64_t authorization_generation{0};
   std::vector<std::string> validated_capabilities;
   std::vector<std::string> active_capabilities;
+  std::vector<SemanticDeviceAttribute> semantic_attributes;
 };
 
 struct CapabilityProvider {
   std::string package_id;
   std::string logical_device_instance_id;
+};
+
+struct CapabilityCandidate {
+  std::string package_id;
+  std::string logical_device_instance_id;
+  std::string hardware_profile_id;
+  std::string capability;
+  std::vector<SemanticDeviceAttribute> semantic_attributes;
+  ExtensionCategory category{ExtensionCategory::behavior};
+  ExtensionClass extension_class{ExtensionClass::host_plugin};
+  TrustClass assigned_trust{TrustClass::community_untrusted};
+  devices::ControllerIdentity controller{devices::ControllerIdentity::none};
+  LifecycleState lifecycle{LifecycleState::discovered};
+  std::uint64_t authorization_generation{0};
+  bool capability_validated{false};
+  bool capability_active{false};
 };
 
 enum class RegistryResult {
@@ -74,6 +104,8 @@ class ExtensionRegistry {
 
   const ExtensionRecord* find(const std::string& package_id) const;
   std::vector<CapabilityProvider> resolve(
+      const std::string& capability) const;
+  std::vector<CapabilityCandidate> inspect_capability(
       const std::string& capability) const;
 
  private:

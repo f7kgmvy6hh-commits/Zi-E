@@ -352,6 +352,12 @@ void run_plugin_sdk_host_tests() {
     const auto old_presentation = context->presentation();
     assert(fixture.host.suspend_extension(value.manifest.id) ==
            core::ExtensionHostResult::suspended);
+    const auto suspended_context = fixture.host.context(value.manifest.id);
+    assert(suspended_context != nullptr);
+    assert(suspended_context->lifecycle() == sdk::ExtensionLifecycle::inactive);
+    assert(suspended_context->active_capabilities().empty());
+    assert(suspended_context->commands() == nullptr);
+    assert(context->lifecycle() == sdk::ExtensionLifecycle::active);
     assert(old_commands->submit({sdk::CommandDomain::expression,
                                  sdk::ExpressionCommand{"awake"}}) ==
            sdk::CallResult::rejected_stale_context);
@@ -446,6 +452,7 @@ void run_plugin_sdk_host_tests() {
     const auto stale_context = first->active_context;
     assert(fixture.host.remove_extension(value.manifest.id) ==
            core::ExtensionHostResult::removed);
+    assert(fixture.host.context(value.manifest.id) == nullptr);
     assert(stale_context->commands()->submit(
                {sdk::CommandDomain::expression,
                 sdk::ExpressionCommand{"stale"}}) ==
@@ -506,6 +513,11 @@ void run_plugin_sdk_host_tests() {
            sdk::CallResult::accepted);
     assert(fixture.host.fail_extension(value.manifest.id) ==
            core::ExtensionHostResult::failed);
+    const auto failed_context = fixture.host.context(value.manifest.id);
+    assert(failed_context != nullptr);
+    assert(failed_context->lifecycle() == sdk::ExtensionLifecycle::failed);
+    assert(failed_context->active_capabilities().empty());
+    assert(failed_context->commands() == nullptr);
     assert(old_commands->submit({sdk::CommandDomain::expression,
                                  sdk::ExpressionCommand{"revoked"}}) ==
            sdk::CallResult::rejected_stale_context);
@@ -514,9 +526,20 @@ void run_plugin_sdk_host_tests() {
            core::ExtensionHostResult::rejected_lifecycle);
     assert(fixture.host.recover_extension(value.manifest.id) ==
            core::ExtensionHostResult::recovered);
+    const auto recovered_context = fixture.host.context(value.manifest.id);
+    assert(recovered_context != nullptr);
+    assert(recovered_context->lifecycle() == sdk::ExtensionLifecycle::inactive);
+    assert(recovered_context->active_capabilities().empty());
+    assert(recovered_context->commands() == nullptr);
     assert(fixture.host.activate_extension(value.manifest.id,
                                            {"semantic.presentation"}) ==
            core::ExtensionHostResult::activated);
+    const auto reactivated_context = fixture.host.context(value.manifest.id);
+    assert(reactivated_context != nullptr);
+    assert(reactivated_context->lifecycle() == sdk::ExtensionLifecycle::active);
+    assert(reactivated_context->instance_epoch() !=
+           recovered_context->instance_epoch());
+    assert(reactivated_context->commands() != nullptr);
     assert(extension->activate_count == 2);
     assert(old_commands->submit({sdk::CommandDomain::expression,
                                  sdk::ExpressionCommand{"still-revoked"}}) ==
@@ -524,6 +547,12 @@ void run_plugin_sdk_host_tests() {
     const auto recovered_commands = extension->active_context->commands();
     assert(fixture.host.quarantine_extension(value.manifest.id) ==
            core::ExtensionHostResult::quarantined);
+    const auto quarantined_context = fixture.host.context(value.manifest.id);
+    assert(quarantined_context != nullptr);
+    assert(quarantined_context->lifecycle() ==
+           sdk::ExtensionLifecycle::quarantined);
+    assert(quarantined_context->active_capabilities().empty());
+    assert(quarantined_context->commands() == nullptr);
     assert(recovered_commands->submit(
                {sdk::CommandDomain::expression,
                 sdk::ExpressionCommand{"quarantined"}}) ==
@@ -533,6 +562,8 @@ void run_plugin_sdk_host_tests() {
            core::ExtensionHostResult::rejected_lifecycle);
     assert(fixture.host.recover_extension(value.manifest.id) ==
            core::ExtensionHostResult::recovered);
+    assert(fixture.host.context(value.manifest.id)->lifecycle() ==
+           sdk::ExtensionLifecycle::inactive);
   }
 
   {

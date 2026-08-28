@@ -205,6 +205,9 @@ class PresentationService {
   virtual std::optional<PresentationState> current() = 0;
 };
 
+// Immutable snapshot issued for one host lifecycle/activation epoch. Retaining this
+// object does not retain authority: every service handle rechecks live host/registry
+// state and fails stale after revocation.
 class ExtensionContext {
  public:
   virtual ~ExtensionContext() = default;

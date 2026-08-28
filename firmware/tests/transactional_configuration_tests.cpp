@@ -38,7 +38,7 @@ ExtensionCandidate host_candidate() {
 
 RegistryAssignment assignment(const ExtensionCandidate& candidate) {
   return {candidate.manifest.id, TrustClass::local_developer,
-          ControllerIdentity::host, "zie.test-profile"};
+          ControllerIdentity::host, "zie.test-profile", {}};
 }
 
 void activate(ExtensionRegistry& registry, const ExtensionCandidate& candidate) {

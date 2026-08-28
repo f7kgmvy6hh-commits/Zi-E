@@ -10,6 +10,7 @@ void run_extension_registry_tests();
 void run_transactional_configuration_tests();
 void run_semantic_robot_api_tests();
 void run_event_bus_virtual_robot_tests();
+void run_hardware_profile_resolution_tests();
 void run_provider_foundation_tests();
 void run_presentation_engine_tests();
 void run_plugin_sdk_host_tests();
@@ -245,6 +246,7 @@ int main() {
   run_transactional_configuration_tests();
   run_semantic_robot_api_tests();
   run_event_bus_virtual_robot_tests();
+  run_hardware_profile_resolution_tests();
   run_provider_foundation_tests();
   run_presentation_engine_tests();
   run_plugin_sdk_host_tests();

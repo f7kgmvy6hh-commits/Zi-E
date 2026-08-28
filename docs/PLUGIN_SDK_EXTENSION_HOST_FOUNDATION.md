@@ -35,6 +35,15 @@ transition and issues a new active context. Every activation gets a fresh nonzer
 epoch backed by the registry's monotonic authorization generation; the command session
 is bound through `AuthoritativeRobotCore`, not selected by the extension.
 
+Each context is an immutable issuance snapshot, not a live authority object. An old
+retained snapshot may continue to report the lifecycle and capabilities that applied
+when it was issued, but all of its service handles recheck the current epoch and fail
+with `rejected_stale_context` after revocation. `ExtensionHost::context(package_id)` is
+the current-host query: suspension, failure, quarantine, and recovery replace its
+answer with a non-active, zero-grant snapshot; removal returns null. Recovery never
+reuses the prior active snapshot. Explicit activation issues a fresh authoritative
+context and epoch.
+
 ## Safe services
 
 The SDK contains only narrow semantic interfaces:

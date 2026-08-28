@@ -1,6 +1,7 @@
 #include "zie/extensions/ExtensionRegistry.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
 
 namespace zie::extensions {
@@ -113,6 +114,41 @@ bool conflicts(const ExtensionRecord& record,
          record.device_identity.logical.instance_id == identity.logical.instance_id;
 }
 
+bool known(const SemanticAttributeDomain value) {
+  switch (value) {
+    case SemanticAttributeDomain::variant:
+    case SemanticAttributeDomain::placement:
+    case SemanticAttributeDomain::performance_class:
+    case SemanticAttributeDomain::tool_class:
+      return true;
+  }
+  return false;
+}
+
+bool valid_semantic_value(const std::string& value) {
+  if (value.empty() ||
+      !std::isalnum(static_cast<unsigned char>(value.front()))) {
+    return false;
+  }
+  return std::all_of(value.begin(), value.end(), [](const unsigned char part) {
+    return std::islower(part) || std::isdigit(part) || part == '.' ||
+           part == '_' || part == '-';
+  });
+}
+
+bool valid_attributes(const std::vector<SemanticDeviceAttribute>& attributes) {
+  for (std::size_t index = 0; index < attributes.size(); ++index) {
+    if (!known(attributes[index].domain) ||
+        !valid_semantic_value(attributes[index].value)) {
+      return false;
+    }
+    for (std::size_t other = index + 1; other < attributes.size(); ++other) {
+      if (attributes[index].domain == attributes[other].domain) return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 bool ExtensionRegistry::assign_new_authorization_generation(
@@ -131,6 +167,9 @@ RegistryResult ExtensionRegistry::register_extension(
   if (candidate.manifest.id != assignment.package_id ||
       candidate.device_identity.package.extension_id != assignment.package_id) {
     return RegistryResult::rejected_package_mismatch;
+  }
+  if (!valid_attributes(assignment.semantic_attributes)) {
+    return RegistryResult::rejected_invalid_identity;
   }
   const auto* existing = find(assignment.package_id);
   if (existing != nullptr && existing->lifecycle != LifecycleState::removed) {
@@ -158,6 +197,7 @@ RegistryResult ExtensionRegistry::register_extension(
   record.manifest = candidate.manifest;
   record.device_identity = candidate.device_identity;
   record.assigned_trust = assignment.assigned_trust;
+  record.semantic_attributes = assignment.semantic_attributes;
   if (existing != nullptr &&
       existing->device_identity.logical.instance_id ==
           candidate.device_identity.logical.instance_id) {
@@ -303,6 +343,37 @@ std::vector<CapabilityProvider> ExtensionRegistry::resolve(
     }
   }
   return providers;
+}
+
+std::vector<CapabilityCandidate> ExtensionRegistry::inspect_capability(
+    const std::string& capability) const {
+  std::vector<CapabilityCandidate> candidates;
+  for (const auto& record : records_) {
+    for (const auto& declared : record.manifest.declared_capabilities) {
+      const bool exact = declared == capability;
+      const bool semantic_hardware_variant =
+          capability.compare(0, 9, "hardware.") == 0 &&
+          declared.compare(0, capability.size(), capability) == 0 &&
+          declared.size() > capability.size() &&
+          declared[capability.size()] == '.';
+      if (!exact && !semantic_hardware_variant) continue;
+      candidates.push_back(
+          {record.manifest.id,
+           record.device_identity.logical.instance_id,
+           record.device_identity.hardware_profile.profile_id,
+           declared,
+           record.semantic_attributes,
+           record.manifest.category,
+           record.manifest.extension_class,
+           record.assigned_trust,
+           record.device_identity.controller.controller,
+           record.lifecycle,
+           record.authorization_generation,
+           contains(record.validated_capabilities, declared),
+           contains(record.active_capabilities, declared)});
+    }
+  }
+  return candidates;
 }
 
 }  // namespace zie::extensions

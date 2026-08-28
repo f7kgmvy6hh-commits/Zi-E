@@ -43,7 +43,7 @@ void register_and_activate(ExtensionRegistry& registry,
                            const ExtensionCandidate& value) {
   assert(registry.register_extension(value, {value.manifest.id,
              TrustClass::local_developer, ControllerIdentity::none,
-             "zie.test-profile"}) == RegistryResult::accepted);
+             "zie.test-profile", {}}) == RegistryResult::accepted);
   assert(registry.transition(value.manifest.id, LifecycleState::validated) == RegistryResult::transitioned);
   assert(registry.validate_capabilities(value.manifest.id,
              value.manifest.declared_capabilities) == RegistryResult::capabilities_validated);
@@ -88,7 +88,7 @@ ExtensionCandidate client_candidate() {
 void activate_client(ExtensionRegistry& registry, const ExtensionCandidate& value) {
   assert(registry.register_extension(value, {value.manifest.id,
              TrustClass::local_developer, ControllerIdentity::host,
-             "zie.test-profile"}) == RegistryResult::accepted);
+             "zie.test-profile", {}}) == RegistryResult::accepted);
   assert(registry.transition(value.manifest.id, LifecycleState::validated) == RegistryResult::transitioned);
   assert(registry.validate_capabilities(value.manifest.id, value.manifest.declared_capabilities) == RegistryResult::capabilities_validated);
   assert(registry.transition(value.manifest.id, LifecycleState::inactive) == RegistryResult::transitioned);
@@ -188,7 +188,7 @@ void run_presentation_engine_tests() {
   executable.manifest.entrypoint = "execute_pack";
   executable.manifest.required_permissions = {Permission::write_face};
   assert(registry.register_extension(executable, {executable.manifest.id,
-      TrustClass::local_developer, ControllerIdentity::none, "zie.test-profile"}) ==
+      TrustClass::local_developer, ControllerIdentity::none, "zie.test-profile", {}}) ==
       RegistryResult::rejected_invalid_manifest);
 
   const auto unknown_schema_candidate = asset_candidate("zie.face.schema", "face.schema", "face-006",

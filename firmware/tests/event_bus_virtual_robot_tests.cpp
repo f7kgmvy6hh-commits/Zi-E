@@ -49,7 +49,7 @@ void activate(ExtensionRegistry& registry, const ExtensionCandidate& owner) {
       "semantic.sensor-query", "events.read"};
   assert(registry.register_extension(
              owner, {owner.manifest.id, TrustClass::local_developer,
-                     ControllerIdentity::host, "zie.test-profile"}) ==
+                     ControllerIdentity::host, "zie.test-profile", {}}) ==
          RegistryResult::accepted);
   assert(registry.transition(owner.manifest.id, LifecycleState::validated) ==
          RegistryResult::transitioned);

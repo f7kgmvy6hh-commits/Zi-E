@@ -35,6 +35,7 @@ add_executable(zie_architecture_tests
     tests/transactional_configuration_tests.cpp
     tests/semantic_robot_api_tests.cpp
     tests/event_bus_virtual_robot_tests.cpp
+    tests/hardware_profile_resolution_tests.cpp
     tests/provider_foundation_tests.cpp
     tests/presentation_engine_tests.cpp
     tests/plugin_sdk_host_tests.cpp

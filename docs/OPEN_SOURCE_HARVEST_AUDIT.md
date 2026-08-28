@@ -214,3 +214,19 @@ damage the whole host.
 
 Decision: adopt the versioned, capability-scoped in-memory SDK/host boundary. Defer
 dynamic loading, process/WASM sandboxing, crash isolation, signing, and persistence.
+
+### Hardware-profile resolution delta — 2026-08-28
+
+Problem: capability-name matching can bind the wrong device, inactive hardware can
+remain claimed, and implicit startup/rebinding can make a profile nondeterministic.
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [ros2_control Controller Manager lifecycle configuration](https://control.ros.org/master/doc/ros2_control/controller_manager/doc/userdoc.html) | Hardware component initial states are explicit and duplicate declarations are rejected; activating controllers on inactive hardware is documented as unsafe | Separate validate/resolve/activate states, exclude inactive candidates, reject duplicate logical slots, and require explicit profile activation | Inactive/quarantined, duplicate-slot, and lifecycle tests. Concepts only; no ROS code copied. **ADAPT** |
+| [ros2_control multi-hardware misrouting issue #1177](https://github.com/ros-controls/ros2_control/issues/1177) | A second robot's interfaces were presented to the wrong hardware component, demonstrating that capability/interface names alone are insufficient for multiple instances | Bind every result to exact package, logical-device instance, profile ID, category, and authorization generation; reject single-slot ambiguity | Ambiguous-provider, wrong-profile, identity-impersonation, and exact-device tests. **ADAPT** |
+| [ros2_control inactive-hardware claim issue #3444](https://github.com/ros-controls/ros2_control/issues/3444) | Controllers may remain active and interfaces claimed after manual hardware deactivation | Recheck selected registry lifecycle/generation, invalidate the active profile when observed, and require explicit re-resolution/reactivation | Revocation and no-silent-rebinding tests. **ADAPT** |
+| [ros2_control deterministic startup issue #2811](https://github.com/ros-controls/ros2_control/issues/2811) | Multi-component initialization order can be nondeterministic when stages interleave | Use an explicit whole-profile `declared -> validated -> resolved -> active` sequence and sort candidates deterministically before producing a bounded result | Deterministic matching and atomic failed-replacement tests. Runtime startup scheduling remains excluded. **ADAPT / DEFER runtime staging** |
+
+Decision: adopt exact registry-authoritative matching, staged explicit activation, and
+revocation without automatic rebinding. Discovery, runtime scheduling, transport,
+drivers, and commissioning remain deferred.

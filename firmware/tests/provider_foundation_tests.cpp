@@ -44,7 +44,7 @@ ExtensionCandidate candidate(const std::string& id, const std::string& logical,
 void activate(ExtensionRegistry& registry, const ExtensionCandidate& value) {
   assert(registry.register_extension(
              value, {value.manifest.id, TrustClass::local_developer,
-                     ControllerIdentity::host, "zie.test-profile"}) ==
+                     ControllerIdentity::host, "zie.test-profile", {}}) ==
          RegistryResult::accepted);
   assert(registry.transition(value.manifest.id, LifecycleState::validated) ==
          RegistryResult::transitioned);

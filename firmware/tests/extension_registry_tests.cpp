@@ -57,7 +57,7 @@ ExtensionCandidate candidate(const std::string& id,
 RegistryAssignment assignment(const std::string& id,
                               const ControllerIdentity controller,
                               const TrustClass trust) {
-  return {id, trust, controller, "zie.test-profile"};
+  return {id, trust, controller, "zie.test-profile", {}};
 }
 
 void validate_and_activate(ExtensionRegistry& registry, const std::string& id) {

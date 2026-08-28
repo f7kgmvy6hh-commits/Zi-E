@@ -505,3 +505,21 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Expose configuration only as copied reads and typed stage requests with a host-built
   authoritative binding. Validation/commit remains transactional core authority, and
   identity/authority/raw-control namespaces remain forbidden.
+
+## 2026-08-28 — Context snapshots and authoritative hardware-profile resolution
+
+- Define every Plugin SDK `ExtensionContext` as an immutable issuance snapshot.
+  Retained snapshots may preserve historical metadata, but their handles are
+  epoch-bound and fail stale after revocation. The host's current-context query
+  replaces active metadata with a zero-grant inactive/failed/quarantined snapshot,
+  returns null after removal, and issues a fresh context only after explicit
+  activation.
+- Treat profiles as trusted, versioned semantic requirement sets resolved only
+  against registry-authoritative device identity and lifecycle. Resolution uses exact
+  hardware-profile binding, category, active validated capability, protected
+  ownership, logical device, and authorization generation; ambiguity fails closed.
+- Make activation atomic. Revocation invalidates the selected result and no spare is
+  silently rebound; explicit re-resolution and reactivation are required.
+- Exclude transport identity, GPIO/PWM/register/setpoint data, raw actuator control,
+  and safety bypasses from profile content. Discovery, parsing, drivers,
+  commissioning, persistence, and transport remain deferred.

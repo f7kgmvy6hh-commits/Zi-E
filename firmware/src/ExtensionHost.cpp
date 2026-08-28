@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "core/AuthoritativeRobotCore.hpp"
+#include "zie/core/HardwareProfile.hpp"
 
 namespace zie::core {
 namespace {
@@ -737,10 +738,11 @@ class ExtensionHost::Impl {
        api::AuthoritativeRobotCore& core, api::SemanticRobotApi& commands,
        api::ResilientEventBus& events, api::RobotStateStore& robot_state,
        extensions::TransactionalConfiguration& configuration,
-       providers::ProviderRouter& providers)
+       providers::ProviderRouter& providers,
+       HardwareProfileManager* hardware_profiles)
       : registry(registry), core(core), commands(commands), events(events),
         robot_state(robot_state), configuration(configuration),
-        providers(providers) {}
+        providers(providers), hardware_profiles(hardware_profiles) {}
 
   Record* find(const std::string& package_id) {
     const auto found = std::find_if(records.rbegin(), records.rend(),
@@ -771,6 +773,16 @@ class ExtensionHost::Impl {
       record.authority->event_subscriptions.clear();
     }
     record.authority.reset();
+  }
+  void refresh_inactive_context(Record& record,
+                                const sdk::ExtensionLifecycle lifecycle) {
+    const auto* registry_record = registry.find(record.package_id);
+    if (registry_record == nullptr ||
+        registry_record->lifecycle == LifecycleState::removed) {
+      record.context.reset();
+      return;
+    }
+    record.context = make_context(*registry_record, lifecycle, {}, nullptr);
   }
   std::shared_ptr<const sdk::ExtensionContext> make_context(
       const extensions::ExtensionRecord& registry_record,
@@ -830,6 +842,7 @@ class ExtensionHost::Impl {
   api::RobotStateStore& robot_state;
   extensions::TransactionalConfiguration& configuration;
   providers::ProviderRouter& providers;
+  HardwareProfileManager* hardware_profiles;
   std::vector<Record> records;
 };
 
@@ -838,9 +851,11 @@ ExtensionHost::ExtensionHost(
     api::SemanticRobotApi& commands, api::ResilientEventBus& events,
     api::RobotStateStore& robot_state,
     extensions::TransactionalConfiguration& configuration,
-    providers::ProviderRouter& providers)
+    providers::ProviderRouter& providers,
+    HardwareProfileManager* hardware_profiles)
     : impl_(std::make_unique<Impl>(registry, core, commands, events, robot_state,
-                                   configuration, providers)) {}
+                                   configuration, providers,
+                                   hardware_profiles)) {}
 
 ExtensionHost::~ExtensionHost() {
   for (auto& record : impl_->records) {
@@ -937,6 +952,7 @@ ExtensionHostResult ExtensionHost::initialize_extension(
     impl_->registry.transition(package_id, LifecycleState::failed,
                                extensions::FailureClass::configuration);
     record->lifecycle = sdk::ExtensionLifecycle::failed;
+    impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::failed);
     return ExtensionHostResult::rejected_extension;
   }
   record->lifecycle = sdk::ExtensionLifecycle::initialized;
@@ -954,6 +970,14 @@ ExtensionHostResult ExtensionHost::activate_extension(
   if (record->lifecycle != sdk::ExtensionLifecycle::initialized &&
       record->lifecycle != sdk::ExtensionLifecycle::inactive) {
     return ExtensionHostResult::rejected_lifecycle;
+  }
+  if (impl_->hardware_profiles != nullptr) {
+    const auto active_profile = impl_->hardware_profiles->active_profile();
+    if (!active_profile.has_value() ||
+        active_profile->identity.profile_id !=
+            registry_record->device_identity.hardware_profile.profile_id) {
+      return ExtensionHostResult::rejected_profile;
+    }
   }
   for (const auto& capability : active_capabilities) {
     if (!category_allows(registry_record->manifest.category, capability) ||
@@ -1003,6 +1027,7 @@ ExtensionHostResult ExtensionHost::activate_extension(
                                extensions::FailureClass::incompatible);
     authority->current = false;
     record->lifecycle = sdk::ExtensionLifecycle::failed;
+    impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::failed);
     return ExtensionHostResult::rejected_registry;
   }
   record->authority = authority;
@@ -1020,6 +1045,7 @@ ExtensionHostResult ExtensionHost::activate_extension(
     impl_->registry.transition(package_id, LifecycleState::failed,
                                extensions::FailureClass::temporary);
     record->lifecycle = sdk::ExtensionLifecycle::failed;
+    impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::failed);
     return ExtensionHostResult::rejected_extension;
   }
   record->lifecycle = sdk::ExtensionLifecycle::active;
@@ -1040,6 +1066,7 @@ ExtensionHostResult ExtensionHost::suspend_extension(
   }
   notify_suspended(record->extension);
   record->lifecycle = sdk::ExtensionLifecycle::inactive;
+  impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::inactive);
   return ExtensionHostResult::suspended;
 }
 
@@ -1065,6 +1092,7 @@ ExtensionHostResult ExtensionHost::fail_extension(
   }
   notify_suspended(record->extension);
   record->lifecycle = sdk::ExtensionLifecycle::failed;
+  impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::failed);
   return ExtensionHostResult::failed;
 }
 
@@ -1083,6 +1111,7 @@ ExtensionHostResult ExtensionHost::quarantine_extension(
   }
   notify_suspended(record->extension);
   record->lifecycle = sdk::ExtensionLifecycle::quarantined;
+  impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::quarantined);
   return ExtensionHostResult::quarantined;
 }
 
@@ -1109,6 +1138,7 @@ ExtensionHostResult ExtensionHost::recover_extension(
     return ExtensionHostResult::rejected_lifecycle;
   }
   record->lifecycle = sdk::ExtensionLifecycle::inactive;
+  impl_->refresh_inactive_context(*record, sdk::ExtensionLifecycle::inactive);
   return ExtensionHostResult::recovered;
 }
 
@@ -1123,6 +1153,7 @@ ExtensionHostResult ExtensionHost::remove_extension(
   }
   notify_suspended(record->extension);
   record->lifecycle = sdk::ExtensionLifecycle::removed;
+  record->context.reset();
   return ExtensionHostResult::removed;
 }
 
@@ -1135,8 +1166,51 @@ sdk::ExtensionLifecycle ExtensionHost::lifecycle(
 
 std::shared_ptr<const sdk::ExtensionContext> ExtensionHost::context(
     const std::string& package_id) const {
-  const auto* record = impl_->find(package_id);
-  return record == nullptr ? nullptr : record->context;
+  auto* record = impl_->find(package_id);
+  if (record == nullptr) return nullptr;
+  const auto* registry_record = impl_->registry.find(package_id);
+  if (registry_record == nullptr ||
+      registry_record->lifecycle == LifecycleState::removed) {
+    record->context.reset();
+    return nullptr;
+  }
+  if (record->lifecycle == sdk::ExtensionLifecycle::active) {
+    const bool authority_current =
+        record->authority != nullptr && record->authority->current &&
+        registry_record->lifecycle == LifecycleState::active &&
+        registry_record->authorization_generation ==
+            record->authority->registry_generation;
+    if (!authority_current) {
+      impl_->revoke(*record);
+      switch (registry_record->lifecycle) {
+        case LifecycleState::failed:
+          record->lifecycle = sdk::ExtensionLifecycle::failed;
+          break;
+        case LifecycleState::quarantined:
+          record->lifecycle = sdk::ExtensionLifecycle::quarantined;
+          break;
+        case LifecycleState::removed:
+          record->lifecycle = sdk::ExtensionLifecycle::removed;
+          record->context.reset();
+          return nullptr;
+        case LifecycleState::discovered:
+        case LifecycleState::validating:
+        case LifecycleState::installed:
+        case LifecycleState::validated:
+        case LifecycleState::inactive:
+        case LifecycleState::activating:
+        case LifecycleState::configured:
+        case LifecycleState::commissioning:
+        case LifecycleState::active:
+        case LifecycleState::degraded:
+        case LifecycleState::disabled:
+          record->lifecycle = sdk::ExtensionLifecycle::inactive;
+          break;
+      }
+      impl_->refresh_inactive_context(*record, record->lifecycle);
+    }
+  }
+  return record->context;
 }
 
 }  // namespace zie::core

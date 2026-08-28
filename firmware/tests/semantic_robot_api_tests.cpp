@@ -50,7 +50,7 @@ void register_active(ExtensionRegistry& registry,
   const RegistryAssignment assignment{owner.manifest.id,
                                       TrustClass::local_developer,
                                       ControllerIdentity::host,
-                                      "zie.test-profile"};
+                                      "zie.test-profile", {}};
   assert(registry.register_extension(owner, assignment) ==
          RegistryResult::accepted);
   assert(registry.transition(owner.manifest.id, LifecycleState::validated) ==
