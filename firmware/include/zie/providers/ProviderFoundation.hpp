@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -74,6 +76,17 @@ enum class ProviderResult {
   rejected_invalid_request,
   rejected_no_provider,
   rejected_unknown_kind,
+  priority_configured,
+  rejected_invalid_priority,
+  rejected_priority_generation,
+  rejected_generation_exhausted,
+};
+
+struct ModalityPriorityPolicy {
+  ProviderKind kind{ProviderKind::llm};
+  std::string semantic_capability;
+  std::vector<std::string> ordered_package_ids;
+  std::uint64_t revision{0};
 };
 
 enum class ProviderFailure {
@@ -114,8 +127,11 @@ class ProviderRouter {
         max_diagnostics_(max_diagnostics) {}
 
   ProviderResult add(const ProviderBinding& binding);
+  ProviderResult configure_priority(const ModalityPriorityPolicy& policy,
+                                    std::uint64_t expected_generation);
   ProviderOutcome invoke(const ProviderInvocation& invocation);
   bool available(const std::string& semantic_capability) const;
+  std::uint64_t priority_generation() const { return priority_generation_; }
   std::size_t provider_count() const { return bindings_.size(); }
 
  private:
@@ -125,6 +141,8 @@ class ProviderRouter {
   std::size_t max_attempts_{0};
   std::size_t max_diagnostics_{0};
   std::vector<ProviderBinding> bindings_;
+  std::vector<ModalityPriorityPolicy> priorities_;
+  std::uint64_t priority_generation_{0};
 };
 
 class DeterministicMockProvider final : public Provider {

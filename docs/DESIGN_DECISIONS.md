@@ -550,3 +550,22 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Protected safety remains built-in-only; asset packs remain data-only; capability
   expansion needs explicit registry validation.
 - Watchdog output is semantic only and plugin credentials are opaque owner handles.
+
+## 2026-08-28 — Final software foundation freeze candidate
+
+- Freeze one authority chain: package policy establishes eligibility; registry owns
+  identity/trust/capabilities; profile manager owns exact resolution; ExtensionHost
+  owns executable epoch/context/session issuance; HostRuntime only coordinates.
+- Keep LLM, STT, TTS, and Wake as independent modality chains with exact semantic
+  capabilities, authoritative ordered priority, bounded typed failover, and current
+  registry authorization on every attempt. A provider cannot self-promote and a
+  temporary fallback does not alter future primary eligibility.
+- Freeze VirtualRobot only as the software integration contract. It cannot satisfy a
+  physical commissioning gate or prove that an accepted command executed in hardware.
+- Freeze the future App as a consumer of public/semantic services. It cannot bypass
+  HostRuntime, registry, ExtensionHost, profile, package, or protected-safety checks.
+- Adopt the Prototype P1 commissioning progression and require separate operator/
+  physical evidence for every physical transition. Autonomous motion remains outside
+  P1 and prohibited before all later safety gates.
+- Keep all CAN/wire values and received-part-dependent pins, interfaces, dimensions,
+  loads, timing, electrical limits, and physical performance explicitly unfrozen.

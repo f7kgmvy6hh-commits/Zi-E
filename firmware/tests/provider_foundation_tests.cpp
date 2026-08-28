@@ -154,6 +154,56 @@ void run_provider_foundation_tests() {
   assert(std::get<WakeResponse>(router.invoke({"provider.wake.detect", WakeRequest{"wake.input"}}).response)
              .detected);
 
+  ProviderRouter prioritized(registry, 5, 3, 5);
+  auto preferred = std::make_shared<DeterministicMockProvider>(
+      ProviderKind::llm,
+      std::deque<ProviderCall>{
+          {ProviderCallStatus::temporary_failure, LlmResponse{}},
+          {ProviderCallStatus::success, LlmResponse{"primary-restored"}}});
+  auto secondary = std::make_shared<DeterministicMockProvider>(
+      ProviderKind::llm,
+      std::deque<ProviderCall>{{ProviderCallStatus::success,
+                                LlmResponse{"bounded-fallback"}}});
+  auto prioritized_stt = std::make_shared<DeterministicMockProvider>(
+      ProviderKind::stt, std::deque<ProviderCall>{});
+  assert(prioritized.add(binding(llm_bad, preferred, "provider.llm.chat")) ==
+         ProviderResult::registered);
+  assert(prioritized.add(binding(llm_good, secondary, "provider.llm.chat")) ==
+         ProviderResult::registered);
+  assert(prioritized.add(
+             binding(stt, prioritized_stt, "provider.stt.transcribe")) ==
+         ProviderResult::registered);
+  assert(prioritized.configure_priority(
+             {ProviderKind::llm, "provider.llm.chat",
+              {llm_bad.manifest.id, llm_good.manifest.id}, 1},
+             0) == ProviderResult::priority_configured);
+  assert(prioritized.priority_generation() == 1);
+  assert(prioritized.configure_priority(
+             {ProviderKind::stt, "provider.stt.transcribe",
+              {stt.manifest.id}, 1},
+             0) == ProviderResult::rejected_priority_generation);
+  assert(prioritized.configure_priority(
+             {ProviderKind::stt, "provider.stt.transcribe",
+              {stt.manifest.id}, 1},
+             1) == ProviderResult::priority_configured);
+  assert(prioritized.configure_priority(
+             {ProviderKind::llm, "provider.stt.transcribe",
+              {stt.manifest.id}, 2},
+             2) == ProviderResult::rejected_invalid_priority);
+  assert(prioritized.configure_priority(
+             {static_cast<ProviderKind>(255), "provider.llm.chat",
+              {llm_bad.manifest.id}, 2},
+             2) == ProviderResult::rejected_invalid_priority);
+  const auto fallback_result = prioritized.invoke(
+      {"provider.llm.chat", LlmRequest{"first"}});
+  assert(fallback_result.result == ProviderResult::succeeded);
+  assert(fallback_result.provider_package_id == llm_good.manifest.id);
+  const auto primary_retry = prioritized.invoke(
+      {"provider.llm.chat", LlmRequest{"second"}});
+  assert(primary_retry.result == ProviderResult::succeeded);
+  assert(primary_retry.provider_package_id == llm_bad.manifest.id);
+  assert(preferred->call_count() == 2 && secondary->call_count() == 1);
+
   ProviderRouter bounded(registry, 2, 1, 2);
   auto first_failure = std::make_shared<DeterministicMockProvider>(
       ProviderKind::llm, std::deque<ProviderCall>{{

@@ -101,3 +101,26 @@ After laptop-based behavior/database is stable:
 
 ## Immediate pre-purchase risk-retirement step
 Run the minimum-parts bench campaign in `PRE_PURCHASE_GATE.md` before ordering batches. Prioritize actuator commissioning/thermal tests, cliff surface tests, head cable loop, wheel traction/braking, battery transients, magnet pull/thermal, and belly optical coupons.
+
+## 2026-08-28 handoff lanes
+
+### Software foundation complete / frozen candidate
+
+Authority ownership, semantic APIs, extension/package lifecycle, device/profile
+identity, modality-specific providers, presentation packs, runtime/recovery,
+update/security policy, VirtualRobot integration, and protected safety separation are
+ready for repository review and commit.
+
+### Blocked on verified physical hardware
+
+Phase 2B2 wire/CAN decisions, production drivers, pins/connectors, measured timing,
+safe-stop performance, sensor behavior, actuator identity/load/thermal limits, battery
+behavior, cable topology, and final received-part CAD interfaces remain
+`WAITING_FOR_VERIFIED_INPUTS` / `VERIFY_ON_ARRIVAL`.
+
+### Future App work
+
+After this stage, design the App only against the frozen public/semantic services for
+readiness, explicit profile selection, package/plugin management, provider priorities,
+packs, semantic commands, configuration, logs/events/diagnostics, commissioning, and
+VirtualRobot/real-target selection. No App code is part of this stage.

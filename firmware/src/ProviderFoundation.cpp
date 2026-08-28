@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <limits>
 #include <type_traits>
 
 namespace zie::providers {
@@ -144,6 +145,56 @@ ProviderResult ProviderRouter::add(const ProviderBinding& binding) {
   return ProviderResult::registered;
 }
 
+ProviderResult ProviderRouter::configure_priority(
+    const ModalityPriorityPolicy& policy,
+    const std::uint64_t expected_generation) {
+  if (expected_generation != priority_generation_) {
+    return ProviderResult::rejected_priority_generation;
+  }
+  if (!known(policy.kind) || policy.semantic_capability.empty() ||
+      policy.semantic_capability.rfind(prefix(policy.kind), 0) != 0 ||
+      policy.ordered_package_ids.empty() || policy.revision == 0) {
+    return ProviderResult::rejected_invalid_priority;
+  }
+  std::vector<std::string> seen;
+  for (const auto& package_id : policy.ordered_package_ids) {
+    if (package_id.empty() ||
+        std::find(seen.begin(), seen.end(), package_id) != seen.end()) {
+      return ProviderResult::rejected_invalid_priority;
+    }
+    const auto binding = std::find_if(
+        bindings_.begin(), bindings_.end(),
+        [&policy, &package_id](const ProviderBinding& value) {
+          return value.identity.package_id == package_id &&
+                 value.identity.semantic_capability ==
+                     policy.semantic_capability &&
+                 value.provider && value.provider->kind() == policy.kind;
+        });
+    if (binding == bindings_.end()) {
+      return ProviderResult::rejected_invalid_priority;
+    }
+    seen.push_back(package_id);
+  }
+  if (priority_generation_ == std::numeric_limits<std::uint64_t>::max()) {
+    return ProviderResult::rejected_generation_exhausted;
+  }
+  const auto existing = std::find_if(
+      priorities_.begin(), priorities_.end(), [&policy](const auto& value) {
+        return value.kind == policy.kind &&
+               value.semantic_capability == policy.semantic_capability;
+      });
+  if (existing == priorities_.end()) {
+    priorities_.push_back(policy);
+  } else {
+    if (policy.revision <= existing->revision) {
+      return ProviderResult::rejected_invalid_priority;
+    }
+    *existing = policy;
+  }
+  ++priority_generation_;
+  return ProviderResult::priority_configured;
+}
+
 bool ProviderRouter::available(const std::string& semantic_capability) const {
   return std::any_of(bindings_.begin(), bindings_.end(),
                      [this, &semantic_capability](const ProviderBinding& binding) {
@@ -185,7 +236,29 @@ ProviderOutcome ProviderRouter::invoke(const ProviderInvocation& invocation) {
                                    binding.identity.semantic_capability, failure,
                                    called});
   };
-  for (const auto& binding : bindings_) {
+  std::vector<const ProviderBinding*> ordered;
+  const auto priority = std::find_if(
+      priorities_.begin(), priorities_.end(),
+      [&invocation, kind](const ModalityPriorityPolicy& value) {
+        return value.kind == kind &&
+               value.semantic_capability == invocation.requested_capability;
+      });
+  if (priority != priorities_.end()) {
+    for (const auto& package_id : priority->ordered_package_ids) {
+      const auto binding = std::find_if(
+          bindings_.begin(), bindings_.end(),
+          [&package_id, &invocation](const ProviderBinding& value) {
+            return value.identity.package_id == package_id &&
+                   value.identity.semantic_capability ==
+                       invocation.requested_capability;
+          });
+      if (binding != bindings_.end()) ordered.push_back(&*binding);
+    }
+  } else {
+    for (const auto& binding : bindings_) ordered.push_back(&binding);
+  }
+  for (const auto* binding_ptr : ordered) {
+    const auto& binding = *binding_ptr;
     if (binding.provider->kind() != kind) continue;
     matched = true;
     if (binding.identity.semantic_capability !=

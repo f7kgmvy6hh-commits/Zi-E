@@ -258,3 +258,14 @@ safe stop, scheduling, transport, drivers, and commissioning remain deferred.
 
 Concepts only; no external code copied. Crypto, storage, networking, installation,
 and production TUF/Uptane metadata remain deferred.
+
+### Final integration/provider recovery delta — 2026-08-28
+
+| Problem / comparable failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [Home Assistant core issue #174990](https://github.com/home-assistant/core/issues/174990): temporary service unavailability leaves an integration unavailable until reload | Temporary service failure must not silently become permanent provider state | Fail over only for the current bounded invocation; preserve authoritative priority and reconsider the primary on the next call after live authorization/health checks | Deterministic primary-temporary/fallback/primary-restored test. Concept only; no code copied. **ADAPT** |
+| [Home Assistant core issue #157017](https://github.com/home-assistant/core/issues/157017): multiple integrations can remain unavailable due to retained coordinator state | A retained service/session object can outlive useful health and block recovery | SDK/service handles remain epoch-bound; provider eligibility is rechecked per attempt; restart/recovery issues fresh authority rather than reviving cached state | Retained-context, authorization-loss, shutdown/recovery, and fresh-epoch tests. **ADAPT** |
+| [ros2_control lifecycle guidance](https://github.com/ros-controls/ros2_control/blob/master/controller_manager/doc/userdoc.rst) and issues #2079/#3444 | Restarted hardware must traverse lifecycle again; failed/inactive hardware can otherwise leave dependents active | Exact-device re-resolution, reverse revocation, required-failure dominance, and explicit reactivation | Host runtime recovery/revocation tests. Previously harvested; reconfirmed for final audit. **ADAPT** |
+
+No external code, CAD, or configuration was imported. Network-provider behavior,
+credentials, and production health probing remain future work.

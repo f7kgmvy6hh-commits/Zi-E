@@ -1,11 +1,18 @@
 # Current State — 2026-08-28
 
 ## Phase
-Prototype architecture and Project/CAD v0.3 package are prepared. Phase 2A now has a
+Software Foundation Freeze candidate and Prototype P1 Build-Ready package are
+`READY_TO_COMMIT`. Prototype architecture and Project/CAD v0.3 are prepared. Phase 2A has a
 transport-independent motion command lifecycle foundation plus a Phase 2B1
 controller-session/liveness scaffold. Bounded wire encoding, transport binding,
 production bindings, and bench commissioning remain next. Physical risk-retirement
 bench rigs are still required before bulk component purchase.
+
+The integrated host authority chain, end-to-end VirtualRobot contract, independent
+LLM/STT/TTS/Wake priority policy, App handoff boundary, and commissioning gates are
+documented in `SOFTWARE_ARCHITECTURE_FREEZE_CANDIDATE.md`,
+`FINAL_SOFTWARE_INTEGRATION_AUDIT.md`, and `PROTOTYPE_P1_BUILD_READY.md`. This status
+does not claim hardware commissioning or freeze any unverified physical value.
 
 ## What is substantially defined
 - A bounded in-memory package-policy foundation separates package/version/content
@@ -73,6 +80,9 @@ bench rigs are still required before bulk component purchase.
   package/device/category/capability authorization. Ordered failover and typed
   diagnostic history are bounded, authorization is rechecked per attempt, and mocks
   cover malformed, throwing, revoked, mismatched, and exhausted providers.
+- Provider priority is explicit, monotonic, authoritative configuration per exact
+  modality/capability chain. Providers cannot self-promote; each bounded attempt
+  rechecks registry authority, and temporary fallback never locks out the primary.
 - A bounded data-only presentation catalog validates and selects registry-owned face
   and sound packs per context. Declaration/validation is pack-global while activation
   is context-authoritative, supports shared selection, purges every affected selection
@@ -136,3 +146,13 @@ timing, message inventory, priority, queue-latency, fragmentation, and security 
 are verified. Complete those inputs and rerun priority-aware utilization/response-time
 analysis before freezing serialization, integrity checks, or CAN/TWAI framing.
 Production driver binding remains later work.
+
+## Final integration validation
+
+- Fresh MSYS2 UCRT64 GNU g++ 16.1.0 C++17 configure/build: passed.
+- Full CTest: 1/1 passed.
+- Separate fresh `-Wall -Wextra -Wpedantic -Wswitch-enum` configure/build: passed
+  without warnings.
+- Strict CTest: 1/1 passed.
+- `git diff --check`: passed (Git emitted only line-ending conversion notices).
+- Verified base/unchanged HEAD: `da5143b83bacf33a5afcf99ab98ab17b2c694147`.

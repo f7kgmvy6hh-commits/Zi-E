@@ -49,3 +49,17 @@ Timeouts, concurrency, cancellation, rate limits, health scoring, observability 
 provider-specific configuration, authentication, real media buffers, and external
 integrations remain future stages. No physical or autonomous-motion safety claim is
 made by this foundation.
+
+## Final integration priority policy — 2026-08-28
+
+Provider selection supports host/operator-authored, monotonic priority policies for
+each exact semantic capability within each independent LLM, STT, TTS, or Wake
+modality. Every listed package must already have a matching registered binding;
+duplicates, cross-modality entries, unknown kinds, missing packages, and stale policy
+generations fail closed. Provider registration and output cannot change priority.
+
+Invocation reauthorizes every attempt against the registry. A temporary failure
+affects only that invocation: it does not mutate policy or permanently lock the router
+to a fallback. The next invocation starts at the configured primary and calls it only
+if its exact current identity/category/capability/lifecycle authorization remains
+valid. Tests are deterministic and contain no network, credentials, or vendor SDK.
