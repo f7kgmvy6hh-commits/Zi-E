@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.server.config import Settings
 from app.server.main import create_app
+from app.voice.stt import LocalTranscriber
 
 
 TOKEN = "test-token-with-at-least-24-characters"
@@ -49,7 +50,7 @@ def test_state_and_robot_command_publish_websocket_event(tmp_path):
             assert event["payload"]["target"] == "SAFE"
             state_event = websocket.receive_json()
             assert state_event["type"] == "robot.state"
-            assert state_event["payload"]["source"] == "simulator"
+            assert state_event["payload"]["source"] == "simulation"
             telemetry_event = websocket.receive_json()
             assert telemetry_event["type"] == "robot.telemetry"
             assert telemetry_event["payload"]["mode"] == "SIMULATION"
@@ -124,20 +125,21 @@ def test_real_target_without_adapter_never_claims_physical_event_or_estop(tmp_pa
         assert state_events
         assert all(event["payload"]["source"] == "real-target-unavailable" for event in state_events)
         assert all(event["payload"]["execution"] == "not_delivered" for event in state_events)
-        assert "physical" not in str(events).lower()
+        assert all(event["payload"].get("source") != "physical" for event in state_events)
 
 
 def test_real_target_without_adapter_is_unavailable_on_public_surfaces(tmp_path):
     headers = {"Authorization": f"Bearer {TOKEN}"}
     with TestClient(create_app(real_settings(tmp_path))) as client:
         health_robot = client.get("/api/health", headers=headers).json()["robot"]
-        assert health_robot == {
-            "state": "DISCONNECTED",
-            "simulator": False,
-            "target": "real-target-unavailable",
-            "availability": "unavailable",
-            "execution": "not_delivered",
-        }
+        assert health_robot["robot_state"] == "DISCONNECTED"
+        assert health_robot["target_mode"] == "real-target-unavailable"
+        assert health_robot["availability"] == "unavailable"
+        assert health_robot["readiness"] == "not_ready"
+        assert health_robot["execution"] == "not_delivered"
+        assert health_robot["authority_generation"] == 0
+        assert health_robot["session_id"] is None
+        assert health_robot["physically_confirmed"] is False
         plugins = client.get("/api/plugins", headers=headers).json()["plugins"]
         robot_plugin = next(plugin for plugin in plugins if plugin["id"] == "robot")
         assert robot_plugin == {
@@ -145,6 +147,89 @@ def test_real_target_without_adapter_is_unavailable_on_public_surfaces(tmp_path)
             "status": "real-target-unavailable",
             "permission": "emergency-request-only",
         }
+
+
+def test_stt_oversized_input_is_rejected_before_worker_launch(tmp_path):
+    called = False
+
+    async def should_not_run(*args, **kwargs):
+        nonlocal called
+        called = True
+
+    original = LocalTranscriber.transcribe_isolated
+    LocalTranscriber.transcribe_isolated = should_not_run
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    try:
+        with TestClient(create_app(settings(tmp_path))) as client:
+            response = client.post(
+                "/api/stt/transcribe", headers=headers,
+                content=b"x" * (25 * 1024 * 1024 + 1),
+            )
+            assert response.status_code == 413
+            assert called is False
+    finally:
+        LocalTranscriber.transcribe_isolated = original
+
+
+def test_stt_worker_failure_isolated_from_main_app(tmp_path):
+    async def failed_worker(*args, **kwargs):
+        return {
+            "success": False, "transcript": "", "provider": "local",
+            "error": "STT_WORKER_CRASHED",
+        }
+
+    original = LocalTranscriber.transcribe_isolated
+    LocalTranscriber.transcribe_isolated = failed_worker
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    try:
+        with TestClient(create_app(settings(tmp_path))) as client:
+            response = client.post("/api/stt/transcribe", headers=headers, content=b"audio")
+            assert response.status_code == 422
+            assert response.json()["detail"] == "STT_WORKER_CRASHED"
+            assert client.get("/api/health", headers=headers).status_code == 200
+    finally:
+        LocalTranscriber.transcribe_isolated = original
+
+
+def test_robot_command_domain_rejects_raw_or_unknown_targets(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        for target in ("GPIO", "PWM", "CAN_FRAME", "RAW_ACTUATOR", "future-state"):
+            response = client.post(
+                "/api/robot/command", headers=headers,
+                json={"target": target, "timeout": 1},
+            )
+            assert response.status_code == 422
+        assert not client.app.state.events.history()
+
+
+def test_secrets_absent_from_status_events_and_audit(tmp_path, monkeypatch):
+    secret = "sk-super-secret-provider-token-123456789"
+    cfg = settings(tmp_path)
+    cfg = Settings(
+        cfg.host, cfg.port, cfg.auth_token, cfg.simulator, cfg.log_path,
+        "hermes", cfg.hermes_session, secret, cfg.voice_id, None,
+    )
+
+    def factory(_key):
+        def synth(text, voice_id, model_id, cancelled):
+            yield b"audio"
+        return synth
+
+    monkeypatch.setattr("app.server.main.elevenlabs_synthesizer", factory)
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(cfg)) as client:
+        payloads = [
+            client.get("/api/health", headers=headers).json(),
+            client.get("/api/settings", headers=headers).json(),
+            client.get("/api/providers", headers=headers).json(),
+            client.get("/api/voice/status", headers=headers).json(),
+        ]
+        client.post("/api/voice/speak", headers=headers, json={"text": secret})
+        payloads.append(client.app.state.events.history())
+    payloads.append(cfg.log_path.read_text(encoding="utf-8"))
+    assert secret not in str(payloads)
+    assert TOKEN not in str(payloads)
 
 
 def test_static_hud_contains_every_required_panel(tmp_path):

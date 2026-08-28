@@ -104,26 +104,48 @@ Run the minimum-parts bench campaign in `PRE_PURCHASE_GATE.md` before ordering b
 
 ## 2026-08-28 handoff lanes
 
-### Software foundation complete / frozen candidate
+### SOFTWARE COMPLETE
 
 Authority ownership, semantic APIs, extension/package lifecycle, device/profile
 identity, modality-specific providers, presentation packs, runtime/recovery,
 update/security policy, VirtualRobot integration, and protected safety separation are
-ready for repository review and commit.
+remain frozen and repository-authoritative. The App command-center software foundation
+now adds honest readiness/status APIs, a semantic HostRuntime adapter contract,
+closed simulator/unavailable behavior, modality status views, and adversarial tests.
 
-### Blocked on verified physical hardware
+### SOFTWARE FUTURE WORK
+
+Implement the privileged real-target adapter against HostRuntime/public semantic
+services, including process/transport authentication, capability-scoped profile,
+package/plugin, provider, configuration and pack operations, authoritative telemetry,
+and confirmed command/E-stop feedback. Add no direct hardware path to the App.
+
+### WAITING_FOR_VERIFIED_INPUTS
 
 Phase 2B2 wire/CAN decisions, production drivers, pins/connectors, measured timing,
 safe-stop performance, sensor behavior, actuator identity/load/thermal limits, battery
 behavior, cable topology, and final received-part CAD interfaces remain
 `WAITING_FOR_VERIFIED_INPUTS` / `VERIFY_ON_ARRIVAL`.
 
-### Current App prototype and future real-target work
+### VERIFY_ON_ARRIVAL
+
+Received-part identity, dimensions, interfaces, pins, connectors, cable lengths,
+measured loads/current/thermal behavior, sensor performance, battery behavior, and
+CAD-dependent clearances remain arrival worksheets, not frozen facts.
+
+### PHYSICAL COMMISSIONING REQUIRED
+
+Logic-only bring-up, controller identity/session, sensors, one bounded actuator at a
+time, direction/range/feedback, physical safe stop, constrained motion, and operator
+evidence remain mandatory before supervised or autonomous physical motion.
+
+### Current App foundation
 
 The loopback command-center/HUD prototype now exists and is validated only for its
 simulator/operator surface. Its eventual real target must bind only to frozen
 HostRuntime/public semantic services for readiness, explicit profile selection,
 package/plugin management, provider priorities, packs, semantic commands,
 configuration, logs/events/diagnostics, commissioning, and VirtualRobot/real-target
-selection. Until that adapter exists, App state is not physical authority or execution
-evidence.
+selection. The public status/contract portion is complete; the privileged real-target
+implementation remains future work. Until it exists, App state is not physical
+authority or execution evidence.

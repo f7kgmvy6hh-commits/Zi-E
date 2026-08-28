@@ -19,3 +19,22 @@ ordinary transcription or speech synthesis.
 Local Whisper runs only in `app.voice.stt_worker`, with a bounded parent wait and a
 strict JSON result contract. Native crash, timeout, launch failure, and malformed
 output fail closed without taking down the FastAPI process.
+
+`GET /api/providers` reports four independent ordered chains with exact semantic
+capabilities. `GET /api/voice/status` reports STT, TTS, and Wake status without keys,
+tokens, or provider output. Configuration is not authorization: until HostRuntime
+provides live authority, App entries report `authorization: not_verified`.
+
+The currently executable Hermes, ElevenLabs, Zi-Nanami, and local-Whisper adapters are
+explicitly labeled `scope: app-local-non-robot`. They may provide conversational
+features but grant no robot/profile/plugin/configuration/pack capability. Existing TTS
+tries its configured cloud adapter anew on each request and uses the configured local
+fallback only on failure; this is a non-authoritative App-local path, not the frozen
+HostRuntime provider router. A future privileged integration must perform live
+HostRuntime authorization/health checks before invocation.
+
+Deterministic contract tests prove bounded exact-modality fallback and that a
+temporarily unhealthy primary is retried on the next request after health/auth
+recheck; fallback never rewrites priority. No live OpenAI STT/TTS call or credential
+was added. Local Whisper crash, timeout, cancellation, malformed/oversized output,
+provider impersonation, empty input, and oversized HTTP input fail closed.

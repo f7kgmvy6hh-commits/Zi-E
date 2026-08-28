@@ -24,15 +24,17 @@
   Python compileall, PowerShell parsing, and `git diff --check` passed.
 
 ## Phase
-Zi-E V1 now has an uncommitted local command-center implementation candidate under
-`app/`: loopback-only authenticated FastAPI, bounded WebSocket events, central state,
+Zi-E V1 now has a committed local command-center foundation under `app/` plus the
+current App-completion candidate: loopback-only authenticated FastAPI, bounded
+WebSocket events, central state,
 redacted JSONL audit logging, real host metrics, a responsive graphite/cyan HUD,
 fail-closed semantic robot state/dead-man/E-stop handling, modular cloud/command voice,
 and a thin persistent-session Hermes executable contract. It changes neither Hermes
-nor firmware and adds no physical robot transport. See `COMMAND_CENTER.md`.
+nor firmware and adds no physical robot transport. See `COMMAND_CENTER.md` and
+`APP_HOSTRUNTIME_ADAPTER_CONTRACT.md`.
 
-Software Foundation Freeze candidate and Prototype P1 Build-Ready package are
-`READY_TO_COMMIT`. Prototype architecture and Project/CAD v0.3 are prepared. Phase 2A has a
+Software Foundation Freeze and Prototype P1 Build-Ready package remain `READY`.
+Prototype architecture and Project/CAD v0.3 are prepared. Phase 2A has a
 transport-independent motion command lifecycle foundation plus a Phase 2B1
 controller-session/liveness scaffold. Bounded wire encoding, transport binding,
 production bindings, and bench commissioning remain next. Physical risk-retirement
@@ -243,6 +245,30 @@ Production driver binding remains later work.
   provide commissioning evidence.
 - Full application suite passed: 38 tests. The fallback runner passed 28 tests;
   compileall and `git diff --check` passed.
+
+## App command-center software completion — 2026-08-28
+
+- Added a narrow semantic `HostRuntimeAdapter` contract with closed simulation,
+  unavailable-real, and reserved future-real target modes. Requests and responses
+  distinguish requested/accepted/rejected/confirmed, delivery, physical confirmation,
+  authority generation, and session identity.
+- The App rechecks adapter mode/generation/session across commands and rejects stale
+  authority before publishing execution. Configuration cannot create real authority;
+  restart begins `DISCONNECTED` without a real adapter.
+- Added honest authenticated status surfaces for runtime/readiness, extensions,
+  independent LLM/STT/TTS/Wake provider chains, voice, hardware profile,
+  configuration, presentation, and diagnostics. Unimplemented operations report
+  `not_exposed`, `not_implemented`, or `unavailable`; no mutation/raw-control endpoint
+  was added.
+- Provider status is ordered and capability-specific but reports authorization as
+  `not_verified`; the App does not impersonate frozen HostRuntime authority.
+- Independent adversarial re-review found no remaining concrete raw-control,
+  fabricated physical state, duplicate authority, stale revival, provider widening,
+  secret leakage, simulator/real confusion, optional-service safety masking,
+  documentation overclaim, or commissioning-claim issue. Production adapter
+  authentication/transport/live authorization remains explicitly deferred.
+- Validation: full App pytest passed 63 tests; fallback regression runner passed 35;
+  Python compileall, PowerShell parsing, and `git diff --check` passed.
 
 ## Final application integration checkpoint — 2026-08-28
 

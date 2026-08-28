@@ -133,3 +133,11 @@ This App has no real-robot HostRuntime adapter yet. Its Python robot state is a
 simulation/operator guard only; it cannot establish motion authority or claim physical
 execution. A real target must consume HostRuntime/public semantic services and remains
 unavailable until that adapter and physical commissioning exist.
+
+The future integration boundary is the narrow semantic `HostRuntimeAdapter`. It
+reports copied readiness, target mode, session, authority generation, state, delivery,
+and confirmation. The App compares generation/session around each request and cannot
+turn configuration into authority. Only authoritative runtime feedback may mark a
+future real command physically confirmed. Profile, extension, provider,
+configuration, and pack operations remain capability-scoped; no raw-control surface
+exists. See `APP_HOSTRUNTIME_ADAPTER_CONTRACT.md`.

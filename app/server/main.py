@@ -9,7 +9,16 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app.robot.state_machine import RobotController
+from app.robot.state_machine import RobotController, RobotState
+from app.runtime.adapter import (
+    HostRuntimeAdapter,
+    RequestPhase,
+    SemanticCommandRequest,
+    SimulatorRuntimeAdapter,
+    TargetMode,
+    UnavailableRuntimeAdapter,
+)
+from app.providers.policy import app_provider_status
 from app.integrations.hermes import HermesBridge, route_message
 from app.security.audit import AuditLog
 from app.security.auth import BearerAuth
@@ -23,7 +32,7 @@ from app.voice.stt import LocalTranscriber
 
 
 class RobotCommandRequest(BaseModel):
-    target: str
+    target: RobotState
     timeout: float = Field(gt=0, le=30)
 
 
@@ -39,12 +48,30 @@ class SpeakRequest(BaseModel):
     text: str = Field(min_length=1, max_length=10000)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    runtime_adapter: HostRuntimeAdapter | None = None,
+) -> FastAPI:
     cfg = settings or load_settings()
     auth = BearerAuth(cfg.auth_token)
     events = EventBus()
-    state = StateCore(cfg.simulator)
     robot = RobotController(simulator=cfg.simulator)
+    adapter = runtime_adapter or (
+        SimulatorRuntimeAdapter(robot) if cfg.simulator else UnavailableRuntimeAdapter(robot)
+    )
+    initial_runtime = adapter.status()
+    if cfg.simulator and initial_runtime.target_mode is not TargetMode.SIMULATION:
+        raise ValueError("simulator configuration requires the simulation adapter")
+    if not cfg.simulator and initial_runtime.target_mode is TargetMode.SIMULATION:
+        raise ValueError("non-simulator configuration cannot use simulation authority")
+    state = StateCore(cfg.simulator)
+    state.update("robot", {
+        "state": initial_runtime.robot_state,
+        "target_mode": initial_runtime.target_mode.value,
+        "authority": "available" if initial_runtime.authority_generation > 0 else "unavailable",
+        "execution": initial_runtime.execution,
+        "physically_confirmed": initial_runtime.physically_confirmed,
+    })
     audit = AuditLog(cfg.log_path)
     voice = VoiceService(
         cfg.voice_id,
@@ -53,16 +80,86 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         cfg.elevenlabs_model,
     )
     transcriber = LocalTranscriber()
-    robot_source = "simulator" if cfg.simulator else "real-target-unavailable"
+
+    def runtime_status():
+        return adapter.status()
+
+    def real_runtime_ready(current) -> bool:
+        return (
+            current.target_mode is TargetMode.FUTURE_REAL_TARGET
+            and current.readiness == "ready"
+            and current.availability == "available"
+            and current.authority_generation > 0
+            and bool(current.session_id)
+        )
+
+    def response_is_consistent(result, before, after, *, allow_requested: bool = False) -> bool:
+        if (
+            result.authority_generation != after.authority_generation
+            or result.target_mode is not after.target_mode
+            or before.authority_generation != after.authority_generation
+            or before.session_id != after.session_id
+        ):
+            return False
+        valid_outcome = {
+            RequestPhase.REQUESTED: allow_requested and not result.delivered and not result.physically_confirmed,
+            RequestPhase.ACCEPTED: result.delivered and not result.physically_confirmed,
+            RequestPhase.REJECTED: not result.delivered and not result.physically_confirmed,
+            RequestPhase.CONFIRMED: (
+                result.target_mode is TargetMode.FUTURE_REAL_TARGET
+                and result.delivered
+                and result.physically_confirmed
+            ),
+        }[result.phase]
+        if not valid_outcome:
+            return False
+        if result.target_mode is TargetMode.REAL_TARGET_UNAVAILABLE:
+            return not result.delivered and not result.physically_confirmed
+        if result.target_mode is TargetMode.SIMULATION:
+            return not result.physically_confirmed
+        return True
+
+    def response_execution(result) -> str:
+        if result.physically_confirmed:
+            return "confirmed"
+        if result.target_mode is TargetMode.SIMULATION and result.delivered:
+            return "simulated"
+        if result.delivered:
+            return "delivered_unconfirmed"
+        return "not_delivered"
 
     async def deadman_loop():
         while True:
             await asyncio.sleep(0.05)
-            result = robot.poll()
+            before = runtime_status()
+            result = adapter.poll()
             if result:
-                state.update("robot", {"state": robot.state.value, "last_command": result.as_dict()})
-                await events.publish("robot.deadman", result.as_dict())
-                audit.write("robot.deadman", command=result.as_dict())
+                current = runtime_status()
+                if (
+                    not response_is_consistent(result, before, current)
+                    or (
+                        current.target_mode is TargetMode.FUTURE_REAL_TARGET
+                        and not real_runtime_ready(current)
+                    )
+                ):
+                    state.update("robot", {
+                        "state": "DISCONNECTED",
+                        "authority": "unavailable",
+                        "execution": "not_delivered",
+                        "physically_confirmed": False,
+                    })
+                    await events.publish("runtime.feedback_rejected", {
+                        "reason": "stale_or_inconsistent_authority",
+                        "source": current.target_mode.value,
+                    })
+                    continue
+                state.update("robot", {
+                    "state": current.robot_state, "last_command": result.public(),
+                    "execution": response_execution(result),
+                    "physically_confirmed": result.physically_confirmed,
+                })
+                await events.publish("robot.deadman", result.public())
+                audit.write("robot.deadman", command=result.public())
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -79,6 +176,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.events = events
     app.state.core = state
     app.state.robot = robot
+    app.state.runtime_adapter = adapter
     app.mount("/hud", StaticFiles(directory=Path(__file__).parents[1] / "hud"), name="hud-assets")
 
     def require_auth(authorization: str | None = Header(default=None)):
@@ -91,8 +189,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health", dependencies=[Depends(require_auth)])
     def health():
+        current = runtime_status()
+        providers = app_provider_status(cfg, transcriber.status())
+        robot_ready = (
+            current.target_mode is TargetMode.SIMULATION
+            or real_runtime_ready(current)
+        )
         return {
-            "status": "ok",
+            "status": "ok" if robot_ready else "blocked",
+            "readiness": {
+                "app": "ready",
+                "required_robot": "ready" if robot_ready else "unavailable",
+                "overall": "ready" if robot_ready else "blocked",
+            },
             "system": system_metrics(),
             "simulator": cfg.simulator,
             "hermes": {"configured": bool(cfg.hermes_command), "session": cfg.hermes_session},
@@ -103,13 +212,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "configured": bool(cfg.elevenlabs_api_key or cfg.voice_fallback_command),
             },
             "stt": {"provider": "local", "model": transcriber.model_name, "status": transcriber.status()},
-            "robot": {
-                "state": robot.state.value,
-                "simulator": cfg.simulator,
-                "target": robot_source,
-                "availability": "available" if cfg.simulator else "unavailable",
-                "execution": "simulated" if cfg.simulator else "not_delivered",
-            },
+            "robot": current.public(),
+            "providers": providers,
         }
 
     @app.get("/api/state", dependencies=[Depends(require_auth)])
@@ -125,25 +229,88 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "voice_fallback_configured": bool(cfg.voice_fallback_command),
             "hermes_configured": bool(cfg.hermes_command),
             "hermes_session": cfg.hermes_session,
+            "provider_priority": app_provider_status(cfg, transcriber.status()),
+        }
+
+    @app.get("/api/runtime", dependencies=[Depends(require_auth)])
+    def public_runtime():
+        return runtime_status().public()
+
+    @app.get("/api/providers", dependencies=[Depends(require_auth)])
+    def providers():
+        return {"modalities": app_provider_status(cfg, transcriber.status())}
+
+    @app.get("/api/voice/status", dependencies=[Depends(require_auth)])
+    def voice_status():
+        providers = app_provider_status(cfg, transcriber.status())
+        return {
+            "stt": {"state": transcriber.status(), "chain": providers["stt"]},
+            "tts": {
+                "state": "configured" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable",
+                "muted": state.snapshot()["voice"]["muted"],
+                "speaking": state.snapshot()["voice"]["speaking"],
+                "chain": providers["tts"],
+            },
+            "wake": {"state": "unavailable", "chain": providers["wake"]},
+        }
+
+    @app.get("/api/hardware-profile", dependencies=[Depends(require_auth)])
+    def hardware_profile():
+        current = runtime_status()
+        return {
+            "status": "unavailable" if current.target_mode is TargetMode.REAL_TARGET_UNAVAILABLE else "not_exposed",
+            "profile_id": None,
+            "resolution_generation": None,
+            "device_rebinding": "explicit-only",
+        }
+
+    @app.get("/api/configuration", dependencies=[Depends(require_auth)])
+    def configuration():
+        return {"status": "not_exposed", "generation": None, "mutable": False}
+
+    @app.get("/api/presentation", dependencies=[Depends(require_auth)])
+    def presentation():
+        return {"status": "not_exposed", "context": None, "face_pack": None, "sound_pack": None}
+
+    @app.get("/api/diagnostics", dependencies=[Depends(require_auth)])
+    def diagnostics():
+        current = runtime_status()
+        return {
+            "runtime": current.public(),
+            "event_history_count": len(events.history()),
+            "persistence": "not_implemented",
+            "physical_commissioning": "required",
         }
 
     @app.get("/api/plugins", dependencies=[Depends(require_auth)])
     def plugins():
+        current = runtime_status()
+        command_ready = (
+            current.target_mode is TargetMode.SIMULATION
+            or real_runtime_ready(current)
+        )
         return {
             "plugins": [
-                {"id": "chat", "status": "available", "permission": "read-write"},
-                {"id": "task", "status": "available", "permission": "read"},
+                {"id": "chat", "status": "available" if cfg.hermes_command else "unavailable", "permission": "invoke" if cfg.hermes_command else "none"},
+                {"id": "task", "status": "presentation-only", "permission": "none"},
                 {
                     "id": "robot",
-                    "status": "simulation" if cfg.simulator else "real-target-unavailable",
-                    "permission": "safe-command" if cfg.simulator else "emergency-request-only",
+                    "status": (
+                        current.target_mode.value if command_ready
+                        else "real-target-unavailable"
+                    ),
+                    "permission": "semantic-command" if command_ready else "emergency-request-only",
                 },
                 {"id": "voice", "status": "available" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable", "permission": "speak"},
                 {"id": "system", "status": "available", "permission": "read"},
-                {"id": "browser", "status": "available", "permission": "read"},
-                {"id": "memory", "status": "available", "permission": "read"},
+                {"id": "browser", "status": "presentation-only", "permission": "none"},
+                {"id": "memory", "status": "not_implemented", "permission": "none"},
             ]
         }
+
+    @app.get("/api/extensions", dependencies=[Depends(require_auth)])
+    def extensions():
+        return plugins()
 
     @app.post("/api/chat", dependencies=[Depends(require_auth)])
     async def chat(request: ChatRequest):
@@ -221,43 +388,64 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/robot/command", dependencies=[Depends(require_auth)])
     async def robot_command(request: RobotCommandRequest):
-        result = robot.command("hud", request.target, request.timeout)
+        before = runtime_status()
+        if before.target_mode is TargetMode.FUTURE_REAL_TARGET and not real_runtime_ready(before):
+            raise HTTPException(status_code=503, detail="real-target runtime is not ready")
+        result = adapter.submit(SemanticCommandRequest(request.target.value, request.timeout))
+        after = runtime_status()
+        if (
+            result.target != request.target.value
+            or not response_is_consistent(result, before, after)
+            or (after.target_mode is TargetMode.FUTURE_REAL_TARGET and not real_runtime_ready(after))
+        ):
+            raise HTTPException(status_code=503, detail="runtime authority changed during command")
         state.update("robot", {
-            "state": robot.state.value,
-            "last_command": result.as_dict(),
-            "execution": "simulated" if cfg.simulator and result.result == "accepted" else "not_delivered",
+            "state": after.robot_state,
+            "last_command": result.public(),
+            "execution": response_execution(result),
+            "physically_confirmed": result.physically_confirmed,
         })
-        await events.publish("robot.command", result.as_dict())
+        await events.publish("robot.command", result.public())
         await events.publish("robot.state", {
-            "state": robot.state.value, "source": robot_source,
-            "execution": "simulated" if cfg.simulator and result.result == "accepted" else "not_delivered",
+            "state": after.robot_state,
+            "source": after.target_mode.value,
+            "execution": response_execution(result),
+            "physically_confirmed": result.physically_confirmed,
         })
-        if cfg.simulator:
-            await events.publish("robot.telemetry", {"mode": "SIMULATION", "state": robot.state.value})
-        audit.write("robot.command", command=result.as_dict())
-        if result.result == "rejected_real_target_unavailable":
-            raise HTTPException(status_code=503, detail=result.as_dict())
-        if result.result.startswith("rejected"):
-            raise HTTPException(status_code=409, detail=result.as_dict())
-        return result.as_dict()
+        if after.target_mode is TargetMode.SIMULATION:
+            await events.publish("robot.telemetry", {"mode": "SIMULATION", "state": after.robot_state})
+        audit.write("robot.command", command=result.public())
+        if result.phase in {RequestPhase.REQUESTED, RequestPhase.REJECTED}:
+            code = 503 if after.target_mode is TargetMode.REAL_TARGET_UNAVAILABLE else 409
+            raise HTTPException(status_code=code, detail=result.public())
+        return result.public()
 
     @app.post("/api/robot/estop", dependencies=[Depends(require_auth)])
     async def estop():
-        result = robot.emergency_stop("hud")
+        before = runtime_status()
+        result = adapter.request_estop("hud")
+        current = runtime_status()
+        if (
+            result.target != RobotState.EMERGENCY_STOP.value
+            or not response_is_consistent(result, before, current, allow_requested=True)
+        ):
+            raise HTTPException(status_code=503, detail="runtime authority changed during E-stop request")
         state.update("robot", {
-            "state": robot.state.value,
-            "last_command": result.as_dict(),
-            "execution": "simulated" if cfg.simulator else "not_delivered",
+            "state": current.robot_state,
+            "last_command": result.public(),
+            "execution": response_execution(result),
+            "physically_confirmed": result.physically_confirmed,
         })
-        await events.publish("robot.estop", result.as_dict())
+        await events.publish("robot.estop", result.public())
         await events.publish("robot.state", {
-            "state": robot.state.value, "source": robot_source,
-            "execution": "simulated" if cfg.simulator else "not_delivered",
+            "state": current.robot_state, "source": current.target_mode.value,
+            "execution": response_execution(result),
+            "physically_confirmed": result.physically_confirmed,
         })
-        audit.write("robot.estop", command=result.as_dict())
-        if result.result == "requested_not_delivered":
-            raise HTTPException(status_code=503, detail=result.as_dict())
-        return result.as_dict()
+        audit.write("robot.estop", command=result.public())
+        if result.phase in {RequestPhase.REQUESTED, RequestPhase.REJECTED}:
+            raise HTTPException(status_code=503, detail=result.public())
+        return result.public()
 
     @app.websocket("/api/events")
     async def websocket_events(websocket: WebSocket):

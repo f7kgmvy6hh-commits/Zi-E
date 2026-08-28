@@ -1,7 +1,7 @@
 # ZI-E V1 Local Command Center
 
-Status: implemented host-side foundation; physical robot and verified Hermes adapters
-remain deliberately unconfigured.
+Status: App software foundation complete with semantic adapter contract; physical
+HostRuntime adapter and robot remain deliberately unimplemented/uncommissioned.
 
 ## Boundary
 
@@ -41,7 +41,10 @@ command line is the ZI-E server before terminating it.
 
 ## Public surface
 
-- `GET /api/health`, `GET /api/state`, `GET /api/settings`
+- `GET /api/health`, `/api/state`, `/api/settings`, `/api/runtime`
+- `GET /api/plugins`, `/api/extensions`, `/api/providers`, `/api/voice/status`
+- `GET /api/hardware-profile`, `/api/configuration`, `/api/presentation`,
+  `/api/diagnostics` (honest read-only visibility; no authority mutation)
 - `POST /api/chat`
 - `POST /api/robot/command`, `POST /api/robot/estop`
 - `POST /api/voice/mute`, `POST /api/voice/stop`
@@ -51,3 +54,8 @@ All REST routes require bearer authentication. Primary tests are pytest tests un
 `tests/app/`. When pytest cannot be installed offline,
 `python scripts/run_tests_fallback.py` executes the current plain-assert tests with
 their two simple fixtures. It is explicitly a fallback, not a pytest replacement.
+
+`app.runtime.adapter.HostRuntimeAdapter` is the only future real-target integration
+surface. See `APP_HOSTRUNTIME_ADAPTER_CONTRACT.md`. The current simulator and
+unavailable adapters contain no raw-control methods; profile/configuration/pack and
+provider changes remain future capability-scoped HostRuntime operations.

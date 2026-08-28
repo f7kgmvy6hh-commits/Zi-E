@@ -617,6 +617,24 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   flag cannot create physical authority or execution confirmation, and no event may
   label an unavailable target as physical.
 
+## 2026-08-28 — App semantic HostRuntime adapter and honest status freeze
+
+- Make `HostRuntimeAdapter` the App's only future real-target boundary. Its surface is
+  copied status, closed semantic command request/response, semantic E-stop request,
+  and polling; it contains no raw hardware or authority-mutation method.
+- Distinguish simulation, real-target-unavailable, and reserved future-real-target.
+  Bind every future-real response to current adapter target mode, positive authority
+  generation, and session; a mid-request change fails closed before execution events.
+- Distinguish requested, accepted, rejected, and confirmed phases; delivery and
+  physical confirmation are independent. Only runtime feedback may assert physical
+  confirmation. Simulation never does.
+- Expose profile/configuration/presentation/provider/extension visibility honestly.
+  Missing capability-scoped HostRuntime operations are `not_exposed` or unavailable,
+  never decorative authority. Do not silently rebind devices or profiles.
+- Keep App provider status separate for LLM/STT/TTS/Wake, exact-capability and ordered.
+  Configuration is not authorization; report `not_verified` until a live HostRuntime
+  check exists. Fallback is bounded and non-sticky in deterministic contract tests.
+
 ## 2026-08-28 — Zi-E HUD plugin presentation
 
 - Use an original cinematic robotics-control visual language: graphite surfaces,

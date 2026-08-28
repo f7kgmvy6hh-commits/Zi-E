@@ -1,5 +1,7 @@
 import asyncio
 
+import pytest
+
 from app.voice.stt import LocalTranscriber
 
 
@@ -101,4 +103,49 @@ def test_isolated_transcriber_kills_worker_on_timeout(monkeypatch):
     result = asyncio.run(LocalTranscriber().transcribe_isolated(b"audio"))
 
     assert result["error"] == "STT_WORKER_TIMEOUT"
+    assert process.killed
+
+
+def test_isolated_transcriber_rejects_oversized_worker_output(monkeypatch):
+    process = CompletedProcess()
+    process.stdout = b"x" * (64 * 1024 + 1)
+
+    async def fake_create_process(*args, **kwargs):
+        return process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_process)
+    result = asyncio.run(LocalTranscriber().transcribe_isolated(b"audio"))
+
+    assert result["error"] == "STT_WORKER_INVALID_OUTPUT"
+
+
+def test_isolated_transcriber_reports_worker_crash(monkeypatch):
+    process = CompletedProcess()
+    process.returncode = 3
+    process.stdout = b'{"success":false}'
+
+    async def fake_create_process(*args, **kwargs):
+        return process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_process)
+    result = asyncio.run(LocalTranscriber().transcribe_isolated(b"audio"))
+
+    assert result["error"] == "STT_WORKER_CRASHED"
+
+
+def test_isolated_transcriber_kills_worker_on_cancellation(monkeypatch):
+    process = CompletedProcess()
+    process.returncode = None
+
+    async def cancelled_communicate():
+        raise asyncio.CancelledError
+
+    process.communicate = cancelled_communicate
+
+    async def fake_create_process(*args, **kwargs):
+        return process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_process)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(LocalTranscriber().transcribe_isolated(b"audio"))
     assert process.killed
