@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "core/AuthoritativeRobotCore.hpp"
+#include "core/PackagePolicy.hpp"
 #include "zie/core/HardwareProfile.hpp"
 
 namespace zie::core {
@@ -739,10 +740,11 @@ class ExtensionHost::Impl {
        api::ResilientEventBus& events, api::RobotStateStore& robot_state,
        extensions::TransactionalConfiguration& configuration,
        providers::ProviderRouter& providers,
-       HardwareProfileManager* hardware_profiles)
+       HardwareProfileManager* hardware_profiles, PackagePolicy* package_policy)
       : registry(registry), core(core), commands(commands), events(events),
         robot_state(robot_state), configuration(configuration),
-        providers(providers), hardware_profiles(hardware_profiles) {}
+        providers(providers), hardware_profiles(hardware_profiles),
+        package_policy(package_policy) {}
 
   Record* find(const std::string& package_id) {
     const auto found = std::find_if(records.rbegin(), records.rend(),
@@ -843,6 +845,7 @@ class ExtensionHost::Impl {
   extensions::TransactionalConfiguration& configuration;
   providers::ProviderRouter& providers;
   HardwareProfileManager* hardware_profiles;
+  PackagePolicy* package_policy;
   std::vector<Record> records;
 };
 
@@ -852,10 +855,10 @@ ExtensionHost::ExtensionHost(
     api::RobotStateStore& robot_state,
     extensions::TransactionalConfiguration& configuration,
     providers::ProviderRouter& providers,
-    HardwareProfileManager* hardware_profiles)
+    HardwareProfileManager* hardware_profiles, PackagePolicy* package_policy)
     : impl_(std::make_unique<Impl>(registry, core, commands, events, robot_state,
                                    configuration, providers,
-                                   hardware_profiles)) {}
+                                   hardware_profiles, package_policy)) {}
 
 ExtensionHost::~ExtensionHost() {
   for (auto& record : impl_->records) {
@@ -970,6 +973,10 @@ ExtensionHostResult ExtensionHost::activate_extension(
   if (record->lifecycle != sdk::ExtensionLifecycle::initialized &&
       record->lifecycle != sdk::ExtensionLifecycle::inactive) {
     return ExtensionHostResult::rejected_lifecycle;
+  }
+  if (impl_->package_policy != nullptr &&
+      !impl_->package_policy->allows_activation(package_id)) {
+    return ExtensionHostResult::rejected_package_policy;
   }
   if (impl_->hardware_profiles != nullptr) {
     const auto active_profile = impl_->hardware_profiles->active_profile();

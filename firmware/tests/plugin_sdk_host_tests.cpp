@@ -5,6 +5,7 @@
 
 #include "core/AuthoritativeRobotCore.hpp"
 #include "core/ExtensionHost.hpp"
+#include "core/PackagePolicy.hpp"
 
 namespace {
 
@@ -100,6 +101,20 @@ struct HostFixture {
                            configuration, providers};
 };
 
+struct PolicyHostFixture {
+  extensions::ExtensionRegistry registry;
+  api::AuthoritativeRobotCore core;
+  api::SemanticRobotApi commands{registry};
+  api::ResilientEventBus events{registry, 8,
+                                api::BackpressurePolicy::drop_newest};
+  api::RobotStateStore state;
+  extensions::TransactionalConfiguration configuration{registry};
+  providers::ProviderRouter providers{registry, 8, 4, 8};
+  core::PackagePolicy policy{registry, 4, 2, 2};
+  core::ExtensionHost host{registry, core, commands, events, state,
+                           configuration, providers, nullptr, &policy};
+};
+
 void prepare(HostFixture& fixture,
              const extensions::ExtensionCandidate& extension_candidate,
              const std::shared_ptr<MockExtension>& extension,
@@ -143,6 +158,87 @@ void run_plugin_sdk_host_tests() {
          sdk::ContractCompatibility::unsupported_version);
   assert(sdk::check_contract_compatibility({{1, 1, 0}, {1, 0, 0}}) ==
          sdk::ContractCompatibility::invalid_range);
+
+  {
+    PolicyHostFixture fixture;
+    const auto value = candidate("zie.policy.host", {"events.read"});
+    const auto extension = std::make_shared<MockExtension>();
+    assert(fixture.host.declare_extension(
+               value, assignment(value.manifest.id),
+               {{1, 0, 0}, {1, 1, 0}}, extension) ==
+           core::ExtensionHostResult::declared);
+    assert(fixture.host.validate_extension(value.manifest.id, {"events.read"}) ==
+           core::ExtensionHostResult::validated);
+    assert(fixture.host.initialize_extension(value.manifest.id) ==
+           core::ExtensionHostResult::initialized);
+    assert(fixture.host.activate_extension(value.manifest.id, {"events.read"}) ==
+           core::ExtensionHostResult::rejected_package_policy);
+    core::PackageCandidate package;
+    package.identity = {value.manifest.id, {1, 0, 0}, {1, 0, 0},
+                        {core::ContentIdentityKind::abstract_digest,
+                         "digest-policy-host"},
+                        "zie.publisher"};
+    package.extension_class = extensions::ExtensionClass::host_plugin;
+    package.category = extensions::ExtensionCategory::behavior;
+    package.sdk_contract = {{1, 0, 0}, {1, 1, 0}};
+    package.core_contract = {{1, 0, 0}, {1, 0, 0}};
+    package.requested_capabilities = {"events.read"};
+    assert(fixture.policy.declare_available(package) ==
+           core::PackageResult::declared);
+    assert(fixture.policy.stage(value.manifest.id) ==
+           core::PackageResult::staged);
+    const core::PackageVerificationDecision verification{
+        value.manifest.id, "zie.signer", "abstract.algorithm",
+        core::PackageVerificationState::verified_untrusted,
+        extensions::TrustClass::local_developer,
+        core::PackageTrustProvenance::local_developer,
+        devices::ControllerIdentity::host, "zie.test-profile"};
+    assert(fixture.policy.verify(value.manifest.id, verification) ==
+           core::PackageResult::verified);
+    assert(fixture.policy.check_compatibility(value.manifest.id) ==
+           core::PackageResult::compatible);
+    assert(fixture.policy.mark_ready(value.manifest.id) ==
+           core::PackageResult::ready);
+    assert(fixture.host.activate_extension(value.manifest.id, {"events.read"}) ==
+           core::ExtensionHostResult::activated);
+    assert(fixture.policy.confirm_active(value.manifest.id) ==
+           core::PackageResult::activated);
+    const auto old_context = extension->active_context;
+    auto update = package;
+    update.identity.package_version = {1, 1, 0};
+    update.identity.content.value = "digest-policy-host-v2";
+    const auto generation = fixture.policy.snapshot(value.manifest.id)
+                                ->installation_generation;
+    assert(fixture.policy.stage_update(update, generation,
+                                       core::DowngradePolicy::reject) ==
+           core::PackageResult::update_staged);
+    assert(fixture.policy.verify_update(verification) ==
+           core::PackageResult::verified);
+    assert(fixture.policy.check_update_compatibility(value.manifest.id) ==
+           core::PackageResult::compatible);
+    assert(fixture.policy.commit_update(value.manifest.id, fixture.host) ==
+           core::PackageResult::updated);
+    const auto updated_context = extension->active_context;
+    assert(updated_context->instance_epoch() != old_context->instance_epoch());
+    assert(old_context->events()->subscribe(
+               "stale-update", {sdk::EventDomain::lifecycle_changed}) ==
+           sdk::CallResult::rejected_stale_context);
+    const auto updated_generation = fixture.policy.snapshot(value.manifest.id)
+                                        ->installation_generation;
+    assert(fixture.policy.rollback(value.manifest.id, "digest-policy-host",
+                                   updated_generation, fixture.host) ==
+           core::PackageResult::rolled_back);
+    assert(extension->active_context->instance_epoch() !=
+           updated_context->instance_epoch());
+    assert(updated_context->events()->subscribe(
+               "stale-rollback", {sdk::EventDomain::lifecycle_changed}) ==
+           sdk::CallResult::rejected_stale_context);
+    assert(fixture.policy.quarantine(value.manifest.id, fixture.host) ==
+           core::PackageResult::quarantined);
+    assert(old_context->events()->subscribe(
+               "stale", {sdk::EventDomain::lifecycle_changed}) ==
+           sdk::CallResult::rejected_stale_context);
+  }
 
   {
     HostFixture fixture;

@@ -47,7 +47,8 @@ bool authority_or_raw_key(const std::string& key) {
       "device.",      "identity.",    "controller.",    "profile.",
       "hardware_profile.", "safety.", "safety_bypass.", "gpio.",
       "pwm.",         "register.",    "actuator.",      "driver.",
-      "can."};
+      "can.",         "secret.",     "password.",      "credential.",
+      "token.",       "api_key.",    "private_key."};
   return std::any_of(forbidden.begin(), forbidden.end(),
                      [&key](const std::string& prefix) {
                        return begins_with(key, prefix);

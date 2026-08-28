@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "core/AuthoritativeRobotCore.hpp"
+#include "core/PackagePolicy.hpp"
 #include "zie/api/ResilientEventBus.hpp"
 #include "zie/api/VirtualRobot.hpp"
 #include "zie/presentation/PresentationEngine.hpp"
@@ -42,6 +43,7 @@ bool known(const RuntimeSubsystemDomain value) {
     case RuntimeSubsystemDomain::presentation:
     case RuntimeSubsystemDomain::configuration:
     case RuntimeSubsystemDomain::virtual_robot:
+    case RuntimeSubsystemDomain::package_security:
       return true;
   }
   return false;
@@ -62,6 +64,7 @@ bool known(const RuntimeReason value) {
     case RuntimeReason::presentation_unavailable:
     case RuntimeReason::configuration_unavailable:
     case RuntimeReason::virtual_robot_unavailable:
+    case RuntimeReason::package_policy_unavailable:
     case RuntimeReason::checkpoint_corrupt:
     case RuntimeReason::checkpoint_unknown_version:
     case RuntimeReason::checkpoint_device_mismatch:
@@ -87,7 +90,7 @@ HostRuntime::HostRuntime(
     extensions::TransactionalConfiguration& configuration,
     api::VirtualRobot& virtual_robot, const std::size_t max_subsystems,
     const std::size_t max_checkpoint_items,
-    const std::size_t max_recovery_attempts)
+    const std::size_t max_recovery_attempts, PackagePolicy* package_policy)
     : core_(core),
       profiles_(profiles),
       extensions_(extensions),
@@ -97,6 +100,7 @@ HostRuntime::HostRuntime(
       presentation_(presentation),
       configuration_(configuration),
       virtual_robot_(virtual_robot),
+      package_policy_(package_policy),
       max_subsystems_(max_subsystems),
       max_checkpoint_items_(max_checkpoint_items),
       max_recovery_attempts_(max_recovery_attempts) {}
@@ -111,7 +115,8 @@ bool HostRuntime::next_generation() {
 
 bool HostRuntime::valid_plan(const RuntimeStartupPlan& plan) const {
   const std::size_t readiness_entries =
-      6 + plan.extensions.size() + plan.providers.size() +
+      6 + (package_policy_ == nullptr ? 0U : 1U) +
+      plan.extensions.size() + plan.providers.size() +
       plan.configurations.size();
   if (max_subsystems_ == 0 || max_checkpoint_items_ == 0 ||
       max_recovery_attempts_ == 0 || !valid_key(plan.hardware_profile_id) ||
@@ -276,6 +281,12 @@ RuntimeResult HostRuntime::coordinate_start(const RuntimeStartupPlan& plan,
                 RuntimeReadinessState::ready, RuntimeReason::none, true);
 
   for (const auto& extension : plan.extensions) {
+    if (package_policy_ != nullptr &&
+        !package_policy_->allows_activation(extension.package_id)) {
+      return fail(RuntimeReason::package_policy_unavailable,
+                  RuntimeSubsystemDomain::package_security,
+                  extension.package_id);
+    }
     auto lifecycle = extensions_.lifecycle(extension.package_id);
     ExtensionHostResult result = ExtensionHostResult::rejected_lifecycle;
     if (lifecycle == sdk::ExtensionLifecycle::active) {
@@ -310,6 +321,13 @@ RuntimeResult HostRuntime::coordinate_start(const RuntimeStartupPlan& plan,
                     RuntimeReadinessState::degraded,
                     RuntimeReason::extension_unavailable, false);
     } else {
+      if (package_policy_ != nullptr &&
+          package_policy_->confirm_active(extension.package_id) !=
+              PackageResult::activated) {
+        return fail(RuntimeReason::package_policy_unavailable,
+                    RuntimeSubsystemDomain::package_security,
+                    extension.package_id);
+      }
       const auto context = extensions_.context(extension.package_id);
       if (context == nullptr) {
         return fail(RuntimeReason::extension_unavailable,
@@ -334,6 +352,19 @@ RuntimeResult HostRuntime::coordinate_start(const RuntimeStartupPlan& plan,
                     RuntimeReadinessState::ready, RuntimeReason::none,
                     extension.required);
     }
+  }
+  if (package_policy_ != nullptr) {
+    std::vector<std::string> required_packages;
+    for (const auto& extension : plan.extensions) {
+      if (extension.required) required_packages.push_back(extension.package_id);
+    }
+    if (!package_policy_->runtime_ready(required_packages)) {
+      return fail(RuntimeReason::package_policy_unavailable,
+                  RuntimeSubsystemDomain::package_security,
+                  "package-security");
+    }
+    set_readiness("package-security", RuntimeSubsystemDomain::package_security,
+                  RuntimeReadinessState::ready, RuntimeReason::none, true);
   }
 
   for (const auto& provider : plan.providers) {
@@ -475,6 +506,17 @@ RuntimeResult HostRuntime::refresh() {
                     RuntimeReason::extension_unavailable, false);
     }
   }
+  if (package_policy_ != nullptr) {
+    std::vector<std::string> required_packages;
+    for (const auto& extension : active_plan_.extensions) {
+      if (extension.required) required_packages.push_back(extension.package_id);
+    }
+    if (!package_policy_->runtime_ready(required_packages)) {
+      return fail(RuntimeReason::package_policy_unavailable,
+                  RuntimeSubsystemDomain::package_security,
+                  "package-security");
+    }
+  }
   for (const auto& provider : active_plan_.providers) {
     if (!providers_.available(provider.semantic_capability)) {
       if (provider.required) {
@@ -560,6 +602,7 @@ bool HostRuntime::failure_is_required(
     case RuntimeSubsystemDomain::protected_safety:
     case RuntimeSubsystemDomain::state_store:
     case RuntimeSubsystemDomain::virtual_robot:
+    case RuntimeSubsystemDomain::package_security:
       return true;
     case RuntimeSubsystemDomain::extension: {
       const auto found = std::find_if(

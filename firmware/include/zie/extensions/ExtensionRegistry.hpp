@@ -72,6 +72,7 @@ enum class RegistryResult {
   transitioned,
   capabilities_validated,
   capabilities_activated,
+  package_version_replaced,
   removed,
   rejected_invalid_manifest,
   rejected_invalid_identity,
@@ -101,6 +102,9 @@ class ExtensionRegistry {
   RegistryResult activate_capabilities(
       const std::string& package_id,
       const std::vector<std::string>& active_capabilities);
+  RegistryResult replace_package_version(
+      const std::string& package_id, ContractVersion version,
+      std::uint64_t expected_authorization_generation);
 
   const ExtensionRecord* find(const std::string& package_id) const;
   std::vector<CapabilityProvider> resolve(

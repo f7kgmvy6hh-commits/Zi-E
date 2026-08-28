@@ -314,6 +314,26 @@ RegistryResult ExtensionRegistry::activate_capabilities(
   return RegistryResult::capabilities_activated;
 }
 
+RegistryResult ExtensionRegistry::replace_package_version(
+    const std::string& package_id, const ContractVersion version,
+    const std::uint64_t expected_authorization_generation) {
+  auto* record = find_mutable(package_id);
+  if (record == nullptr) return RegistryResult::rejected_not_found;
+  if (record->lifecycle == LifecycleState::removed) {
+    return RegistryResult::rejected_removed;
+  }
+  if (record->lifecycle != LifecycleState::inactive ||
+      record->authorization_generation != expected_authorization_generation ||
+      version.major == 0) {
+    return RegistryResult::rejected_illegal_transition;
+  }
+  if (!assign_new_authorization_generation(*record)) {
+    return RegistryResult::rejected_generation_exhausted;
+  }
+  record->manifest.version = version;
+  return RegistryResult::package_version_replaced;
+}
+
 const ExtensionRecord* ExtensionRegistry::find(
     const std::string& package_id) const {
   const auto found = std::find_if(records_.begin(), records_.end(),

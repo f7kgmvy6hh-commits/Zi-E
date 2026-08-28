@@ -20,6 +20,7 @@ namespace zie::presentation { class PackCatalog; }
 namespace zie::providers { class ProviderRouter; }
 
 namespace zie::core {
+class PackagePolicy;
 
 enum class RuntimeLifecycle {
   created,
@@ -42,6 +43,7 @@ enum class RuntimeSubsystemDomain {
   presentation,
   configuration,
   virtual_robot,
+  package_security,
 };
 
 enum class RuntimeReadinessState { ready, degraded, unavailable, failed };
@@ -60,6 +62,7 @@ enum class RuntimeReason {
   presentation_unavailable,
   configuration_unavailable,
   virtual_robot_unavailable,
+  package_policy_unavailable,
   checkpoint_corrupt,
   checkpoint_unknown_version,
   checkpoint_device_mismatch,
@@ -177,7 +180,8 @@ class HostRuntime {
               extensions::TransactionalConfiguration& configuration,
               api::VirtualRobot& virtual_robot, std::size_t max_subsystems,
               std::size_t max_checkpoint_items,
-              std::size_t max_recovery_attempts);
+              std::size_t max_recovery_attempts,
+              PackagePolicy* package_policy = nullptr);
 
   RuntimeResult start(const RuntimeStartupPlan& plan);
   RuntimeResult shutdown();
@@ -219,6 +223,7 @@ class HostRuntime {
   presentation::PackCatalog& presentation_;
   extensions::TransactionalConfiguration& configuration_;
   api::VirtualRobot& virtual_robot_;
+  PackagePolicy* package_policy_{nullptr};
   std::size_t max_subsystems_{0};
   std::size_t max_checkpoint_items_{0};
   std::size_t max_recovery_attempts_{0};

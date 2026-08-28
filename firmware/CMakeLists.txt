@@ -14,6 +14,7 @@ add_library(zie_firmware
     src/HardwareProfile.cpp
     src/HostRuntime.cpp
     src/MotionCommandLifecycle.cpp
+    src/PackagePolicy.cpp
     src/ProviderFoundation.cpp
     src/PresentationEngine.cpp
     src/PluginSdk.cpp
@@ -40,6 +41,7 @@ add_executable(zie_architecture_tests
     tests/host_runtime_tests.cpp
     tests/provider_foundation_tests.cpp
     tests/presentation_engine_tests.cpp
+    tests/package_policy_tests.cpp
     tests/plugin_sdk_host_tests.cpp
 )
 target_link_libraries(zie_architecture_tests PRIVATE zie_firmware)

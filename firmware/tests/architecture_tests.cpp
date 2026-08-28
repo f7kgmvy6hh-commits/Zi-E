@@ -16,6 +16,7 @@ void run_provider_foundation_tests();
 void run_presentation_engine_tests();
 void run_plugin_sdk_host_tests();
 void run_device_identity_tests();
+void run_package_policy_tests();
 int main() {
   zie::profiles::BenchMinimalProfile profile;
   auto validation = zie::core::validate_profile(
@@ -253,4 +254,5 @@ int main() {
   run_presentation_engine_tests();
   run_plugin_sdk_host_tests();
   run_device_identity_tests();
+  run_package_policy_tests();
 }

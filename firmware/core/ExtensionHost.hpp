@@ -16,6 +16,7 @@ namespace zie::api { class AuthoritativeRobotCore; }
 namespace zie::core {
 
 class HardwareProfileManager;
+class PackagePolicy;
 
 enum class ExtensionHostResult {
   declared,
@@ -35,6 +36,7 @@ enum class ExtensionHostResult {
   rejected_capability,
   rejected_registry,
   rejected_profile,
+  rejected_package_policy,
   rejected_extension,
 };
 
@@ -47,7 +49,8 @@ class ExtensionHost {
                 api::RobotStateStore& robot_state,
                 extensions::TransactionalConfiguration& configuration,
                 providers::ProviderRouter& providers,
-                HardwareProfileManager* hardware_profiles = nullptr);
+                HardwareProfileManager* hardware_profiles = nullptr,
+                PackagePolicy* package_policy = nullptr);
   ~ExtensionHost();
   ExtensionHost(const ExtensionHost&) = delete;
   ExtensionHost& operator=(const ExtensionHost&) = delete;

@@ -8,6 +8,9 @@ production bindings, and bench commissioning remain next. Physical risk-retireme
 bench rigs are still required before bulk component purchase.
 
 ## What is substantially defined
+- A bounded in-memory package-policy foundation separates package/version/content
+  identity, applies authoritative verification and compatibility, gates hosted
+  activation, and models fresh-epoch update/rollback, watchdog, and secret policy.
 - Overall structural architecture and service philosophy.
 - Digital face / camera / dedicated head laser-rangefinder / audio architecture.
 - Hidden secret-until-lit Belly Light Matrix (BLM) for RGB ambient light + low-resolution information such as clock/battery/status.

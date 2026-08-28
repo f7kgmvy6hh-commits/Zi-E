@@ -1,5 +1,12 @@
 # ZI-E Risk Register
 
+## Package/update policy foundation risks — 2026-08-28
+
+- Digest, signer, and verification values are abstractions, not production crypto.
+- Atomicity is in-memory only; durable crash consistency needs a later threat model.
+- Compatibility defaults keep policy wiring optional for old fixtures; production
+  composition must wire PackagePolicy into ExtensionHost and HostRuntime.
+
 This register tracks credible problems requiring prevention, detection, recovery, and
 verification. It does not approve implementation or freeze unresolved hardware values.
 

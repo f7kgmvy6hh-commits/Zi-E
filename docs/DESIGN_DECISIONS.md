@@ -540,3 +540,13 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Split recovery into explicit prepare and complete phases. Re-resolve and compare the
   exact prior device set before profile/extension activation; revalidate configuration
   generations and presentation selections; reject substitution and bound retries.
+
+## 2026-08-28 — Package security and update authority
+
+- Keep package ID, version, and content identity distinct; transport/path is never
+  identity and package declarations never grant trust or protected ownership.
+- Updates and rollback traverse registry generation replacement and ordinary
+  ExtensionHost activation, issuing fresh epochs and never resuming motion.
+- Protected safety remains built-in-only; asset packs remain data-only; capability
+  expansion needs explicit registry validation.
+- Watchdog output is semantic only and plugin credentials are opaque owner handles.

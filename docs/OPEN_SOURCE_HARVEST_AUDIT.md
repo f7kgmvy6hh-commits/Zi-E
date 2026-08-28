@@ -246,3 +246,15 @@ active over unavailable hardware or silently revive stale runtime intent.
 Decision: adopt strict prerequisite ordering, reverse dependent-authority revocation,
 bounded copied recovery intent, and explicit reauthorization. Persistence, physical
 safe stop, scheduling, transport, drivers, and commissioning remain deferred.
+
+### Package-update security delta — 2026-08-28
+
+| Comparable project / failure report | Finding | Adapted ZI-E mitigation |
+|---|---|---|
+| [TUF specification](https://github.com/theupdateframework/specification/blob/master/tuf-spec.md) | Rollback, same/stale metadata, mix-and-match content, and unbounded data are explicit threats | Distinct content identity, stale-generation/downgrade rejection, bounded records and fail-closed verification |
+| [python-tuf updater tests](https://github.com/theupdateframework/python-tuf/blob/develop/tests/test_updater_top_level_update.py) | Bad signatures or same-version replacement leave the prior trusted root current | Failed verification/update preserves active known-good state; same-version/different-content is rejected |
+| [TUF recovery issue #269](https://github.com/theupdateframework/specification/issues/269) | Crash-sensitive trust-reset recovery can weaken rollback defenses | Rollback requires a recorded verified-compatible target and normal registry/host reauthorization |
+| [python-tuf rollback issue #1498](https://github.com/theupdateframework/python-tuf/issues/1498) | Discarding trusted metadata weakened later rollback comparisons | Retain a bounded known-good identity set independent of SDK handles |
+
+Concepts only; no external code copied. Crypto, storage, networking, installation,
+and production TUF/Uptane metadata remain deferred.
