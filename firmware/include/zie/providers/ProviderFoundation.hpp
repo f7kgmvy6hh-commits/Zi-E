@@ -115,6 +115,7 @@ class ProviderRouter {
 
   ProviderResult add(const ProviderBinding& binding);
   ProviderOutcome invoke(const ProviderInvocation& invocation);
+  bool available(const std::string& semantic_capability) const;
   std::size_t provider_count() const { return bindings_.size(); }
 
  private:

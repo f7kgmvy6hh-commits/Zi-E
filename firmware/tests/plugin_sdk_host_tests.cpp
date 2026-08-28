@@ -84,7 +84,7 @@ extensions::ExtensionCandidate candidate(
 
 extensions::RegistryAssignment assignment(const std::string& id) {
   return {id, extensions::TrustClass::local_developer,
-          devices::ControllerIdentity::host, "zie.test-profile"};
+          devices::ControllerIdentity::host, "zie.test-profile", {}};
 }
 
 struct HostFixture {

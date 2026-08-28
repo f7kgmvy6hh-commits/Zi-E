@@ -144,6 +144,15 @@ ProviderResult ProviderRouter::add(const ProviderBinding& binding) {
   return ProviderResult::registered;
 }
 
+bool ProviderRouter::available(const std::string& semantic_capability) const {
+  return std::any_of(bindings_.begin(), bindings_.end(),
+                     [this, &semantic_capability](const ProviderBinding& binding) {
+                       return binding.identity.semantic_capability ==
+                                  semantic_capability &&
+                              authorize(binding) == ProviderResult::registered;
+                     });
+}
+
 ProviderOutcome ProviderRouter::invoke(const ProviderInvocation& invocation) {
   ProviderOutcome outcome;
   if (max_providers_ == 0 || max_attempts_ == 0 || max_diagnostics_ == 0) {

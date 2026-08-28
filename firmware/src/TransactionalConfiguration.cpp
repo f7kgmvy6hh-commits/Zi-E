@@ -261,6 +261,19 @@ const ConfigurationRecord* TransactionalConfiguration::find(
   return found == records_.end() ? nullptr : &*found;
 }
 
+bool TransactionalConfiguration::active_authorized(
+    const std::string& package_id) const {
+  const auto* record = find(package_id);
+  const auto* extension = registry_.find(package_id);
+  return record != nullptr && record->active_configuration.has_value() &&
+         extension != nullptr && may_commit(extension->lifecycle) &&
+         extension->manifest.id == record->authoritative_binding.package_id &&
+         extension->device_identity.logical.instance_id ==
+             record->authoritative_binding.logical_device_instance_id &&
+         extension->device_identity.hardware_profile.profile_id ==
+             record->authoritative_binding.hardware_profile_id;
+}
+
 ConfigurationRecord* TransactionalConfiguration::find_mutable(
     const std::string& package_id) {
   const auto found = std::find_if(

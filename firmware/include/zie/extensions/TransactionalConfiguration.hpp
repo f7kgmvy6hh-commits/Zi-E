@@ -103,6 +103,7 @@ class TransactionalConfiguration {
   ConfigurationResult rollback(const std::string& package_id);
 
   const ConfigurationRecord* find(const std::string& package_id) const;
+  bool active_authorized(const std::string& package_id) const;
 
  private:
   ConfigurationRecord* find_mutable(const std::string& package_id);

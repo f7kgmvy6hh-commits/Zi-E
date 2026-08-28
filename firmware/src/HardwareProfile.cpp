@@ -790,6 +790,19 @@ HardwareProfileResult HardwareProfileManager::activate_profile(
   return HardwareProfileResult::activated;
 }
 
+HardwareProfileResult HardwareProfileManager::deactivate_profile(
+    const std::string& profile_id) {
+  auto* record = find_mutable(profile_id);
+  if (record == nullptr) return HardwareProfileResult::rejected_not_found;
+  if (record->state != HardwareProfileState::active ||
+      active_profile_id_ != profile_id) {
+    return HardwareProfileResult::rejected_lifecycle;
+  }
+  active_profile_id_.clear();
+  record->state = HardwareProfileState::invalidated;
+  return HardwareProfileResult::deactivated;
+}
+
 std::optional<HardwareProfileResolution> HardwareProfileManager::resolution(
     const std::string& profile_id) {
   auto* record = find_mutable(profile_id);
@@ -815,6 +828,18 @@ HardwareProfileManager::active_profile() {
     return std::nullopt;
   }
   return record->resolution;
+}
+
+bool HardwareProfileManager::active_profile_has_protected_safety() {
+  if (active_profile_id_.empty()) return false;
+  auto* record = find_mutable(active_profile_id_);
+  if (record == nullptr || !resolution_is_current(*record)) return false;
+  return std::any_of(record->definition.entries.begin(),
+                     record->definition.entries.end(),
+                     [](const HardwareProfileEntry& entry) {
+                       return entry.ownership ==
+                              ProfileOwnership::protected_safety_core;
+                     });
 }
 
 HardwareProfileState HardwareProfileManager::state(

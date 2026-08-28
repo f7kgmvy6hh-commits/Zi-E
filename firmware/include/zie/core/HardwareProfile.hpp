@@ -175,6 +175,7 @@ enum class HardwareProfileResult {
   validated,
   resolved,
   activated,
+  deactivated,
   invalidated,
   rejected_invalid_manager,
   rejected_not_found,
@@ -206,12 +207,14 @@ class HardwareProfileManager {
   HardwareProfileResult validate_profile(const std::string& profile_id);
   HardwareProfileResult resolve_profile(const std::string& profile_id);
   HardwareProfileResult activate_profile(const std::string& profile_id);
+  HardwareProfileResult deactivate_profile(const std::string& profile_id);
 
   std::optional<HardwareProfileResolution> resolution(
       const std::string& profile_id);
   std::vector<HardwareProfileIssue> validation_issues(
       const std::string& profile_id) const;
   std::optional<HardwareProfileResolution> active_profile();
+  bool active_profile_has_protected_safety();
   HardwareProfileState state(const std::string& profile_id);
 
  private:

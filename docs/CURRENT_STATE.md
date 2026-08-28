@@ -101,6 +101,15 @@ bench rigs are still required before bulk component purchase.
   and explicit re-resolution/reactivation receives a fresh generation. Raw hardware
   and protected-safety bypass namespaces have no profile path. Discovery, parsing,
   drivers, commissioning, persistence, and physical validation remain deferred.
+- An internal in-memory host runtime now orders fail-safe stopped startup, explicit
+  profile resolution/activation, protected-safety checks, extension authorization,
+  and provider/configuration/presentation/core-service readiness. Bounded immutable
+  readiness snapshots distinguish required failure from safe optional degradation.
+  Shutdown revokes extension epochs before profile authority. Versioned copied
+  checkpoints contain semantic reconstruction intent only; recovery re-resolves the
+  exact prior device set, revalidates selections, and requires explicit reactivation
+  with fresh epochs. There is no persistence, scheduler, real hardware, or motion
+  authority in this foundation.
 
 ## Current CAD snapshot
 - Project/CAD v0.3: 39 automated checks; 38 pass; 1 restricted case.

@@ -230,3 +230,19 @@ remain claimed, and implicit startup/rebinding can make a profile nondeterminist
 Decision: adopt exact registry-authoritative matching, staged explicit activation, and
 revocation without automatic rebinding. Discovery, runtime scheduling, transport,
 drivers, and commissioning remain deferred.
+
+### Host-runtime orchestration and recovery delta — 2026-08-28
+
+Problem: startup ordering, partial failure, and restart can leave dependent authority
+active over unavailable hardware or silently revive stale runtime intent.
+
+| Comparable project / real failure | Material finding | Adapted ZI-E mitigation | Verification / disposition |
+|---|---|---|---|
+| [ros2_control Controller Manager lifecycle and restart guidance](https://control.ros.org/master/doc/ros2_control/controller_manager/doc/userdoc.html) | Hardware initial states are explicit; activating controllers over inactive hardware is documented as unsafe; restarted hardware must traverse its lifecycle again; hardware errors stop dependent controllers | Require active resolved profile and fresh protected-safety readiness before hosted activation; shutdown/failure revoke dependent extension authority before profile authority; recovery explicitly re-resolves/reactivates | Startup, protected loss, shutdown, and recovery tests. Concepts only; no code copied. **ADAPT** |
+| [ros2_control inactive-hardware dependency issue #2508](https://github.com/ros-controls/ros2_control/issues/2508) | Manual hardware deactivation could leave direct and chained controllers active, and inactive hardware could still accept controller activation | Runtime health refresh treats selected-device revocation as required failure and revokes the hosted extension chain; no degraded-running safety path | Profile-revocation and stale-context tests. **ADAPT** |
+| [ros2_control startup lifecycle failure issue #2079](https://github.com/ros-controls/ros2_control/issues/2079) | A startup callback error could terminate the shared manager, while the report distinguishes mandatory startup failure from optional unavailable hardware | Preserve typed current failure, fail required prerequisites, isolate explicitly optional failures as degraded, and bound recovery attempts | Missing-required, optional-degraded, extension/event/provider isolation, and retry-limit tests. **ADAPT** |
+| [ros2_control hardware lifecycle documentation](https://control.ros.org/kilted/doc/ros2_control/hardware_interface/doc/lifecycle_of_a_hardware_component.html) | Inactive and active have materially different command authority; active can enable motion/power | Begin startup/recovery with stopped semantic state and never checkpoint active command/session authority | Recovery-nonmoving and checkpoint-content contract tests. Physical enforcement remains deferred. **ADAPT / DEFER hardware validation** |
+
+Decision: adopt strict prerequisite ordering, reverse dependent-authority revocation,
+bounded copied recovery intent, and explicit reauthorization. Persistence, physical
+safe stop, scheduling, transport, drivers, and commissioning remain deferred.

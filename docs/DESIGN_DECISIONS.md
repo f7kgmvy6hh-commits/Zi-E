@@ -523,3 +523,20 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Exclude transport identity, GPIO/PWM/register/setpoint data, raw actuator control,
   and safety bypasses from profile content. Discovery, parsing, drivers,
   commissioning, persistence, and transport remain deferred.
+
+## 2026-08-28 — Authoritative host runtime and safe recovery intent
+
+- Keep orchestration internal and downstream of every existing subsystem authority.
+  Startup establishes stopped semantic state, then orders profile, protected safety,
+  extensions, and optional services. No coordinator call bypasses subsystem checks.
+- Derive requiredness only from the trusted startup plan and fixed core-domain policy.
+  Required or protected failure fails the runtime; explicitly optional failures may
+  degrade it without granting authority.
+- Revoke hosted extension epochs in reverse startup order before deactivating profile
+  authority on shutdown or required failure.
+- Treat checkpoints as bounded copied intent, never authority. Exclude sessions,
+  handles, leases, setpoints, heartbeat state, command sequence authority, and safety
+  bypass state.
+- Split recovery into explicit prepare and complete phases. Re-resolve and compare the
+  exact prior device set before profile/extension activation; revalidate configuration
+  generations and presentation selections; reject substitution and bound retries.
