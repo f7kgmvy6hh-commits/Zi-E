@@ -13,15 +13,15 @@ class Clock:
     def __call__(self): return self.value
 
 
-def test_robot_transitions_fail_closed_and_estop_is_always_reachable():
+def test_real_target_without_adapter_rejects_commands_and_cannot_confirm_estop():
     clock = Clock()
     robot = RobotController(clock=clock, simulator=False)
     denied = robot.command("ui", "AUTONOMOUS", 1.0)
-    assert denied.result == "rejected_transition"
+    assert denied.result == "rejected_real_target_unavailable"
     assert robot.state is RobotState.DISCONNECTED
     stopped = robot.emergency_stop("physical-button")
-    assert stopped.result == "accepted"
-    assert robot.state is RobotState.EMERGENCY_STOP
+    assert stopped.result == "requested_not_delivered"
+    assert robot.state is RobotState.DISCONNECTED
 
 
 def test_command_envelope_and_deadman_safe_stop():

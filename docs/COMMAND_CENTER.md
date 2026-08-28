@@ -19,6 +19,12 @@ Real mode publishes no telemetry until a future commissioned adapter supplies it
 The present Python implementation is not a HostRuntime adapter and therefore cannot
 connect to or authorize a real robot. Until that binding exists, only simulator use is
 validated; App state must not be interpreted as execution or commissioning evidence.
+With `ZIE_SIMULATOR=false`, ordinary robot commands fail with
+`rejected_real_target_unavailable` and the state remains `DISCONNECTED`. The E-stop
+endpoint remains available as an operator request surface but returns
+HTTP 503 with `requested_not_delivered`; it does not claim a physical stop. Health, plugin, state,
+and event surfaces label this condition `real-target-unavailable`/`not_delivered` and
+never infer a physical source from configuration alone.
 
 ## Run
 

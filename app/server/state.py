@@ -9,10 +9,19 @@ from typing import Any
 class StateCore:
     def __init__(self, simulator: bool):
         self._lock = RLock()
+        target_mode = "simulation" if simulator else "real-target-unavailable"
         self._state: dict[str, Any] = {
             "generation": 1,
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "robot": {"state": "DISCONNECTED", "target": None, "telemetry": None, "simulator": simulator},
+            "robot": {
+                "state": "DISCONNECTED",
+                "target": None,
+                "telemetry": None,
+                "simulator": simulator,
+                "target_mode": target_mode,
+                "authority": "simulation" if simulator else "unavailable",
+                "execution": "simulated" if simulator else "not_delivered",
+            },
             "hermes": {"connected": False, "session": None},
             "voice": {"speaking": False, "muted": False},
         }

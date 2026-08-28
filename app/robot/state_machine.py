@@ -66,6 +66,8 @@ class RobotController:
             return self._result(source or "unknown", desired, timeout, "rejected_invalid_command")
         if desired is RobotState.EMERGENCY_STOP:
             return self.emergency_stop(source)
+        if not self.simulator:
+            return self._result(source, desired, timeout, "rejected_real_target_unavailable")
         if desired not in _TRANSITIONS[self.state]:
             return self._result(source, desired, timeout, "rejected_transition")
         self.state = desired
@@ -73,6 +75,12 @@ class RobotController:
         return self._result(source, desired, timeout, "accepted")
 
     def emergency_stop(self, source: str) -> CommandResult:
+        if not self.simulator:
+            self._deadline = None
+            return self._result(
+                source or "unknown", RobotState.EMERGENCY_STOP, 0.0,
+                "requested_not_delivered",
+            )
         self.state = RobotState.EMERGENCY_STOP
         self._deadline = None
         return self._result(source or "unknown", RobotState.EMERGENCY_STOP, 0.0, "accepted")

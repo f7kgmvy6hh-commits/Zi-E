@@ -53,6 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         cfg.elevenlabs_model,
     )
     transcriber = LocalTranscriber()
+    robot_source = "simulator" if cfg.simulator else "real-target-unavailable"
 
     async def deadman_loop():
         while True:
@@ -102,7 +103,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "configured": bool(cfg.elevenlabs_api_key or cfg.voice_fallback_command),
             },
             "stt": {"provider": "local", "model": transcriber.model_name, "status": transcriber.status()},
-            "robot": {"state": robot.state.value, "simulator": cfg.simulator},
+            "robot": {
+                "state": robot.state.value,
+                "simulator": cfg.simulator,
+                "target": robot_source,
+                "availability": "available" if cfg.simulator else "unavailable",
+                "execution": "simulated" if cfg.simulator else "not_delivered",
+            },
         }
 
     @app.get("/api/state", dependencies=[Depends(require_auth)])
@@ -126,7 +133,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "plugins": [
                 {"id": "chat", "status": "available", "permission": "read-write"},
                 {"id": "task", "status": "available", "permission": "read"},
-                {"id": "robot", "status": "simulation" if cfg.simulator else "disconnected", "permission": "safe-command"},
+                {
+                    "id": "robot",
+                    "status": "simulation" if cfg.simulator else "real-target-unavailable",
+                    "permission": "safe-command" if cfg.simulator else "emergency-request-only",
+                },
                 {"id": "voice", "status": "available" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable", "permission": "speak"},
                 {"id": "system", "status": "available", "permission": "read"},
                 {"id": "browser", "status": "available", "permission": "read"},
@@ -211,12 +222,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/robot/command", dependencies=[Depends(require_auth)])
     async def robot_command(request: RobotCommandRequest):
         result = robot.command("hud", request.target, request.timeout)
-        state.update("robot", {"state": robot.state.value, "last_command": result.as_dict()})
+        state.update("robot", {
+            "state": robot.state.value,
+            "last_command": result.as_dict(),
+            "execution": "simulated" if cfg.simulator and result.result == "accepted" else "not_delivered",
+        })
         await events.publish("robot.command", result.as_dict())
-        await events.publish("robot.state", {"state": robot.state.value, "source": "simulator" if cfg.simulator else "physical"})
+        await events.publish("robot.state", {
+            "state": robot.state.value, "source": robot_source,
+            "execution": "simulated" if cfg.simulator and result.result == "accepted" else "not_delivered",
+        })
         if cfg.simulator:
             await events.publish("robot.telemetry", {"mode": "SIMULATION", "state": robot.state.value})
         audit.write("robot.command", command=result.as_dict())
+        if result.result == "rejected_real_target_unavailable":
+            raise HTTPException(status_code=503, detail=result.as_dict())
         if result.result.startswith("rejected"):
             raise HTTPException(status_code=409, detail=result.as_dict())
         return result.as_dict()
@@ -224,10 +244,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/robot/estop", dependencies=[Depends(require_auth)])
     async def estop():
         result = robot.emergency_stop("hud")
-        state.update("robot", {"state": robot.state.value, "last_command": result.as_dict()})
+        state.update("robot", {
+            "state": robot.state.value,
+            "last_command": result.as_dict(),
+            "execution": "simulated" if cfg.simulator else "not_delivered",
+        })
         await events.publish("robot.estop", result.as_dict())
-        await events.publish("robot.state", {"state": robot.state.value, "source": "simulator" if cfg.simulator else "physical"})
+        await events.publish("robot.state", {
+            "state": robot.state.value, "source": robot_source,
+            "execution": "simulated" if cfg.simulator else "not_delivered",
+        })
         audit.write("robot.estop", command=result.as_dict())
+        if result.result == "requested_not_delivered":
+            raise HTTPException(status_code=503, detail=result.as_dict())
         return result.as_dict()
 
     @app.websocket("/api/events")

@@ -611,6 +611,11 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   priority or widen capabilities.
 - Isolate native local Whisper execution in a bounded subprocess with a strict typed
   result contract. Ordinary STT/TTS never depends on Codex development authority.
+- Fail closed when the App is configured for a real target without a commissioned
+  HostRuntime/public-semantic adapter: retain `DISCONNECTED`, reject ordinary state or
+  motion commands, and represent E-stop only as `requested_not_delivered`. A config
+  flag cannot create physical authority or execution confirmation, and no event may
+  label an unavailable target as physical.
 
 ## 2026-08-28 — Zi-E HUD plugin presentation
 

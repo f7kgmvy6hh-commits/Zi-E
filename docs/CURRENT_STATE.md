@@ -9,6 +9,20 @@
 - Browser push-to-talk uses `MediaRecorder` and uploads only after user release; microphone permission is user-controlled.
 - Empty-audio endpoint regression coverage passes without loading the Whisper model.
 
+## App real-target fail-closed correction — 2026-08-28
+
+- The current Python App has no commissioned HostRuntime/public-semantic real-target
+  adapter. With simulator mode disabled, its robot remains `DISCONNECTED`; ordinary
+  commands are rejected as `rejected_real_target_unavailable`.
+- The operator E-stop surface returns HTTP 503 with `requested_not_delivered` without
+  mutating local state or claiming physical execution. State events use
+  `real-target-unavailable`/`not_delivered`, never `physical` based only on config.
+- Health, state, and plugin surfaces distinguish simulation from unavailable real
+  target. Future confirmed real execution must come from the commissioned adapter and
+  cannot be synthesized by this App state machine.
+- Validation: full App pytest passed 41 tests; fallback regression runner passed 31;
+  Python compileall, PowerShell parsing, and `git diff --check` passed.
+
 ## Phase
 Zi-E V1 now has an uncommitted local command-center implementation candidate under
 `app/`: loopback-only authenticated FastAPI, bounded WebSocket events, central state,

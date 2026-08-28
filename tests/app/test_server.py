@@ -11,6 +11,15 @@ def settings(tmp_path):
     return Settings("127.0.0.1", 8765, TOKEN, True, tmp_path / "log.jsonl", None, "session-one", None, "voice-one", None)
 
 
+def real_settings(tmp_path):
+    cfg = settings(tmp_path)
+    return Settings(
+        cfg.host, cfg.port, cfg.auth_token, False, cfg.log_path, cfg.hermes_command,
+        cfg.hermes_session, cfg.elevenlabs_api_key, cfg.voice_id,
+        cfg.voice_fallback_command,
+    )
+
+
 def test_health_is_narrow_and_reports_real_metrics(tmp_path):
     with TestClient(create_app(settings(tmp_path))) as client:
         assert client.get("/api/health").status_code == 401
@@ -79,6 +88,63 @@ def test_estop_publishes_estop_and_state_events(tmp_path):
             assert first["type"] == "robot.estop"
             assert second["type"] == "robot.state"
             assert second["payload"]["state"] == "EMERGENCY_STOP"
+
+
+def test_real_target_without_adapter_rejects_commands_and_stays_disconnected(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(real_settings(tmp_path))) as client:
+        for target in ("SAFE", "MANUAL", "AUTONOMOUS"):
+            response = client.post(
+                "/api/robot/command", headers=headers,
+                json={"target": target, "timeout": 1},
+            )
+            assert response.status_code == 503
+            assert response.json()["detail"]["result"] == "rejected_real_target_unavailable"
+        robot = client.get("/api/state", headers=headers).json()["robot"]
+        assert robot["state"] == "DISCONNECTED"
+        assert robot["target_mode"] == "real-target-unavailable"
+        assert robot["authority"] == "unavailable"
+        assert robot["execution"] == "not_delivered"
+
+
+def test_real_target_without_adapter_never_claims_physical_event_or_estop(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(real_settings(tmp_path))) as client:
+        command = client.post(
+            "/api/robot/command", headers=headers,
+            json={"target": "SAFE", "timeout": 1},
+        )
+        assert command.status_code == 503
+        estop = client.post("/api/robot/estop", headers=headers)
+        assert estop.status_code == 503
+        assert estop.json()["detail"]["result"] == "requested_not_delivered"
+        assert estop.json()["detail"]["result"] != "accepted"
+        events = client.app.state.events.history()
+        state_events = [event for event in events if event["type"] == "robot.state"]
+        assert state_events
+        assert all(event["payload"]["source"] == "real-target-unavailable" for event in state_events)
+        assert all(event["payload"]["execution"] == "not_delivered" for event in state_events)
+        assert "physical" not in str(events).lower()
+
+
+def test_real_target_without_adapter_is_unavailable_on_public_surfaces(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(real_settings(tmp_path))) as client:
+        health_robot = client.get("/api/health", headers=headers).json()["robot"]
+        assert health_robot == {
+            "state": "DISCONNECTED",
+            "simulator": False,
+            "target": "real-target-unavailable",
+            "availability": "unavailable",
+            "execution": "not_delivered",
+        }
+        plugins = client.get("/api/plugins", headers=headers).json()["plugins"]
+        robot_plugin = next(plugin for plugin in plugins if plugin["id"] == "robot")
+        assert robot_plugin == {
+            "id": "robot",
+            "status": "real-target-unavailable",
+            "permission": "emergency-request-only",
+        }
 
 
 def test_static_hud_contains_every_required_panel(tmp_path):
