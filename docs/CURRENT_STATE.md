@@ -1,6 +1,13 @@
 # Current State — 2026-08-28
 
 ## Phase
+Zi-E V1 now has an uncommitted local command-center implementation candidate under
+`app/`: loopback-only authenticated FastAPI, bounded WebSocket events, central state,
+redacted JSONL audit logging, real host metrics, a responsive graphite/cyan HUD,
+fail-closed semantic robot state/dead-man/E-stop handling, modular cloud/command voice,
+and a thin persistent-session Hermes executable contract. It changes neither Hermes
+nor firmware and adds no physical robot transport. See `COMMAND_CENTER.md`.
+
 Software Foundation Freeze candidate and Prototype P1 Build-Ready package are
 `READY_TO_COMMIT`. Prototype architecture and Project/CAD v0.3 are prepared. Phase 2A has a
 transport-independent motion command lifecycle foundation plus a Phase 2B1
@@ -136,6 +143,18 @@ See `OPEN_ITEMS_AND_FREEZE_GATES.md` and `OPEN_SOURCE_HARVEST_AUDIT.md`: display
 
 ## Rule for future work
 Every new answer/change must use the Memory/Inventory Loop + full engineering loop + Open-Source Harvest Loop, and update repository source-of-truth docs when approved.
+
+## Zi-E V1 command center — 2026-08-28 continuation
+
+- Hermes 0.20.6 now runs directly with one named session, deterministic routing,
+  explicit `/model` bypass, and secret-free route/tool/response events.
+- Voice speak streams redacted ElevenLabs chunks with centralized voice/model config,
+  cancellation signaling, and Zi-Nanami fallback.
+- Exact lifecycle scripts optionally own Camofox, start and health-check the server,
+  open the HUD, and stop only revalidated owned PIDs.
+- Example YAML and all requested operator docs are present. No motion authority was
+  added. Full pytest passed 28 tests without warnings; PowerShell parsing and Python
+  compileall passed. The tracked archived `.pyc` is deleted in the working tree.
 
 ## Next exact firmware step
 

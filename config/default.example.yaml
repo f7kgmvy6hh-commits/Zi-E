@@ -1,0 +1,9 @@
+# ZI-E V1 human-readable configuration example. Runtime secrets remain in .env.
+server: {host: 127.0.0.1, port: 8765, simulator: false}
+hermes:
+  executable: hermes
+  session: zie-command-center
+  simple_model: minimax-oauth/MiniMax-M3
+  main_model: openai-codex/gpt-5.6-sol
+voice: {provider: elevenlabs, voice_id: zie-default, model_id: eleven_multilingual_v2}
+camofox: {enabled: false}

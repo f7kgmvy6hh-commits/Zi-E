@@ -1,0 +1,140 @@
+from fastapi.testclient import TestClient
+
+from app.server.config import Settings
+from app.server.main import create_app
+
+
+TOKEN = "test-token-with-at-least-24-characters"
+
+
+def settings(tmp_path):
+    return Settings("127.0.0.1", 8765, TOKEN, True, tmp_path / "log.jsonl", None, "session-one", None, "voice-one", None)
+
+
+def test_health_is_narrow_and_reports_real_metrics(tmp_path):
+    with TestClient(create_app(settings(tmp_path))) as client:
+        assert client.get("/api/health").status_code == 401
+        response = client.get("/api/health", headers={"Authorization": f"Bearer {TOKEN}"})
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "ok"
+        assert 0 <= body["system"]["cpu_percent"] <= 100
+        assert body["system"]["source"] == "local-machine"
+
+
+def test_state_and_robot_command_publish_websocket_event(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        with client.websocket_connect("/api/events") as websocket:
+            websocket.send_json({"authorization": f"Bearer {TOKEN}"})
+            response = client.post("/api/robot/command", headers=headers, json={"target": "SAFE", "timeout": 1})
+            assert response.status_code == 200
+            event = websocket.receive_json()
+            assert event["type"] == "robot.command"
+            assert event["payload"]["target"] == "SAFE"
+        state = client.get("/api/state", headers=headers).json()
+        assert state["robot"]["state"] == "SAFE"
+
+
+def test_websocket_rejects_bad_auth(tmp_path):
+    with TestClient(create_app(settings(tmp_path))) as client:
+        try:
+            with client.websocket_connect("/api/events") as websocket:
+                websocket.send_json({"authorization": "Bearer bad"})
+                websocket.receive_json()
+        except Exception:
+            pass
+        else:
+            raise AssertionError("unauthenticated websocket accepted")
+
+
+def test_estop_endpoint_is_available_from_disconnected(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        result = client.post("/api/robot/estop", headers=headers).json()
+        assert result["result"] == "accepted"
+        assert result["target"] == "EMERGENCY_STOP"
+
+
+def test_static_hud_contains_every_required_panel(tmp_path):
+    with TestClient(create_app(settings(tmp_path))) as client:
+        html = client.get("/").text
+        for panel in ("chat", "task", "robot", "vision", "computer", "terminal", "browser", "files", "memory", "system", "voice", "settings"):
+            assert f'data-panel="{panel}"' in html
+
+
+def test_settings_never_expose_secrets_and_voice_controls_work(tmp_path):
+    cfg = settings(tmp_path)
+    cfg = Settings(cfg.host, cfg.port, cfg.auth_token, cfg.simulator, cfg.log_path, "hermes", cfg.hermes_session, "cloud-secret", cfg.voice_id, "nanami")
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(cfg)) as client:
+        body = client.get("/api/settings", headers=headers).json()
+        serialized = str(body)
+        assert TOKEN not in serialized and "cloud-secret" not in serialized
+        assert body["voice_id"] == "voice-one"
+        assert client.post("/api/voice/mute", headers=headers, json={"muted": True}).json()["result"] == "muted"
+        assert client.post("/api/voice/stop", headers=headers).json()["result"] == "stopped"
+
+
+def test_voice_speak_streams_chunk_safe_audio_and_publishes_events(tmp_path, monkeypatch):
+    captured = []
+    def factory(_key):
+        def synth(text, voice_id, model_id, cancelled):
+            captured.append((text, voice_id, model_id))
+            yield b"ID3"
+            yield b"audio"
+        return synth
+    monkeypatch.setattr("app.server.main.elevenlabs_synthesizer", factory)
+    cfg = settings(tmp_path)
+    cfg = Settings(cfg.host, cfg.port, cfg.auth_token, cfg.simulator, cfg.log_path,
+                   None, cfg.hermes_session, "cloud-secret", cfg.voice_id, None)
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(cfg)) as client:
+        response = client.post("/api/voice/speak", headers=headers,
+                               json={"text": "say sk-abcdefghijklmnopqrstuvwxyz"})
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("audio/mpeg")
+        assert response.content == b"ID3audio"
+        assert captured == [("say [REDACTED]", "voice-one", "eleven_multilingual_v2")]
+        assert [e["type"] for e in client.app.state.events.history()[-2:]] == [
+            "voice.speak", "voice.response"
+        ]
+
+
+def test_chat_unavailable_without_configured_hermes(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        response = client.post("/api/chat", headers=headers, json={"message": "hello"})
+        assert response.status_code == 503
+
+
+def test_chat_uses_bridge_and_publishes_route_tool_and_response_events(tmp_path, monkeypatch):
+    cfg = settings(tmp_path)
+    cfg = Settings(
+        cfg.host, cfg.port, cfg.auth_token, cfg.simulator, cfg.log_path, "hermes",
+        "stable-name", None, cfg.voice_id, None,
+    )
+
+    class FakeRoute:
+        def public(self): return {"provider": "minimax-oauth", "model": "MiniMax-M3", "reason": "simple"}
+
+    class FakeBridge:
+        last_route = FakeRoute()
+        async def stream_bytes(self, message):
+            assert message == "hello"
+            yield b"world"
+
+    monkeypatch.setattr("app.server.main.HermesBridge.executable", lambda *args, **kwargs: FakeBridge())
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(cfg)) as client:
+        response = client.post("/api/chat", headers=headers, json={"message": "hello"})
+        assert response.status_code == 200 and response.content == b"world"
+        emitted = client.app.state.events.history()
+        assert [event["type"] for event in emitted[-3:]] == [
+            "chat.model_route", "chat.tool", "chat.response"
+        ]
+        assert emitted[-3]["payload"] == {
+            "provider": "minimax-oauth", "model": "MiniMax-M3", "reason": "simple"
+        }
+        assert emitted[-2]["payload"] == {"tool": "hermes-cli", "status": "started"}
+        assert emitted[-1]["payload"]["bytes"] == 5

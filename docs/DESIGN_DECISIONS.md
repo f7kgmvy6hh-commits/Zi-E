@@ -569,3 +569,31 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   P1 and prohibited before all later safety gates.
 - Keep all CAN/wire values and received-part-dependent pins, interfaces, dimensions,
   loads, timing, electrical limits, and physical performance explicitly unfrozen.
+
+## 2026-08-28 — Zi-E V1 local command-center boundary
+
+- Implement the laptop command center as a thin authenticated operator/UI layer around
+  one persistent Hermes session; it is not another agent, tool loop, memory authority,
+  or provider credential owner.
+- Bind only to validated loopback and require bearer authentication for every API and
+  event connection. Never expose Hermes, OAuth, ElevenLabs, or provider secrets to the
+  browser; structurally redact logs and cloud-bound speech text.
+- Expose narrow health/state/settings, Hermes chat, semantic robot-state, E-stop,
+  voice-control, and event surfaces. A HUD panel does not imply a generic terminal,
+  browser, filesystem, or actuator API.
+- Keep robot state deterministic and fail closed. E-stop is reachable from every
+  state; active host modes have a dead-man deadline; every command records source,
+  UTC timestamp, semantic target, timeout, and result. Host acceptance is never
+  physical execution confirmation.
+- Default to real/non-simulator mode with null robot telemetry. Simulator data must be
+  explicitly enabled and labeled and cannot satisfy commissioning evidence.
+
+## 2026-08-28 — Zi-E V1 Hermes and voice execution
+
+- Invoke Hermes 0.20.6 as `chat --continue <stable-name> --create-if-missing -q
+  <message> -Q --source tool` and preserve one named session.
+- Route simple prompts to `minimax-oauth/MiniMax-M3`, complex prompts to configured
+  `openai-codex/gpt-5.6-sol`, and let explicit `/model` requests bypass automatic
+  flags. `smart_model_routing` is only a setup placeholder and is not consumed.
+- Stream redacted TTS in bounded chunks, centralize ElevenLabs voice/model, retain
+  Zi-Nanami fallback, and cancel remaining work wherever the generator can observe it.

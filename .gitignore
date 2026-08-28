@@ -6,3 +6,9 @@
 /build-package-dev*/
 /build-security*/
 /build-final*/
+/.venv/
+/.env
+/runtime/
+__pycache__/
+*.py[cod]
+.pytest_cache/

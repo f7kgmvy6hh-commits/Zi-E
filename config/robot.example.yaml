@@ -1,0 +1,12 @@
+# Example only: physical motion stays locked until safe commissioning succeeds.
+robot:
+  simulator: false
+  transport: unconfigured
+  autonomous_motion_enabled: false
+  require_feedback_confirmation: true
+  commissioning:
+    actuator_identity_verified: false
+    voltage_class_verified: false
+    bus_and_baud_verified: false
+    direction_and_range_verified: false
+    end_state_sensors_verified: false

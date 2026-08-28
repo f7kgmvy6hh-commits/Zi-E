@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+testpaths = ["tests/app"]
+addopts = "-ra --strict-config --strict-markers"
+cache_dir = "runtime/pytest-cache"
+filterwarnings = [
+    "error",
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated.*:starlette.exceptions.StarletteDeprecationWarning",
+]

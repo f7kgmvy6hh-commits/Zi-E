@@ -111,3 +111,19 @@ Normal autonomous motion is locked out until actuator identity/direction/range c
 
 ## Head measurement sensor
 `VL53L1X -> I2C -> ESP32-S3` provides single-point forward distance aligned/calibrated with the head camera. It is non-safety-critical. Lower cliff/proximity sensors remain local to STM32.
+
+## V1 command-center integration
+
+The loopback server owns authentication, audit, state, events, voice orchestration,
+and the HUD. Language-model work runs through installed Hermes 0.20.6 using the
+stable named session and supported contract `hermes chat --continue NAME
+--create-if-missing -q MESSAGE -Q --source tool`.
+
+ZI-E deterministically routes simple prompts to `minimax-oauth/MiniMax-M3` and
+complex prompts to the configured main model, defaulting to
+`openai-codex/gpt-5.6-sol`. Explicit `/model` requests bypass automatic selection.
+Route events expose provider/model names but never credentials.
+
+Hermes configuration may contain `smart_model_routing`, but in this installed
+version it is only a setup placeholder and is not consumed by the ZI-E bridge. No
+unsupported Hermes smart-routing behavior is assumed.
