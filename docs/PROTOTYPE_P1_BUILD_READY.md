@@ -4,6 +4,18 @@ Status: process and worksheets are ready; execution is blocked on received hardw
 and operator-confirmed measurements. Every physical value not backed by received-part
 evidence is `VERIFY_ON_ARRIVAL`.
 
+Canonical companion artifacts for this package:
+
+- `HARDWARE_SOURCE_OF_TRUTH_RECONCILIATION.md`
+- `PURCHASED_PARTS_INTAKE_SCHEMA.md` and its empty CSV template
+- `P1_CAD_FREEZE_CANDIDATE.md`
+- `P1_ASSEMBLY_ELECTRICAL_BRINGUP_PACKAGE.md`
+- `P1_PHYSICAL_VERIFICATION_WORKSHEET.md`
+- `PHASE2B2_INPUT_GATE.md`
+
+These documents supersede generic rows below when more precise, without converting
+CAD/listing assumptions into physical facts.
+
 ## P1 scope and controller map
 
 P1 is a supervised bench prototype: power domains, ESP32-S3 multimedia/presence,
@@ -147,4 +159,3 @@ manual stop pass. No integrated bench state until every required sensor and loca
 safe-stop path passes. No autonomous motion until a later separately approved hardware
 commissioning phase validates physical timing and all safety gates. VirtualRobot,
 received-command, or software-ready status is never sufficient.
-

@@ -58,7 +58,7 @@ See `docs/AI_CAD_WORKFLOW.md` and `docs/ENGINEERING_LOOPS.md`.
 - Added hidden **Belly Light Matrix (BLM)** secret-until-lit optical window, matrix keepout, baffle and prototype board envelope.
 - Added pre-purchase open-source failure-harvest audit based on Reachy Mini, LeRobot SO-101, OpenArm, Stretch, MoveIt/Nav2 and MuJoCo lessons.
 - Added commissioning, command-arbitration, dynamic safety-envelope and diagnostic requirements before bulk component purchase.
-- Automated validation now runs 37 checks: 36 pass; the sole restricted case remains both arms forward with 2×250 g payload during normal driving.
+- Automated validation now runs 39 checks: 38 pass; the sole restricted case remains both arms forward with 2×250 g payload during normal driving. These are model checks, not physical verification.
 
 
 ## v0.3 sensor-brow addition

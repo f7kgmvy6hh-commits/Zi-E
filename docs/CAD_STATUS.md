@@ -1,5 +1,9 @@
 # Current CAD Status
 
+Current physical-freeze interpretation is in `P1_CAD_FREEZE_CANDIDATE.md`. All v0.3
+dimensions/performance values are model parameters or estimates until received-part
+measurement; archived CAD is non-authoritative.
+
 The current CAD source of truth is `mechanical/cad/current/`.
 
 ## Snapshot

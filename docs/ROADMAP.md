@@ -108,7 +108,7 @@ Run the minimum-parts bench campaign in `PRE_PURCHASE_GATE.md` before ordering b
 
 Authority ownership, semantic APIs, extension/package lifecycle, device/profile
 identity, modality-specific providers, presentation packs, runtime/recovery,
-update/security policy, VirtualRobot integration, and protected safety separation are
+update/security policy, VirtualRobot integration, and protected safety separation
 remain frozen and repository-authoritative. The App command-center software foundation
 now adds honest readiness/status APIs, a semantic HostRuntime adapter contract,
 closed simulator/unavailable behavior, modality status views, and adversarial tests.
@@ -149,3 +149,20 @@ configuration, logs/events/diagnostics, commissioning, and VirtualRobot/real-tar
 selection. The public status/contract portion is complete; the privileged real-target
 implementation remains future work. Until it exists, App state is not physical
 authority or execution evidence.
+
+## Prototype P1 handoff status — 2026-08-28
+
+- **SOFTWARE FOUNDATION:** READY.
+- **APP SOFTWARE FOUNDATION:** READY.
+- **P1 BUILD-READY DOCUMENTATION:** READY; canonical inventory/CAD/assembly/
+  electrical/first-power/verification artifacts complete.
+- **HARDWARE INVENTORY:** awaiting purchased-parts Google Sheet, photos and received
+  measurements; no current row is physically verified.
+- **PHYSICAL COMMISSIONING:** NOT DONE.
+- **PHASE 2B2:** `WAITING_FOR_VERIFIED_INPUTS`.
+- **PRODUCTION DRIVERS:** NOT STARTED; blocked on exact hardware/profile/interface and
+  commissioning evidence.
+
+Next physical action after parts arrive: import/review inventory, quarantine conflicts,
+measure received parts, update CAD/profile mappings, then execute logic-only first
+power. Do not begin autonomous motion or production CAN/driver work.

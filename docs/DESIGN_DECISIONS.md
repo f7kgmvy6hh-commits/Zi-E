@@ -635,6 +635,24 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   Configuration is not authorization; report `not_verified` until a live HostRuntime
   check exists. Fallback is bounded and non-sticky in deterministic contract tests.
 
+## 2026-08-28 — Prototype P1 physical source-of-truth contract
+
+- Use current repository decisions/CAD as design authority and the reviewed future
+  purchased-parts sheet, label photos, datasheets and measurements as physical-article
+  authority. Archived/legacy CAD and older BOM assumptions cannot silently return.
+- Treat all current component choices as documented candidates, undecided classes or
+  `VERIFY_ON_ARRIVAL`; no current repository row is proof of received hardware.
+- Keep v0.3 CAD numeric envelopes/performance as model parameters and estimates until
+  received-part fit and physical tests replace them. Concept images have no dimensional
+  authority.
+- Preserve ESP32 multimedia/presence versus STM32 protected safety/motion ownership.
+  Physical drivers remain built-in/protected; App/plugins/providers receive semantic
+  capabilities only.
+- Require the ordered logic-only, sensor-by-sensor, one-restrained-actuator-at-a-time
+  commissioning package. VirtualRobot/software success cannot pass physical gates.
+- Keep Phase 2B2 `WAITING_FOR_VERIFIED_INPUTS`; freeze no CAN/pin/connector/current/
+  fuse/wire/regulator/timing/safe-stop value without reviewed evidence.
+
 ## 2026-08-28 — Zi-E HUD plugin presentation
 
 - Use an original cinematic robotics-control visual language: graphite surfaces,

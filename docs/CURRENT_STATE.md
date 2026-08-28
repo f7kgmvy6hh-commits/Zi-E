@@ -46,6 +46,30 @@ documented in `SOFTWARE_ARCHITECTURE_FREEZE_CANDIDATE.md`,
 `FINAL_SOFTWARE_INTEGRATION_AUDIT.md`, and `PROTOTYPE_P1_BUILD_READY.md`. This status
 does not claim hardware commissioning or freeze any unverified physical value.
 
+## Prototype P1 source-of-truth reconciliation — 2026-08-28
+
+- Software Foundation and App Software Foundation remain `READY`.
+- P1 build-ready documentation now has a canonical component reconciliation, empty
+  purchased-parts/Google Sheet intake contract, CAD freeze candidate, assembly and
+  electrical preparation, ordered first-power package, arrival measurement worksheet,
+  and condensed Phase 2B2 gate.
+- No current component is marked physically `VERIFIED`. Current choices are documented
+  candidates, undecided implementations, or `VERIFY_ON_ARRIVAL`; the reviewed future
+  purchased-parts sheet/photos/measurements will become physical inventory authority.
+- Current CAD remains v0.3: internally automated geometry evidence is preserved, while
+  every received-part-dependent dimension, mass/COM, torque/current/thermal, traction,
+  sensor, cable and fit result remains parametric or blocked by measurement.
+- Physical commissioning is `NOT DONE`. Production drivers are `NOT STARTED` and
+  blocked where physical/profile inputs are required. Phase 2B2 remains
+  `WAITING_FOR_VERIFIED_INPUTS`.
+- P1 build-ready documentation is `READY` for arrival-day evidence intake and
+  controlled bench execution. This is process readiness only, not physical readiness.
+- P1 artifact validation: the committed CAD dataset/schema reports 39 checks, 38
+  passing and one restricted; the empty purchased-parts template passes its 32-field
+  schema. Fresh CAD regeneration is unavailable in this environment because CadQuery
+  is not installed, and the release checksum manifest disagrees with an untouched STEP
+  checkout file, so no fresh geometry or full artifact-integrity claim is made.
+
 ## What is substantially defined
 - A bounded in-memory package-policy foundation separates package/version/content
   identity, applies authoritative verification and compatibility, gates hosted

@@ -2,6 +2,11 @@
 
 This is the quick lookup table. `Primary` means current first-choice; `Backup` means an intentional substitute, not an equal recommendation. Prices are deliberately omitted because they are volatile; re-check before purchasing.
 
+This is a design-choice quick reference, not physical inventory. The canonical
+reconciliation/status/provenance layer is
+`HARDWARE_SOURCE_OF_TRUTH_RECONCILIATION.md`; purchased items must enter through
+`PURCHASED_PARTS_INTAKE_SCHEMA.md`. `KEEP` below never means physically verified.
+
 | Subsystem | Primary | Backup(s) / Switch Condition | Status |
 |---|---|---|---|
 | Display | 3.5" IPS touch, ILI9488, 480×320 landscape | EastRising/BuyDisplay or equivalent documented panel if FPC/touch IC/availability fails | KEEP, verify exact panel |
