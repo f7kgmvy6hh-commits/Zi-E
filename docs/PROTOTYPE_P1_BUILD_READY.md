@@ -1,5 +1,9 @@
 # Prototype Phase 1 Build-Ready Package — 2026-08-28
 
+The Control Center V1 exposes this package as honest P1/CAD status, non-persistent
+inventory preview, and a commissioning checklist. It does not make CAD data,
+inventory rows, simulator output, or software tests satisfy a physical gate.
+
 Status: process and worksheets are ready; execution is blocked on received hardware
 and operator-confirmed measurements. Every physical value not backed by received-part
 evidence is `VERIFY_ON_ARRIVAL`.

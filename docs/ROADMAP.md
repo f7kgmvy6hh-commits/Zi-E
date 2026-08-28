@@ -1,5 +1,17 @@
 # ZI-E Roadmap
 
+## Control Center V1 status — 2026-08-28
+
+- **CONTROL CENTER V1 SOFTWARE:** READY candidate: 16 workspaces, honest shared state,
+  simulator semantics, inventory preview, commissioning/safety foundations and fixed
+  developer validation actions.
+- **SOFTWARE FUTURE:** commissioned HostRuntime adapter/telemetry, capability-scoped
+  mutations, reviewed evidence ingestion, fixed launcher/flashing workflows, and
+  detailed camera/actuator/link integrations.
+- **PHYSICAL:** inventory reconciliation, measurements, first power and commissioning
+  remain undone. App or VirtualRobot results cannot satisfy these gates.
+- **PHASE 2B2:** `WAITING_FOR_VERIFIED_INPUTS`; production CAN/drivers not started.
+
 ## Phase A — Concept Design
 Status: substantially complete.
 

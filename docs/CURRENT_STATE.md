@@ -1,5 +1,19 @@
 # Current State — 2026-08-28
 
+## Control Center V1 cockpit — 2026-08-28
+
+- The authenticated loopback App now has 16 workspaces for operator status, simulator
+  semantics, hardware intake, P1/CAD, commissioning, safety, providers/plugins,
+  diagnostics and development.
+- A consolidated honest model reports ESP32/STM32 ownership and unavailable hardware
+  fields without fabricated telemetry. Inventory previews remain
+  `NOT_VERIFIED`/`REVIEW_REQUIRED` with no persistence or device/profile binding.
+- Developer actions are fixed authenticated identities with bounded execution/output
+  and `robot_authority: NONE`. No generic terminal, filesystem, raw CAN/GPIO/PWM,
+  flashing, or direct actuator endpoint exists.
+- Physical commissioning is `NOT DONE`, production drivers `NOT STARTED`, and Phase
+  2B2 `WAITING_FOR_VERIFIED_INPUTS`.
+
 ## STT isolation validation — 2026-08-28
 
 - Local `faster-whisper` is installed in Zi-E's project environment and the `base` model is cached locally.

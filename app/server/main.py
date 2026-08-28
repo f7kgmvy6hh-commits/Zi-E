@@ -23,6 +23,14 @@ from app.integrations.hermes import HermesBridge, route_message
 from app.security.audit import AuditLog
 from app.security.auth import BearerAuth
 from app.server.config import Settings, load_settings
+from app.server.control_center import (
+    cockpit_status,
+    developer_actions,
+    inventory_preview,
+    inventory_schema,
+    repository_status,
+    run_developer_action,
+)
 from app.server.events import EventBus
 from app.server.metrics import system_metrics
 from app.server.state import StateCore
@@ -46,6 +54,10 @@ class ChatRequest(BaseModel):
 
 class SpeakRequest(BaseModel):
     text: str = Field(min_length=1, max_length=10000)
+
+
+class DeveloperActionRequest(BaseModel):
+    action_id: str = Field(min_length=1, max_length=40, pattern=r"^[a-z_]+$")
 
 
 def create_app(
@@ -280,6 +292,91 @@ def create_app(
             "event_history_count": len(events.history()),
             "persistence": "not_implemented",
             "physical_commissioning": "required",
+        }
+
+    @app.get("/api/control-center", dependencies=[Depends(require_auth)])
+    def control_center():
+        current = runtime_status()
+        provider_state = app_provider_status(cfg, transcriber.status())
+        voice_state = "configured" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable"
+        return cockpit_status(current.public(), provider_state, transcriber.status(), voice_state)
+
+    @app.get("/api/developer", dependencies=[Depends(require_auth)])
+    def developer_workspace():
+        return {
+            "repository": repository_status(),
+            "actions": [action.public() for action in developer_actions().values()],
+            "arbitrary_commands": False,
+            "filesystem_api": False,
+            "robot_authority": "NONE",
+            "test_history": "current-session-events-only",
+        }
+
+    @app.post("/api/developer/action", dependencies=[Depends(require_auth)])
+    async def developer_action(request: DeveloperActionRequest):
+        try:
+            result = await run_developer_action(request.action_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        await events.publish("developer.action", {
+            "action_id": request.action_id,
+            "state": result["state"],
+            "exit_code": result["exit_code"],
+            "robot_authority": "NONE",
+        })
+        audit.write("developer.action", action_id=request.action_id,
+                    state=result["state"], exit_code=result["exit_code"])
+        return result
+
+    @app.get("/api/hardware/inventory/schema", dependencies=[Depends(require_auth)])
+    def hardware_inventory_schema():
+        return {
+            "columns": inventory_schema(), "physical_verification": "NOT_VERIFIED",
+            "authority": "non-authoritative-intake", "persistence": "not_implemented",
+        }
+
+    @app.post("/api/hardware/inventory/preview", dependencies=[Depends(require_auth)])
+    async def hardware_inventory_preview(request: Request):
+        try:
+            result = inventory_preview(await request.body())
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        await events.publish("hardware.inventory.preview", {
+            "count": result["count"], "physical_verification": "NOT_VERIFIED",
+            "persisted": False,
+        })
+        audit.write("hardware.inventory.preview", count=result["count"], persisted=False)
+        return result
+
+    @app.get("/api/semantic-contracts", dependencies=[Depends(require_auth)])
+    def semantic_contracts():
+        return {
+            "robot_state": {
+                "endpoint": "/api/robot/command", "transport": "HostRuntimeAdapter",
+                "states": [state.value for state in RobotState],
+                "outcomes": [phase.value for phase in RequestPhase],
+                "physical_confirmation": "authoritative-runtime-feedback-only",
+            },
+            "motion": {
+                "directions": ["forward", "backward", "left", "right", "stop"],
+                "speed_limit": "bounded-future-runtime-policy",
+                "deadman": "required-for-motion",
+                "state": "NOT_CONFIGURED",
+                "raw_motor_control": False,
+            },
+            "actuator_commissioning": {
+                "single_restrained_actuator": True, "explicit_enable": True,
+                "bounded_jog": True, "verified_range_recording": "future-reviewed-evidence",
+                "state": "NOT_CONFIGURED", "raw_actuator_control": False,
+            },
+            "presentation": {
+                "face_expressions": ["neutral", "happy", "curious", "sleepy", "warning"],
+                "rgb_fail_state": "fail-dark", "state": "NOT_CONFIGURED",
+                "arbitrary_display_memory": False,
+            },
+            "firmware": {"approved_fixed_workflows_only": True, "unrestricted_flash": False},
         }
 
     @app.get("/api/plugins", dependencies=[Depends(require_auth)])

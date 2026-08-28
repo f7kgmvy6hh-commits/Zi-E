@@ -1,7 +1,38 @@
-# ZI-E V1 Local Command Center
+# ZI-E Control Center V1
 
 Status: App software foundation complete with semantic adapter contract; physical
 HostRuntime adapter and robot remain deliberately unimplemented/uncommissioned.
+
+The Control Center serves five compatible roles without acquiring hardware authority:
+development cockpit, hardware-intake tool, commissioning console, simulator UI, and
+eventual semantic real-robot operator interface.
+
+## Workspaces and honesty model
+
+The desktop-first HUD contains Overview, Robot, Camera/Vision, Face/Display/RGB,
+Motors/Actuators, Sensors, Power/Battery, Controllers, Voice/Providers, Hardware
+Inventory, P1/CAD, Commissioning, Safety, Plugins/Profiles, Diagnostics, and Developer.
+Unavailable fields remain explicit `UNAVAILABLE`, `NOT_CONFIGURED`, `NOT_VERIFIED`, or
+`VERIFY_ON_ARRIVAL`; null values are never replaced by demonstration telemetry.
+
+Robot state buttons retain the simulator semantic path. Direction, speed, actuator
+jog, presentation and flashing contracts are visible but `NOT_CONFIGURED`. Inventory
+preview is UTF-8, header-exact, in-memory, bounded to 2 MiB/500 rows, non-persistent,
+and always marks rows `NOT_VERIFIED`/`REVIEW_REQUIRED`. The commissioning view begins
+at zero and has no App mutation endpoint. VirtualRobot cannot advance a physical gate.
+Phase 2B2 remains `WAITING_FOR_VERIFIED_INPUTS`, with no link transmit operation.
+
+## Developer Workspace
+
+Repository status uses fixed read-only Git invocations. Executable actions are a
+closed server-owned allowlist: App pytest, fallback tests, Python compileall, and CAD
+validation only when CadQuery is installed. Actions take no arguments, use fixed
+working directories, have timeouts and bounded output, require authentication, and
+are audit/event logged with `robot_authority: NONE`.
+
+Folder/Terminal/Codex/Hermes/log launch entries remain `UNAVAILABLE` until fixed local
+workflows are reviewed. There is no generic shell, arbitrary path/filesystem, CAN
+transmit, raw actuator, or unrestricted flashing endpoint.
 
 ## Boundary
 
@@ -36,7 +67,7 @@ never infer a physical source from configuration alone.
 ```
 
 Open `http://127.0.0.1:8766/`, then enter the generated `.env` bearer token in the
-Settings panel. Start refuses a live ZI-E PID; stop verifies that the recorded PID's
+top-bar token field. Start refuses a live ZI-E PID; stop verifies that the recorded PID's
 command line is the ZI-E server before terminating it.
 
 ## Public surface
@@ -45,6 +76,9 @@ command line is the ZI-E server before terminating it.
 - `GET /api/plugins`, `/api/extensions`, `/api/providers`, `/api/voice/status`
 - `GET /api/hardware-profile`, `/api/configuration`, `/api/presentation`,
   `/api/diagnostics` (honest read-only visibility; no authority mutation)
+- `GET /api/control-center`, `/api/developer`, `/api/semantic-contracts`
+- `GET /api/hardware/inventory/schema`; `POST /api/hardware/inventory/preview`
+- `POST /api/developer/action` with a fixed allowlisted `action_id` only
 - `POST /api/chat`
 - `POST /api/robot/command`, `POST /api/robot/estop`
 - `POST /api/voice/mute`, `POST /api/voice/stop`

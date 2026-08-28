@@ -1,5 +1,20 @@
 # ZI-E Design Decisions — Concept v0.1
 
+## Control Center V1 cockpit boundary — 2026-08-28
+
+- The App is a 16-workspace operator/developer cockpit, not a runtime, registry,
+  Hardware Profile authority, commissioning authority, or protected controller.
+- Hardware telemetry is nullable and state-qualified. Simulator output is
+  `SIMULATED`; repository entries remain `NOT_VERIFIED` or `VERIFY_ON_ARRIVAL`.
+- Inventory upload is a bounded non-persistent preview. User text cannot assert
+  `VERIFIED`, bind a device/profile, or satisfy commissioning.
+- Developer execution is a fixed no-argument allowlist with authentication, fixed
+  working directories, timeout, bounded output and audit logging. Generic shell,
+  arbitrary filesystem, raw hardware and unrestricted flashing APIs are forbidden.
+- Physical commissioning gates have no self-certifying App mutation path. Future
+  transitions require reviewed physical evidence; execution confirmation remains
+  authoritative HostRuntime/controller feedback only.
+
 This document captures the design decisions made so far. Dimensions are not final unless explicitly stated.
 
 ## 1. Overall category and personality

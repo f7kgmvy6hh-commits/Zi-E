@@ -232,11 +232,15 @@ def test_secrets_absent_from_status_events_and_audit(tmp_path, monkeypatch):
     assert TOKEN not in str(payloads)
 
 
-def test_static_hud_contains_every_required_panel(tmp_path):
+def test_static_hud_contains_every_control_center_workspace(tmp_path):
     with TestClient(create_app(settings(tmp_path))) as client:
         html = client.get("/").text
-        for panel in ("chat", "task", "robot", "vision", "computer", "terminal", "browser", "files", "memory", "system", "voice", "settings"):
-            assert f'data-panel="{panel}"' in html
+        for workspace in (
+            "overview", "robot", "camera", "face", "motors", "sensors",
+            "power", "controllers", "voice", "inventory", "p1",
+            "commissioning", "safety", "plugins", "diagnostics", "developer",
+        ):
+            assert f'data-w="{workspace}"' in html
 
 
 def test_settings_never_expose_secrets_and_voice_controls_work(tmp_path):
@@ -330,3 +334,114 @@ def test_chat_uses_bridge_and_publishes_route_tool_and_response_events(tmp_path,
         }
         assert emitted[-2]["payload"] == {"tool": "hermes-cli", "status": "started"}
         assert emitted[-1]["payload"]["bytes"] == 5
+
+
+def test_control_center_exposes_all_workspaces_and_honest_physical_state(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        body = client.get("/api/control-center", headers=headers).json()
+        assert len(body["workspaces"]) == 16
+        assert body["target"]["mode"] == "SIMULATED"
+        assert body["target"]["physical_readiness"] == "NOT_VERIFIED"
+        assert body["commissioning"]["progress"] == 0
+        assert body["commissioning"]["virtual_robot_can_pass_physical_gate"] is False
+        assert body["commissioning"]["autonomous_physical_motion"] == "BLOCKED"
+        assert all(gate["state"] == "NOT_VERIFIED" for gate in body["commissioning"]["gates"])
+        assert body["controller_link"]["phase2b2"] == "WAITING_FOR_VERIFIED_INPUTS"
+        assert body["controller_link"]["transmit_api"] is False
+
+
+def test_real_target_control_center_remains_disconnected_and_safety_blocked(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(real_settings(tmp_path))) as client:
+        body = client.get("/api/control-center", headers=headers).json()
+        assert body["target"]["mode"] == "DISCONNECTED"
+        assert body["safety"]["motion_authority"] == "UNAVAILABLE"
+        assert body["safety"]["physical_estop"] == "UNAVAILABLE"
+        assert "real target unavailable" in body["safety"]["motion_blocked_reasons"]
+        assert all(controller["state"] == "UNAVAILABLE" for controller in body["controllers"])
+        assert body["target"]["execution_confirmation"] == "NOT_VERIFIED"
+
+
+def test_inventory_preview_is_non_authoritative_and_never_self_verifies(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        schema = client.get("/api/hardware/inventory/schema", headers=headers).json()
+        row = {field: "" for field in schema["columns"]}
+        row.update({"inventory_id": "P1-001", "part_name": "user-entered part"})
+        import csv
+        import io
+        stream = io.StringIO()
+        writer = csv.DictWriter(stream, fieldnames=schema["columns"])
+        writer.writeheader()
+        writer.writerow(row)
+        response = client.post(
+            "/api/hardware/inventory/preview", headers=headers,
+            content=stream.getvalue().encode("utf-8"),
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["persisted"] is False
+        assert body["physical_verification"] == "NOT_VERIFIED"
+        assert body["rows"][0]["physical_verification"] == "NOT_VERIFIED"
+        assert body["rows"][0]["review_status"] == "REVIEW_REQUIRED"
+        malformed = stream.getvalue().splitlines()[0] + "\n" + ",".join(
+            ["value"] * (len(schema["columns"]) + 1)
+        )
+        assert client.post(
+            "/api/hardware/inventory/preview", headers=headers,
+            content=malformed.encode("utf-8"),
+        ).status_code == 422
+
+
+def test_developer_workspace_is_allowlisted_and_has_no_robot_or_shell_authority(tmp_path, monkeypatch):
+    async def fixed_failure(action_id):
+        if action_id != "compileall":
+            raise KeyError("unknown developer action")
+        return {
+            "action_id": action_id, "state": "FAULT", "exit_code": 7,
+            "output": "fixed test failure", "robot_authority": "NONE",
+        }
+
+    monkeypatch.setattr("app.server.main.run_developer_action", fixed_failure)
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        before = client.get("/api/runtime", headers=headers).json()
+        body = client.get("/api/developer", headers=headers).json()
+        assert body["arbitrary_commands"] is False
+        assert body["filesystem_api"] is False
+        assert body["robot_authority"] == "NONE"
+        assert client.post(
+            "/api/developer/action", headers=headers,
+            json={"action_id": "arbitrary_command"},
+        ).status_code == 404
+        action = client.post(
+            "/api/developer/action", headers=headers,
+            json={"action_id": "compileall"},
+        )
+        assert action.status_code == 200
+        assert action.json()["robot_authority"] == "NONE"
+        assert action.json()["state"] == "FAULT"
+        assert client.get("/api/runtime", headers=headers).json() == before
+        assert not any(
+            event["type"].startswith("robot.")
+            for event in client.app.state.events.history()
+        )
+        paths = {route.path for route in client.app.routes}
+        assert "/terminal" not in paths
+        assert "/api/terminal" not in paths
+        assert not any("gpio" in path.lower() or "pwm" in path.lower() or "can/transmit" in path.lower() for path in paths)
+
+
+def test_semantic_contracts_disable_raw_motion_presentation_and_flashing(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        body = client.get("/api/semantic-contracts", headers=headers).json()
+        assert body["motion"]["state"] == "NOT_CONFIGURED"
+        assert body["motion"]["raw_motor_control"] is False
+        assert body["actuator_commissioning"]["raw_actuator_control"] is False
+        assert body["presentation"]["arbitrary_display_memory"] is False
+        assert body["firmware"]["unrestricted_flash"] is False
+        html = client.get("/").text
+        for label in ("OVERVIEW", "CAMERA / VISION", "HARDWARE INVENTORY", "COMMISSIONING", "DEVELOPER"):
+            assert label in html
