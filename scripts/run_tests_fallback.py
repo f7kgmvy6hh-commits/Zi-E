@@ -16,6 +16,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 class MonkeyPatch:
+    def setattr(self, target: str, value):
+        parts = target.split(".")
+        owner = importlib.import_module(parts.pop(0))
+        while parts:
+            attribute = parts.pop(0)
+            if not parts:
+                original = getattr(owner, attribute)
+                setattr(owner, attribute, value)
+                return original
+            owner = getattr(owner, attribute)
+        raise ValueError(f"invalid setattr target: {target}")
+
     def delenv(self, key: str, raising: bool = True):
         if raising and key not in os.environ:
             raise KeyError(key)
