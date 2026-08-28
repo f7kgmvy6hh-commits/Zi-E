@@ -592,11 +592,25 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 
 - Invoke Hermes 0.20.6 as `chat --continue <stable-name> --create-if-missing -q
   <message> -Q --source tool` and preserve one named session.
-- Route simple prompts to `minimax-oauth/MiniMax-M3`, complex prompts to configured
-  `openai-codex/gpt-5.6-sol`, and let explicit `/model` requests bypass automatic
-  flags. `smart_model_routing` is only a setup placeholder and is not consumed.
+- Superseded: prompt-complexity routing between MiniMax and OpenAI is not provider
+  authority. Send ordinary requests to the configured LLM primary (defaulting to the
+  OpenAI-capable Hermes model), and let explicit `/model` requests bypass App
+  selection. Bounded fallback remains modality-specific HostRuntime policy;
+  `smart_model_routing` is only a setup placeholder and is not consumed.
 - Stream redacted TTS in bounded chunks, centralize ElevenLabs voice/model, retain
   Zi-Nanami fallback, and cancel remaining work wherever the generator can observe it.
+
+## 2026-08-28 — Current App/STT reconciliation
+
+- Treat the current Python command center as a simulator/operator prototype, not a
+  HostRuntime implementation or physical authority. A real target stays unavailable
+  until the App consumes HostRuntime/public semantic services and commissioning gates.
+- Keep OpenAI-capable providers preferred when configured and authorized, separately
+  for LLM, STT, TTS, and Wake. Existing local Whisper, ElevenLabs, and Zi-Nanami
+  adapters are fallback/available implementations; they cannot set authoritative
+  priority or widen capabilities.
+- Isolate native local Whisper execution in a bounded subprocess with a strict typed
+  result contract. Ordinary STT/TTS never depends on Codex development authority.
 
 ## 2026-08-28 — Zi-E HUD plugin presentation
 

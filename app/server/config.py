@@ -44,7 +44,7 @@ def load_settings(source: Mapping[str, str] | None = None) -> Settings:
     token = values.get("ZIE_AUTH_TOKEN", "")
     if len(token) < 24:
         raise ValueError("ZIE_AUTH_TOKEN must be at least 24 characters")
-    port = int(values.get("ZIE_PORT", "8765"))
+    port = int(values.get("ZIE_PORT", "8766"))
     if not 1 <= port <= 65535:
         raise ValueError("ZIE_PORT is outside 1..65535")
     return Settings(

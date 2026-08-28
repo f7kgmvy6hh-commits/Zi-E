@@ -16,25 +16,18 @@ class HermesRoute:
 
 
 def route_message(message: str, main_model: str) -> HermesRoute | None:
-    """Apply the deliberately small, documented routing policy.
+    """Select the configured LLM primary without inventing fallback authority.
 
     Hermes slash commands own explicit model selection, so they are passed through
-    without provider/model flags. This does not use Hermes smart_model_routing.
+    without provider/model flags. Bounded fallback belongs to the authoritative
+    modality chain, not prompt heuristics in this App adapter.
     """
     if message.lstrip().lower().startswith("/model"):
         return None
-    lowered = message.lower()
-    complex_markers = (
-        "analy", "architect", "implement", "migration", "tradeoff", "debug",
-        "refactor", "security", "design", "multi-step", "compare",
-    )
-    complex_prompt = len(message) > 500 or sum(word in lowered for word in complex_markers) >= 2
-    if not complex_prompt:
-        return HermesRoute("minimax-oauth", "MiniMax-M3", "simple")
     provider, separator, model = main_model.partition("/")
     if not separator or not provider or not model:
         raise ValueError("main Hermes model must be provider/model")
-    return HermesRoute(provider, model, "complex")
+    return HermesRoute(provider, model, "configured-primary")
 
 
 class HermesBridge:

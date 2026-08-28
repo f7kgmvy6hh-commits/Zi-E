@@ -50,7 +50,7 @@ try {
     }
     if (-not $Healthy) { throw 'ZI-E did not become healthy.' }
     $HostIp = if ($Values.ZIE_HOST) { $Values.ZIE_HOST } else { '127.0.0.1' }
-    $Port = if ($Values.ZIE_PORT) { $Values.ZIE_PORT } else { '8765' }
+    $Port = if ($Values.ZIE_PORT) { $Values.ZIE_PORT } else { '8766' }
     Start-Process "http://${HostIp}:${Port}/" | Out-Null
     Write-Host "ZI-E started and healthy as PID $($Server.Id)."
 } catch {

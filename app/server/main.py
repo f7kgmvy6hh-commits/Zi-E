@@ -200,10 +200,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         audio = await request.body()
         if len(audio) > 25 * 1024 * 1024:
             raise HTTPException(status_code=413, detail="audio payload is too large")
-        result = transcriber.transcribe_bytes(audio, ".wav")
+        result = await transcriber.transcribe_isolated(audio, ".wav")
         if not result["success"]:
             raise HTTPException(status_code=422, detail=result["error"])
-        await events.publish("voice.transcript", {"provider": "local", "length": len(result["transcript"])})
+        await events.publish("voice.transcript", {
+            "provider": result["provider"], "length": len(result["transcript"]),
+        })
         return result
 
     @app.post("/api/robot/command", dependencies=[Depends(require_auth)])

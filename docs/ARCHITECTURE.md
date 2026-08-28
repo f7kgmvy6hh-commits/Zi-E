@@ -119,11 +119,17 @@ and the HUD. Language-model work runs through installed Hermes 0.20.6 using the
 stable named session and supported contract `hermes chat --continue NAME
 --create-if-missing -q MESSAGE -Q --source tool`.
 
-ZI-E deterministically routes simple prompts to `minimax-oauth/MiniMax-M3` and
-complex prompts to the configured main model, defaulting to
-`openai-codex/gpt-5.6-sol`. Explicit `/model` requests bypass automatic selection.
-Route events expose provider/model names but never credentials.
+The App adapter sends ordinary LLM requests to its configured primary model,
+defaulting to `openai-codex/gpt-5.6-sol`. It does not infer provider priority from
+prompt complexity. Explicit `/model` requests remain user-directed and bypass the
+adapter selection. Route events expose provider/model names but never credentials.
+Bounded LLM fallback remains owned by the frozen HostRuntime provider chain.
 
 Hermes configuration may contain `smart_model_routing`, but in this installed
 version it is only a setup placeholder and is not consumed by the ZI-E bridge. No
 unsupported Hermes smart-routing behavior is assumed.
+
+This App has no real-robot HostRuntime adapter yet. Its Python robot state is a
+simulation/operator guard only; it cannot establish motion authority or claim physical
+execution. A real target must consume HostRuntime/public semantic services and remains
+unavailable until that adapter and physical commissioning exist.

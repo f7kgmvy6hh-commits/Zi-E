@@ -1,5 +1,14 @@
 # Current State — 2026-08-28
 
+## STT isolation validation — 2026-08-28
+
+- Local `faster-whisper` is installed in Zi-E's project environment and the `base` model is cached locally.
+- A native crash was observed during direct model execution; therefore Whisper is not executed in the Zi-E server process.
+- `POST /api/stt/transcribe` now launches `app.voice.stt_worker` as an isolated subprocess with a bounded timeout.
+- Worker failures are reported as `STT_WORKER_CRASHED` or `STT_WORKER_TIMEOUT`; the main server remains isolated from native STT failures.
+- Browser push-to-talk uses `MediaRecorder` and uploads only after user release; microphone permission is user-controlled.
+- Empty-audio endpoint regression coverage passes without loading the Whisper model.
+
 ## Phase
 Zi-E V1 now has an uncommitted local command-center implementation candidate under
 `app/`: loopback-only authenticated FastAPI, bounded WebSocket events, central state,
@@ -200,6 +209,26 @@ Production driver binding remains later work.
   command provider without exposing credentials or changing provider priority.
 - A regression test covers cloud failure, local fallback output, and call order.
 - Current suite result after the fallback change: 27 passed, 0 failed.
+
+## STT isolation continuation — 2026-08-28
+
+- Continued the existing native-crash mitigation without rebuilding the voice
+  subsystem. The authenticated STT endpoint remains isolated through
+  `app.voice.stt_worker`.
+- Worker launch failures now return `STT_WORKER_UNAVAILABLE`; malformed successful
+  worker output returns `STT_WORKER_INVALID_OUTPUT`; timeout and crash handling remain
+  fail-closed.
+- The worker protocol now preserves handled transcription failures, rejects provider
+  impersonation and malformed/oversized results, and terminates the child on timeout
+  or request cancellation. Transcript events use only the validated provider field.
+- Hermes ordinary requests now use the configured LLM primary; prompt heuristics no
+  longer alter provider priority. Explicit `/model` remains user-directed. The frozen
+  HostRuntime modality router still owns bounded fallback.
+- The current Python App is validated as a simulator/operator prototype only. It has
+  no HostRuntime real-target adapter and cannot establish physical motion authority or
+  provide commissioning evidence.
+- Full application suite passed: 38 tests. The fallback runner passed 28 tests;
+  compileall and `git diff --check` passed.
 
 ## Final application integration checkpoint — 2026-08-28
 

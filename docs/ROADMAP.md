@@ -118,9 +118,12 @@ safe-stop performance, sensor behavior, actuator identity/load/thermal limits, b
 behavior, cable topology, and final received-part CAD interfaces remain
 `WAITING_FOR_VERIFIED_INPUTS` / `VERIFY_ON_ARRIVAL`.
 
-### Future App work
+### Current App prototype and future real-target work
 
-After this stage, design the App only against the frozen public/semantic services for
-readiness, explicit profile selection, package/plugin management, provider priorities,
-packs, semantic commands, configuration, logs/events/diagnostics, commissioning, and
-VirtualRobot/real-target selection. No App code is part of this stage.
+The loopback command-center/HUD prototype now exists and is validated only for its
+simulator/operator surface. Its eventual real target must bind only to frozen
+HostRuntime/public semantic services for readiness, explicit profile selection,
+package/plugin management, provider priorities, packs, semantic commands,
+configuration, logs/events/diagnostics, commissioning, and VirtualRobot/real-target
+selection. Until that adapter exists, App state is not physical authority or execution
+evidence.

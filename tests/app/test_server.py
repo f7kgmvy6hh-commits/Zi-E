@@ -22,6 +22,12 @@ def test_health_is_narrow_and_reports_real_metrics(tmp_path):
         assert body["system"]["source"] == "local-machine"
 
 
+def test_stt_rejects_empty_audio_without_loading_model(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        assert client.post("/api/stt/transcribe", headers=headers, content=b"").status_code == 422
+
+
 def test_state_and_robot_command_publish_websocket_event(tmp_path):
     headers = {"Authorization": f"Bearer {TOKEN}"}
     with TestClient(create_app(settings(tmp_path))) as client:
@@ -150,7 +156,7 @@ def test_chat_uses_bridge_and_publishes_route_tool_and_response_events(tmp_path,
     )
 
     class FakeRoute:
-        def public(self): return {"provider": "minimax-oauth", "model": "MiniMax-M3", "reason": "simple"}
+        def public(self): return {"provider": "openai-codex", "model": "gpt-5.6-sol", "reason": "configured-primary"}
 
     class FakeBridge:
         last_route = FakeRoute()
@@ -168,7 +174,8 @@ def test_chat_uses_bridge_and_publishes_route_tool_and_response_events(tmp_path,
             "chat.model_route", "chat.tool", "chat.response"
         ]
         assert emitted[-3]["payload"] == {
-            "provider": "minimax-oauth", "model": "MiniMax-M3", "reason": "simple"
+            "provider": "openai-codex", "model": "gpt-5.6-sol",
+            "reason": "configured-primary",
         }
         assert emitted[-2]["payload"] == {"tool": "hermes-cli", "status": "started"}
         assert emitted[-1]["payload"]["bytes"] == 5

@@ -121,14 +121,14 @@ def test_hermes_bridge_reuses_one_session_and_streams():
     asyncio.run(scenario())
 
 
-def test_hermes_routing_is_deterministic_and_explicit_model_bypasses_it():
+def test_hermes_uses_configured_primary_and_explicit_model_bypasses_it():
     simple = route_message("What time is it?", "openai-codex/gpt-5.6-sol")
-    assert simple == HermesRoute("minimax-oauth", "MiniMax-M3", "simple")
+    assert simple == HermesRoute("openai-codex", "gpt-5.6-sol", "configured-primary")
     complex_route = route_message(
         "Analyze the architecture, compare the safety tradeoffs, and implement a migration plan with tests.",
         "openai-codex/gpt-5.6-sol",
     )
-    assert complex_route == HermesRoute("openai-codex", "gpt-5.6-sol", "complex")
+    assert complex_route == HermesRoute("openai-codex", "gpt-5.6-sol", "configured-primary")
     assert route_message("/model anthropic/claude then explain this", "openai-codex/gpt-5.6-sol") is None
 
 
@@ -154,12 +154,13 @@ def test_real_hermes_transport_uses_0206_cli_contract_and_no_shell():
         assert response == b"answer\n"
         assert captured["argv"] == (
             "hermes", "chat", "--continue", "stable-name", "--create-if-missing",
-            "-q", "hello", "-Q", "--source", "tool", "--provider", "minimax-oauth",
-            "--model", "MiniMax-M3",
+            "-q", "hello", "-Q", "--source", "tool", "--provider", "openai-codex",
+            "--model", "gpt-5.6-sol",
         )
         assert captured["kwargs"]["stdout"] == asyncio.subprocess.PIPE
         assert bridge.last_route.public() == {
-            "provider": "minimax-oauth", "model": "MiniMax-M3", "reason": "simple"
+            "provider": "openai-codex", "model": "gpt-5.6-sol",
+            "reason": "configured-primary",
         }
 
     asyncio.run(scenario())

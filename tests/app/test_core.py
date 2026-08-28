@@ -15,6 +15,7 @@ def test_config_defaults_are_loopback_and_real_mode(monkeypatch):
     monkeypatch.delenv("ZIE_SIMULATOR", raising=False)
     settings = load_settings({"ZIE_AUTH_TOKEN": "a" * 32})
     assert settings.host == "127.0.0.1"
+    assert settings.port == 8766
     assert settings.simulator is False
 
 

@@ -5,8 +5,8 @@ remain deliberately unconfigured.
 
 ## Boundary
 
-The command center is a loopback-only operator surface around Hermes and ZI-E's public
-semantic robot boundary. Hermes remains the agent brain and owns provider/OAuth
+The command center is a loopback-only operator surface intended to consume ZI-E's
+public semantic robot boundary. Hermes remains the agent brain and owns provider/OAuth
 secrets, session memory, and tools. The command center owns authentication, display
 state, redacted audit logs, local metrics, event delivery, voice routing, and
 high-level robot state requests. It has no raw actuator, generic terminal, arbitrary
@@ -16,6 +16,9 @@ The Python state machine is an additional host-side fail-closed guard, not physi
 authority or execution confirmation. Firmware/STM32 commissioning, link,
 lease/interlock, safe-stop actuation, and actual-state confirmation remain mandatory.
 Real mode publishes no telemetry until a future commissioned adapter supplies it.
+The present Python implementation is not a HostRuntime adapter and therefore cannot
+connect to or authorize a real robot. Until that binding exists, only simulator use is
+validated; App state must not be interpreted as execution or commissioning evidence.
 
 ## Run
 
@@ -26,7 +29,7 @@ Real mode publishes no telemetry until a future commissioned adapter supplies it
 .\scripts\stop.ps1
 ```
 
-Open `http://127.0.0.1:8765/`, then enter the generated `.env` bearer token in the
+Open `http://127.0.0.1:8766/`, then enter the generated `.env` bearer token in the
 Settings panel. Start refuses a live ZI-E PID; stop verifies that the recorded PID's
 command line is the ZI-E server before terminating it.
 
