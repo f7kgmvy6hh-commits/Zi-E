@@ -1,13 +1,25 @@
 # ZI-E Design Decisions — Concept v0.1
 
+## Control Center 0.04 evidence-driven build decisions — 2026-08-29
+
+- App version `0.04` reflects API/HUD changes; hardware evidence entry alone does not
+  force App version churn.
+- Purchased inventory, candidates, reviewed identity, and verified hardware remain
+  separate. Exact identity suggests `MATCH_REVIEW_REQUIRED`; similarity suggests only
+  `POSSIBLE_MATCH`; neither creates authority.
+- The candidate catalog drives coverage/evidence requests but never seeds inventory.
+- Readiness has robot authority `NONE`, cannot pass physical gates or authorize first
+  power, and Phase 2B2 remains `WAITING_FOR_VERIFIED_INPUTS` for controller-link/CAN.
+
 ## Control Center V1 cockpit boundary — 2026-08-28
 
 - The App is a 16-workspace operator/developer cockpit, not a runtime, registry,
   Hardware Profile authority, commissioning authority, or protected controller.
 - Hardware telemetry is nullable and state-qualified. Simulator output is
   `SIMULATED`; repository entries remain `NOT_VERIFIED` or `VERIFY_ON_ARRIVAL`.
-- Inventory upload is a bounded non-persistent preview. User text cannot assert
-  `VERIFIED`, bind a device/profile, or satisfy commissioning.
+- At the 0.01 boundary, inventory upload was a bounded non-persistent preview. This
+  historical limitation was superseded by 0.03's contained revisioned persistence;
+  user text still cannot assert `VERIFIED`, bind a device/profile, or satisfy commissioning.
 - Developer execution is a fixed no-argument allowlist with authentication, fixed
   working directories, timeout, bounded output and audit logging. Generic shell,
   arbitrary filesystem, raw hardware and unrestricted flashing APIs are forbidden.

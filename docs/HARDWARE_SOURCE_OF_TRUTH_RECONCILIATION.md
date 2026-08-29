@@ -1,5 +1,14 @@
 # Hardware Source-of-Truth Reconciliation — Prototype P1
 
+## Control Center 0.04 decision reports
+
+The primary candidate table is a fixed design-reference catalog for Required Hardware
+and WHAT I NEED FROM YOU reports. It is never converted into purchased inventory.
+Exact normalization can suggest `MATCH_REVIEW_REQUIRED`; similarity can suggest only
+`POSSIBLE_MATCH`; explicit review is required for `MATCHED`, decisions, or verification.
+With empty inventory, required classes remain missing and request actual labels, photos,
+datasheets, receipt state, and relevant measurements—never invented values.
+
 Status: canonical repository reconciliation as of 2026-08-28. This is a design
 inventory, not proof of purchase, receipt, fit, electrical suitability, or
 commissioning. The future purchased-parts sheet, label photos, datasheets, and measured

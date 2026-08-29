@@ -11,6 +11,8 @@
   revisioned persistence, canonical CSV import/export, guarded reviews, explicit
   candidate/purchased separation, engineering mappings, blockers, and physical-gate
   dependency visibility.
+- **0.04:** actual-evidence build-decision reports: required-hardware coverage,
+  prioritized human evidence intake, and conservative engineering readiness.
 
 Evidence-led proposed progression (not automatically authorized): `0.04` actual
 purchased-parts reconciliation; `0.05` real-measurement CAD reconciliation; `0.06`
@@ -20,9 +22,17 @@ only after verified inputs. Scope may change when evidence arrives.
 
 Version `1.00` is reserved for a much later integrated, release-capable Zi-E system.
 
-## Control Center 0.03 status — 2026-08-29
+## Current active workflow — Control Center 0.04
 
-- **CONTROL CENTER 0.03 SOFTWARE:** READY_TO_COMMIT candidate: the 0.02 workspaces and
+Control Center inventory is the engineering working copy. Google Sheet is intake
+convenience followed by import, explicit review, and an approved export/snapshot—not
+a competing mutable authority. Evidence-ready CAD, electrical, ESP32, STM32, and
+controller-link work may proceed in parallel. Phase 2B2 remains
+`WAITING_FOR_VERIFIED_INPUTS` and gates production controller-link/CAN decisions.
+
+## Control Center 0.03 status — DONE in `214ca2d`
+
+- **CONTROL CENTER 0.03 SOFTWARE:** DONE and committed: the 0.02 workspaces and
   safety boundaries plus empty-by-default, revisioned purchased inventory, evidence
   review, canonical CSV exchange, reconciliation, blockers, and recovery.
 - **SOFTWARE FUTURE:** commissioned HostRuntime adapter/telemetry, capability-scoped
@@ -31,6 +41,11 @@ Version `1.00` is reserved for a much later integrated, release-capable Zi-E sys
 - **PHYSICAL:** inventory reconciliation, measurements, first power and commissioning
   remain undone. App or VirtualRobot results cannot satisfy these gates.
 - **PHASE 2B2:** `WAITING_FOR_VERIFIED_INPUTS`; production CAN/drivers not started.
+
+## Historical Phase A–I roadmap (legacy planning reference)
+
+Retained for provenance; this is not the current execution workflow. The active
+evidence-driven version progression above is authoritative.
 
 ## Phase A — Concept Design
 Status: substantially complete.
@@ -136,7 +151,7 @@ Run the minimum-parts bench campaign in `PRE_PURCHASE_GATE.md` before ordering b
 
 ## 2026-08-28 handoff lanes
 
-### SOFTWARE COMPLETE
+### SOFTWARE FOUNDATION COMPLETE
 
 Authority ownership, semantic APIs, extension/package lifecycle, device/profile
 identity, modality-specific providers, presentation packs, runtime/recovery,
@@ -154,8 +169,8 @@ and confirmed command/E-stop feedback. Add no direct hardware path to the App.
 
 ### WAITING_FOR_VERIFIED_INPUTS
 
-Phase 2B2 wire/CAN decisions, production drivers, pins/connectors, measured timing,
-safe-stop performance, sensor behavior, actuator identity/load/thermal limits, battery
+Phase 2B2 wire/CAN decisions and any driver work lacking exact evidence, pins/connectors,
+measured timing, safe-stop performance, sensor behavior, actuator identity/load/thermal limits, battery
 behavior, cable topology, and final received-part CAD interfaces remain
 `WAITING_FOR_VERIFIED_INPUTS` / `VERIFY_ON_ARRIVAL`.
 
@@ -192,9 +207,11 @@ authority or execution evidence.
   measurements; no current row is physically verified.
 - **PHYSICAL COMMISSIONING:** NOT DONE.
 - **PHASE 2B2:** `WAITING_FOR_VERIFIED_INPUTS`.
-- **PRODUCTION DRIVERS:** NOT STARTED; blocked on exact hardware/profile/interface and
-  commissioning evidence.
+- **PRODUCTION DRIVERS:** NOT STARTED; each may proceed when its exact
+  hardware/profile/interface evidence exists. Phase 2B2 specifically gates the
+  production controller-link/CAN decisions.
 
 Next physical action after parts arrive: import/review inventory, quarantine conflicts,
 measure received parts, update CAD/profile mappings, then execute logic-only first
-power. Do not begin autonomous motion or production CAN/driver work.
+power. Do not begin autonomous motion or production controller-link/CAN decisions;
+independent evidence-ready driver bench work may proceed within its safety boundary.

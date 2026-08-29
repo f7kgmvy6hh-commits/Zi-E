@@ -1,10 +1,29 @@
 # Current State — 2026-08-29
 
+## ZI-E Control Center 0.04 — 2026-08-29
+
+- Pushed base `214ca2d` contains completed 0.02 and 0.03. Uncommitted 0.04 adds
+  build-decision reports without rewriting history.
+- App version `0.04` reflects API/HUD changes. Physical evidence entry alone does not
+  require a software-version bump.
+- Purchased inventory remains empty by default; design candidates are separate
+  references and are never seeded, received, or verified.
+- Required Hardware, WHAT I NEED FROM YOU, CAD/electrical/driver, ESP32/STM32,
+  first-power, commissioning, and Phase 2B2 reports are conservative, grant robot
+  authority `NONE`, and pass zero physical gates.
+- Work may branch by evidence readiness. Phase 2B2 gates production controller-link/CAN
+  decisions specifically, not every independent device driver.
+- Fresh 0.04 validation: 113 App pytest tests and 44 fallback tests pass. Compileall,
+  PowerShell parsing, HTML/JavaScript parsing, the 32-column schema and reconciliation
+  invariants, and `git diff --check` pass. Independent review findings were repaired:
+  suggestions cannot satisfy coverage; unreviewed text cannot advance engineering
+  readiness; KEEP requires identified reviewer/date and reviewed evidence.
+
 ## ZI-E Control Center 0.03 — 2026-08-29
 
 - Product-facing App version is `0.03`: hardware inventory, evidence, and
   reconciliation foundation. The staged 0.02 work remains preserved beneath this
-  stage; current Git HEAD is still `1c1cf43` because no commit was requested.
+  stage. It was committed in pushed base `214ca2d`.
 - The exact 32-column purchased-parts CSV remains the compatibility schema. New
   lifecycle/revision fields live in a separate application-owned JSON store under
   ignored `runtime/inventory/`, preventing silent CSV schema drift.
@@ -23,7 +42,7 @@
 - Inventory, evidence, review, import, tombstone, decision, and rollback operations
   have robot authority `NONE`; they cannot pass any of the 16 physical commissioning
   gates. Phase 2B2 remains `WAITING_FOR_VERIFIED_INPUTS`.
-- Fresh validation: 104 App pytest tests and 44 fallback tests passed; compileall,
+- Historical 0.03 validation: 104 App pytest tests and 44 fallback tests passed; compileall,
   PowerShell, HTML, JavaScript, canonical 32-column schema/migration validation, and
   `git diff --check` passed. Independent adversarial findings around conflict-safe
   verification, lifecycle revocation, CSV enum rejection, concurrent revisions, and
@@ -123,13 +142,14 @@ does not claim hardware commissioning or freeze any unverified physical value.
   electrical preparation, ordered first-power package, arrival measurement worksheet,
   and condensed Phase 2B2 gate.
 - No current component is marked physically `VERIFIED`. Current choices are documented
-  candidates, undecided implementations, or `VERIFY_ON_ARRIVAL`; the reviewed future
-  purchased-parts sheet/photos/measurements will become physical inventory authority.
+  candidates, undecided implementations, or `VERIFY_ON_ARRIVAL`; reviewed evidence in
+  the Control Center working copy and an explicit project snapshot/export establish the
+  project inventory record. A Google Sheet remains intake convenience only.
 - Current CAD remains v0.3: internally automated geometry evidence is preserved, while
   every received-part-dependent dimension, mass/COM, torque/current/thermal, traction,
   sensor, cable and fit result remains parametric or blocked by measurement.
 - Physical commissioning is `NOT DONE`. Production drivers are `NOT STARTED` and
-  blocked where physical/profile inputs are required. Phase 2B2 remains
+  blocked only where their exact physical/profile inputs are required. Phase 2B2 remains
   `WAITING_FOR_VERIFIED_INPUTS`.
 - P1 build-ready documentation is `READY` for arrival-day evidence intake and
   controlled bench execution. This is process readiness only, not physical readiness.

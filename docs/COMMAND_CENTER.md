@@ -1,12 +1,14 @@
-# ZI-E Control Center 0.03
+# ZI-E Control Center 0.04
 
-Status: inventory/evidence/reconciliation foundation; physical
+Status: actual-evidence build-decision software foundation; physical
 HostRuntime adapter and robot remain deliberately unimplemented/uncommissioned.
 
 Version history: `0.01` is the structural Project Cockpit foundation. `0.02` adds
 functional simulation/preview workspaces and fixed local developer launch workflows.
 `1.00` remains reserved for a future genuinely integrated release-capable system.
 `0.03` adds contained purchased-inventory persistence and engineering reconciliation.
+`0.04` adds required-hardware coverage and practical evidence/readiness reports. App
+versions track software changes; physical evidence entry alone does not force a bump.
 
 ## Purchased hardware workflow
 
@@ -51,8 +53,9 @@ uses hold-to-request UI release stops plus a 500 ms server-side dead-man expiry;
 one-at-a-time actuator jog and presentation semantics are functional only
 as process-local `SIMULATED`/`PREVIEW` requests. A generated static 640×360 camera
 test frame is labeled `TEST_SOURCE` and is not a stream or physical camera. Inventory
-preview is UTF-8, header-exact, in-memory, bounded to 2 MiB/500 rows, non-persistent,
-and always marks rows `NOT_VERIFIED`/`REVIEW_REQUIRED`. The commissioning view begins
+import preview is UTF-8, header-exact, in-memory, bounded to 2 MiB/500 rows, and
+non-persistent until explicit confirmation. Confirmed imports persist through the
+contained revisioned store and begin `NOT_VERIFIED`/`REVIEW_REQUIRED`. Commissioning begins
 at zero and has no App mutation endpoint. VirtualRobot cannot advance a physical gate.
 Phase 2B2 remains `WAITING_FOR_VERIFIED_INPUTS`, with no link transmit operation.
 

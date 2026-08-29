@@ -1,5 +1,13 @@
 # Purchased-Parts / Google Sheet Intake Contract
 
+## 0.04 working-copy workflow
+
+Google Sheet or the HUD form is intake convenience. Export CSV, preview and explicitly
+confirm it in Control Center, use the contained inventory as the engineering working
+copy, review evidence, then export an approved repository snapshot when appropriate.
+Google credentials stay outside the repository; do not treat two mutable sources as
+simultaneously authoritative.
+
 Use the exact columns in `docs/templates/PURCHASED_PARTS_INTAKE_TEMPLATE.csv`. The
 template intentionally contains no invented inventory rows. One row represents one
 exact purchasable variant or uniquely identified assembly; split rows when revision,

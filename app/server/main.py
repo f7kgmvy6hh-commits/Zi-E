@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.inventory.store import InventoryStore
+from app.inventory.reconciliation import build_reports
 
 from app.robot.state_machine import RobotController, RobotState
 from app.runtime.adapter import (
@@ -148,11 +149,22 @@ class InventoryReviewRequest(BaseModel):
     review_date: str | None = Field(default=None, max_length=100)
     review_state: str | None = Field(default=None, pattern=r"^(NOT_REVIEWED|REVIEW_REQUIRED|REVIEWED|CONFLICT)$")
     evidence_state: str | None = Field(default=None, pattern=r"^(UNKNOWN|CLAIMED|ORDERED|RECEIVED|PHOTO_AVAILABLE|MODEL_IDENTIFIED|DOCUMENTATION_FOUND|MEASURED|REVIEW_REQUIRED|REVIEWED|VERIFY_ON_ARRIVAL|CONFLICT)$")
-    candidate_match: str | None = Field(default=None, pattern=r"^(NONE|POSSIBLE_MATCH|MATCHED|MISMATCH)$")
-    driver_state: str | None = Field(default=None, pattern=r"^(NOT_STARTED|BLOCKED_ON_IDENTITY|BLOCKED_ON_DATASHEET|BLOCKED_ON_MEASUREMENT|READY_FOR_IMPLEMENTATION|IMPLEMENTED|COMMISSIONING_REQUIRED)$")
+    candidate_match: str | None = Field(default=None, pattern=r"^(NONE|NO_CANDIDATE|POSSIBLE_MATCH|MATCH_REVIEW_REQUIRED|MATCHED|MISMATCH|CONFLICT)$")
+    driver_state: str | None = Field(default=None, pattern=r"^(NOT_STARTED|BLOCKED_ON_IDENTITY|BLOCKED_ON_DATASHEET|BLOCKED_ON_INTERFACE|BLOCKED_ON_MEASUREMENT|READY_FOR_IMPLEMENTATION|IMPLEMENTED|COMMISSIONING_REQUIRED)$")
     commissioning_dependencies: list[str] | None = Field(default=None, max_length=32)
     measurement_requirements: list[str] | None = Field(default=None, max_length=32)
     conflict_reason: str | None = Field(default=None, max_length=1000)
+    candidate_reference: str | None = Field(default=None, max_length=1000)
+    mismatch_reason: str | None = Field(default=None, max_length=1000)
+    subsystem: str | None = Field(default=None, max_length=100)
+    decision_reason_code: str | None = Field(default=None, pattern=r"^(|EXACT_VARIANT_MISMATCH|ELECTRICAL_INCOMPATIBILITY|MECHANICAL_INCOMPATIBILITY|INTERFACE_INCOMPATIBILITY|SAFETY_CONCERN|INSUFFICIENT_PERFORMANCE_EVIDENCE|UNAVAILABLE_DOCUMENTATION|DUPLICATE_UNNEEDED_COMPONENT|SUPERSEDED_DESIGN)$")
+    decision_notes: str | None = Field(default=None, max_length=1000)
+    protection_dependency: str | None = Field(default=None, max_length=1000)
+    electrical_blocker: str | None = Field(default=None, max_length=1000)
+    mechanical_blocker: str | None = Field(default=None, max_length=1000)
+    implementation_blocker: str | None = Field(default=None, max_length=1000)
+    mounting_geometry: str | None = Field(default=None, max_length=1000)
+    connector_cable_exit: str | None = Field(default=None, max_length=1000)
     request_verification: bool = False
 
 
@@ -466,7 +478,7 @@ def create_app(
     def hardware_inventory_schema():
         return {
             "columns": inventory_schema(), "physical_verification": "NOT_VERIFIED",
-            "authority": "non-authoritative-intake", "persistence": "not_implemented",
+            "authority": "non-authoritative-intake", "persistence": "contained_revisioned_store",
         }
 
     @app.get("/api/inventory", dependencies=[Depends(require_auth)])
@@ -482,6 +494,22 @@ def create_app(
         result["blockers"] = [blocker for blocker in result["blockers"] if blocker["inventory_id"] in visible_ids]
         result["storage"] = inventory.snapshot() | {"items": None}
         return result
+
+    @app.get("/api/reconciliation", dependencies=[Depends(require_auth)])
+    def reconciliation_reports():
+        active = inventory.reconciliation()["items"]
+        return build_reports(active)
+
+    @app.get("/api/reconciliation/reports/{report_id}", dependencies=[Depends(require_auth)])
+    def reconciliation_report(report_id: str):
+        reports = build_reports(inventory.reconciliation()["items"])
+        allowed = {"hardware_reconciliation_summary", "missing_hardware", "user_input_required",
+            "cad_readiness", "electrical_readiness", "driver_implementation_queue",
+            "safety_critical_unresolved", "phase2b2_inputs_required", "commissioning_prerequisites",
+            "first_power_readiness", "required_hardware", "esp32_readiness", "stm32_readiness"}
+        if report_id not in allowed:
+            raise HTTPException(status_code=404, detail="unknown reconciliation report")
+        return {"report": report_id, "data": reports[report_id], "robot_authority": "NONE"}
 
     def mutation_error(exc: Exception):
         if isinstance(exc, KeyError): return HTTPException(status_code=404, detail=str(exc))

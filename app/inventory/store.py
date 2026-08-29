@@ -22,11 +22,16 @@ EVIDENCE_STATES = {"UNKNOWN", "CLAIMED", "ORDERED", "RECEIVED", "PHOTO_AVAILABLE
                    "REVIEWED", "VERIFIED", "VERIFY_ON_ARRIVAL", "CONFLICT"}
 REVIEW_STATES = {"NOT_REVIEWED", "REVIEW_REQUIRED", "REVIEWED", "CONFLICT"}
 DRIVER_STATES = {"NOT_STARTED", "BLOCKED_ON_IDENTITY", "BLOCKED_ON_DATASHEET",
-                 "BLOCKED_ON_MEASUREMENT", "READY_FOR_IMPLEMENTATION", "IMPLEMENTED",
+                 "BLOCKED_ON_INTERFACE", "BLOCKED_ON_MEASUREMENT", "READY_FOR_IMPLEMENTATION", "IMPLEMENTED",
                  "COMMISSIONING_REQUIRED"}
 CAD_STATES = {"CANDIDATE", "PARAMETRIC", "MEASUREMENT_REQUIRED", "MATCH_REVIEW_REQUIRED",
               "MATCHED", "MISMATCH", "BLOCKED", "NOT_APPLICABLE"}
-CANDIDATE_MATCHES = {"NONE", "POSSIBLE_MATCH", "MATCHED", "MISMATCH"}
+CANDIDATE_MATCHES = {"NONE", "NO_CANDIDATE", "POSSIBLE_MATCH", "MATCH_REVIEW_REQUIRED",
+                     "MATCHED", "MISMATCH", "CONFLICT"}
+DECISION_REASONS = {"", "EXACT_VARIANT_MISMATCH", "ELECTRICAL_INCOMPATIBILITY",
+    "MECHANICAL_INCOMPATIBILITY", "INTERFACE_INCOMPATIBILITY", "SAFETY_CONCERN",
+    "INSUFFICIENT_PERFORMANCE_EVIDENCE", "UNAVAILABLE_DOCUMENTATION",
+    "DUPLICATE_UNNEEDED_COMPONENT", "SUPERSEDED_DESIGN"}
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 USER_FIELDS = {"inventory_id", "part_name", "manufacturer", "model_exact_variant", "quantity",
@@ -39,11 +44,16 @@ ENGINEERING_FIELDS = {"controller_ownership", "function", "interface_documented"
     "weight_measured", "safety_criticality", "verify_on_arrival",
     "decision_keep_replace_undecided", "evidence_source", "reviewer", "review_date",
     "review_state", "evidence_state", "candidate_match", "driver_state",
-    "commissioning_dependencies", "measurement_requirements", "conflict_reason"}
+    "commissioning_dependencies", "measurement_requirements", "conflict_reason",
+    "candidate_reference", "mismatch_reason", "subsystem", "decision_reason_code",
+    "decision_notes", "protection_dependency", "electrical_blocker", "mechanical_blocker",
+    "implementation_blocker", "mounting_geometry", "connector_cable_exit"}
 RUNTIME_FIELDS = {"physical_status", "storage_location", "review_date", "review_state",
     "evidence_state", "candidate_match", "driver_state", "commissioning_dependencies",
     "measurement_requirements", "conflict_reason", "verified", "removed", "created_at",
-    "updated_at", "history"}
+    "updated_at", "history", "candidate_reference", "mismatch_reason", "subsystem",
+    "decision_reason_code", "decision_notes", "protection_dependency", "electrical_blocker",
+    "mechanical_blocker", "implementation_blocker", "mounting_geometry", "connector_cable_exit"}
 
 
 def utc_now() -> str:
@@ -79,6 +89,15 @@ class InventoryStore:
         if len(raw) > MAX_BYTES:
             raise ValueError("inventory state exceeds 2 MiB")
         state = json.loads(raw.decode("utf-8"))
+        candidate_items = state.get("items", []) if isinstance(state, dict) else []
+        if isinstance(candidate_items, list):
+            for item in candidate_items:
+                if not isinstance(item, dict):
+                    continue
+                for key in RUNTIME_FIELDS:
+                    if key not in item:
+                        item[key] = [] if key in {"commissioning_dependencies", "measurement_requirements", "history"} else (
+                            False if key in {"verified", "removed"} else "")
         self._validate_state(state)
         return state
 
@@ -131,6 +150,8 @@ class InventoryStore:
                     raise ValueError("invalid bounded list")
             elif key == "history" and (len(value) > 20 or not all(isinstance(entry, dict) for entry in value)):
                 raise ValueError("invalid bounded history")
+        if item["decision_reason_code"] not in DECISION_REASONS:
+            raise ValueError("invalid decision reason")
 
     def _base_item(self, values: dict[str, Any]) -> dict[str, Any]:
         unexpected = set(values) - USER_FIELDS
@@ -155,7 +176,11 @@ class InventoryStore:
             "driver_state": "BLOCKED_ON_IDENTITY", "cad_status": "MEASUREMENT_REQUIRED",
             "candidate_match": "NONE", "review_date": "", "commissioning_dependencies": [],
             "measurement_requirements": [], "conflict_reason": "", "verified": False,
-            "removed": False, "created_at": utc_now(), "updated_at": utc_now(), "history": [],
+            "candidate_reference": "", "mismatch_reason": "", "subsystem": "",
+            "decision_reason_code": "", "decision_notes": "", "protection_dependency": "",
+            "electrical_blocker": "", "mechanical_blocker": "", "implementation_blocker": "",
+            "mounting_geometry": "", "connector_cable_exit": "", "removed": False,
+            "created_at": utc_now(), "updated_at": utc_now(), "history": [],
         })
         self._validate_item(item)
         return item
@@ -207,13 +232,22 @@ class InventoryStore:
         if unexpected:
             raise ValueError(f"unexpected edit fields: {sorted(unexpected)}")
         items = json.loads(json.dumps(self._state["items"])); target = self._find(items, inventory_id)
+        was_verified = target["verified"]
         for key, value in values.items():
             target[key] = value if key == "quantity" else _text(value, 1000)
+        if {"manufacturer", "model_exact_variant"} & set(values):
+            target["candidate_match"] = "NONE"
+            target["candidate_reference"] = ""
+            target["decision_keep_replace_undecided"] = "UNDECIDED"
+            target["decision_reason_code"] = ""
+            target["decision_notes"] = ""
         if "physical_status" in values:
             target["purchase_status"] = {"RECEIVED": "received", "ORDERED": "ordered",
                 "NOT_BOUGHT": "required", "UNKNOWN": ""}.get(values["physical_status"], "")
         target.update({"verified": False, "review_state": "REVIEW_REQUIRED",
                        "evidence_state": "REVIEW_REQUIRED", "updated_at": utc_now()})
+        target["history"] = [*target.get("history", [])[-19:], {"at":utc_now(), "event":"identity_edit",
+            "fields":sorted(values), "verification_revoked":was_verified}]
         self._validate_item(target)
         result = self._save(items, expected_revision, "item_changed")
         return {**result, "item": target}
@@ -240,13 +274,23 @@ class InventoryStore:
         was_verified = target["verified"]
         for key, value in values.items():
             target[key] = value if isinstance(value, list) else _text(value)
+        decision = target["decision_keep_replace_undecided"]
+        if decision == "KEEP" and not (target["review_state"] == "REVIEWED" and
+                target["evidence_state"] == "REVIEWED" and target["reviewer"] and target["review_date"] and
+                target["candidate_match"] == "MATCHED" and target["manufacturer"] and
+                target["model_exact_variant"] and target["evidence_source"] and
+                not target["conflict_reason"]):
+            raise ValueError("KEEP requires reviewed compatibility evidence and a MATCHED candidate")
+        if decision == "REPLACE" and not (target["decision_reason_code"] in DECISION_REASONS - {""} and
+                                           (target["decision_notes"] or target["conflict_reason"])):
+            raise ValueError("REPLACE requires a structured reason and reviewer notes")
         verified = False
         if request_verification:
             requirements = [target["physical_status"] == "RECEIVED", bool(target["manufacturer"]),
                 bool(target["model_exact_variant"]), target["review_state"] == "REVIEWED",
                 target["evidence_state"] == "REVIEWED", bool(target["evidence_source"]),
                 bool(target["reviewer"]), bool(target["review_date"]), not target["removed"],
-                not target["conflict_reason"], target["candidate_match"] != "MISMATCH"]
+                not target["conflict_reason"], target["candidate_match"] not in {"MISMATCH", "CONFLICT"}]
             if not all(requirements):
                 raise ValueError("VERIFIED transition requirements are not satisfied")
             verified = True
@@ -257,7 +301,8 @@ class InventoryStore:
         target["verified"] = verified
         target["updated_at"] = utc_now()
         target["history"] = [*target.get("history", [])[-19:], {"at": utc_now(), "event": "engineering_review",
-                              "decision": target["decision_keep_replace_undecided"]}]
+                              "decision": target["decision_keep_replace_undecided"],
+                              "fields":sorted(values), "verification_revoked":was_verified and not verified}]
         self._validate_item(target)
         result = self._save(items, expected_revision, "review_changed")
         return {**result, "item": target}

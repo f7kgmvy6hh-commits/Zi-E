@@ -147,7 +147,7 @@ def test_conflict_or_candidate_mismatch_blocks_verification_and_review_revokes_c
         value.review("P1-001", {**base, "candidate_match":"MISMATCH"}, 1, True)
     verified = value.review("P1-001", base, 1, True)
     assert verified["item"]["evidence_state"] == "VERIFIED"
-    revoked = value.review("P1-001", {"decision_keep_replace_undecided":"KEEP"}, 2)
+    revoked = value.review("P1-001", {"decision_keep_replace_undecided":"UNDECIDED"}, 2)
     assert revoked["item"]["verified"] is False
     assert revoked["item"]["evidence_state"] == "REVIEW_REQUIRED"
     assert revoked["item"]["review_state"] == "REVIEW_REQUIRED"
