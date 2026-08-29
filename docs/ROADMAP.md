@@ -1,10 +1,30 @@
 # ZI-E Roadmap
 
-## Control Center V1 status — 2026-08-28
+## Control Center version history
 
-- **CONTROL CENTER V1 SOFTWARE:** READY candidate: 16 workspaces, honest shared state,
-  simulator semantics, inventory preview, commissioning/safety foundations and fixed
-  developer validation actions.
+- **0.01:** structural/project-cockpit foundation at commit `1c1cf43`.
+- **0.02:** functional workspaces and safe fixed developer tools. Generated camera
+  test source, presentation previews, simulator drive, restrained one-at-a-time
+  actuator commissioning preview, fuller honest hardware status cards, and fixed
+  local launch workflows are implemented without physical authority.
+- **0.03:** hardware inventory, evidence, and reconciliation foundation: contained
+  revisioned persistence, canonical CSV import/export, guarded reviews, explicit
+  candidate/purchased separation, engineering mappings, blockers, and physical-gate
+  dependency visibility.
+
+Evidence-led proposed progression (not automatically authorized): `0.04` actual
+purchased-parts reconciliation; `0.05` real-measurement CAD reconciliation; `0.06`
+electrical/wiring freeze candidate; `0.07` bench bring-up; `0.08` ESP32 physical
+integration; `0.09` STM32 physical integration; `0.10` Phase 2B2 freeze/implementation
+only after verified inputs. Scope may change when evidence arrives.
+
+Version `1.00` is reserved for a much later integrated, release-capable Zi-E system.
+
+## Control Center 0.03 status — 2026-08-29
+
+- **CONTROL CENTER 0.03 SOFTWARE:** READY_TO_COMMIT candidate: the 0.02 workspaces and
+  safety boundaries plus empty-by-default, revisioned purchased inventory, evidence
+  review, canonical CSV exchange, reconciliation, blockers, and recovery.
 - **SOFTWARE FUTURE:** commissioned HostRuntime adapter/telemetry, capability-scoped
   mutations, reviewed evidence ingestion, fixed launcher/flashing workflows, and
   detailed camera/actuator/link integrations.

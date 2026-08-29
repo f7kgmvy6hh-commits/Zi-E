@@ -5,9 +5,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.inventory.store import InventoryStore
 
 from app.robot.state_machine import RobotController, RobotState
 from app.runtime.adapter import (
@@ -24,13 +26,17 @@ from app.security.audit import AuditLog
 from app.security.auth import BearerAuth
 from app.server.config import Settings, load_settings
 from app.server.control_center import (
+    ACTUATORS,
+    WorkspacePreview,
     cockpit_status,
     developer_actions,
     inventory_preview,
     inventory_schema,
     repository_status,
     run_developer_action,
+    REPOSITORY_ROOT,
 )
+from app.version import APP_VERSION
 from app.server.events import EventBus
 from app.server.metrics import system_metrics
 from app.server.state import StateCore
@@ -57,12 +63,108 @@ class SpeakRequest(BaseModel):
 
 
 class DeveloperActionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     action_id: str = Field(min_length=1, max_length=40, pattern=r"^[a-z_]+$")
+
+
+class PresentationPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expression: str = Field(pattern=r"^(neutral|happy|curious|sleepy|warning)$")
+    face_pack: str = Field(default="builtin-preview", pattern=r"^[a-z0-9_-]{1,40}$")
+    brightness: int = Field(ge=0, le=100)
+    animation_speed: int = Field(ge=0, le=100)
+    rgb_brightness: int = Field(ge=0, le=100)
+    rgb_pattern: str = Field(pattern=r"^[a-z0-9_-]{1,40}$")
+    display_test_pattern: bool = False
+
+
+class ActuatorPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    slot: str
+    operation: str = Field(pattern=r"^(enable|jog_plus|jog_minus|stop)$")
+    speed: int = Field(ge=1, le=25)
+
+
+class DrivePreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    direction: str = Field(pattern=r"^(forward|backward|left|right|stop)$")
+    speed_limit: int = Field(ge=0, le=40)
+    deadman: bool
+
+
+class InventoryCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0)
+    inventory_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    part_name: str = Field(min_length=1, max_length=200)
+    manufacturer: str = Field(default="", max_length=200)
+    model_exact_variant: str = Field(default="", max_length=200)
+    quantity: int = Field(ge=1, le=10000)
+    physical_status: str = Field(pattern=r"^(RECEIVED|ORDERED|NOT_BOUGHT|UNKNOWN)$")
+    purchase_link_reference: str = Field(default="", max_length=1000)
+    photo_reference: str = Field(default="", max_length=1000)
+    storage_location: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=1000)
+
+
+class InventoryEditRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0)
+    part_name: str | None = Field(default=None, min_length=1, max_length=200)
+    manufacturer: str | None = Field(default=None, max_length=200)
+    model_exact_variant: str | None = Field(default=None, max_length=200)
+    quantity: int | None = Field(default=None, ge=1, le=10000)
+    physical_status: str | None = Field(default=None, pattern=r"^(RECEIVED|ORDERED|NOT_BOUGHT|UNKNOWN)$")
+    purchase_link_reference: str | None = Field(default=None, max_length=1000)
+    photo_reference: str | None = Field(default=None, max_length=1000)
+    storage_location: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+class InventoryReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0)
+    controller_ownership: str | None = Field(default=None, pattern=r"^(ESP32|STM32|HOST|PASSIVE|PROTECTED_SAFETY|UNKNOWN)$")
+    function: str | None = Field(default=None, max_length=1000)
+    interface_documented: str | None = Field(default=None, max_length=1000)
+    voltage_documented: str | None = Field(default=None, max_length=1000)
+    current_documented: str | None = Field(default=None, max_length=1000)
+    voltage_measured: str | None = Field(default=None, max_length=1000)
+    current_measured: str | None = Field(default=None, max_length=1000)
+    connector: str | None = Field(default=None, max_length=1000)
+    zie_logical_slot: str | None = Field(default=None, max_length=1000)
+    driver_extension: str | None = Field(default=None, max_length=1000)
+    hardware_profile_mapping: str | None = Field(default=None, max_length=1000)
+    cad_status: str | None = Field(default=None, pattern=r"^(CANDIDATE|PARAMETRIC|MEASUREMENT_REQUIRED|MATCH_REVIEW_REQUIRED|MATCHED|MISMATCH|BLOCKED|NOT_APPLICABLE)$")
+    dimensions_documented: str | None = Field(default=None, max_length=1000)
+    dimensions_measured: str | None = Field(default=None, max_length=1000)
+    weight_documented: str | None = Field(default=None, max_length=1000)
+    weight_measured: str | None = Field(default=None, max_length=1000)
+    safety_criticality: str | None = Field(default=None, max_length=1000)
+    verify_on_arrival: str | None = Field(default=None, pattern=r"^(yes|no|UNKNOWN)$")
+    decision_keep_replace_undecided: str | None = Field(default=None, pattern=r"^(KEEP|REPLACE|UNDECIDED)$")
+    evidence_source: str | None = Field(default=None, max_length=1000)
+    reviewer: str | None = Field(default=None, max_length=200)
+    review_date: str | None = Field(default=None, max_length=100)
+    review_state: str | None = Field(default=None, pattern=r"^(NOT_REVIEWED|REVIEW_REQUIRED|REVIEWED|CONFLICT)$")
+    evidence_state: str | None = Field(default=None, pattern=r"^(UNKNOWN|CLAIMED|ORDERED|RECEIVED|PHOTO_AVAILABLE|MODEL_IDENTIFIED|DOCUMENTATION_FOUND|MEASURED|REVIEW_REQUIRED|REVIEWED|VERIFY_ON_ARRIVAL|CONFLICT)$")
+    candidate_match: str | None = Field(default=None, pattern=r"^(NONE|POSSIBLE_MATCH|MATCHED|MISMATCH)$")
+    driver_state: str | None = Field(default=None, pattern=r"^(NOT_STARTED|BLOCKED_ON_IDENTITY|BLOCKED_ON_DATASHEET|BLOCKED_ON_MEASUREMENT|READY_FOR_IMPLEMENTATION|IMPLEMENTED|COMMISSIONING_REQUIRED)$")
+    commissioning_dependencies: list[str] | None = Field(default=None, max_length=32)
+    measurement_requirements: list[str] | None = Field(default=None, max_length=32)
+    conflict_reason: str | None = Field(default=None, max_length=1000)
+    request_verification: bool = False
+
+
+class RevisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0)
 
 
 def create_app(
     settings: Settings | None = None,
     runtime_adapter: HostRuntimeAdapter | None = None,
+    inventory_root: Path | None = None,
 ) -> FastAPI:
     cfg = settings or load_settings()
     auth = BearerAuth(cfg.auth_token)
@@ -92,6 +194,8 @@ def create_app(
         cfg.elevenlabs_model,
     )
     transcriber = LocalTranscriber()
+    preview = WorkspacePreview(cfg.simulator)
+    inventory = InventoryStore(inventory_root or (REPOSITORY_ROOT / "runtime" / "inventory"), inventory_schema())
 
     def runtime_status():
         return adapter.status()
@@ -183,12 +287,13 @@ def create_app(
             task.cancel()
             audit.write("server.stopped")
 
-    app = FastAPI(title="ZI-E Command Center", version="1.0.0", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="ZI-E Control Center", version=APP_VERSION, lifespan=lifespan, docs_url=None, redoc_url=None)
     app.state.settings = cfg
     app.state.events = events
     app.state.core = state
     app.state.robot = robot
     app.state.runtime_adapter = adapter
+    app.state.inventory = inventory
     app.mount("/hud", StaticFiles(directory=Path(__file__).parents[1] / "hud"), name="hud-assets")
 
     def require_auth(authorization: str | None = Header(default=None)):
@@ -208,6 +313,7 @@ def create_app(
             or real_runtime_ready(current)
         )
         return {
+            "version": APP_VERSION,
             "status": "ok" if robot_ready else "blocked",
             "readiness": {
                 "app": "ready",
@@ -299,13 +405,39 @@ def create_app(
         current = runtime_status()
         provider_state = app_provider_status(cfg, transcriber.status())
         voice_state = "configured" if cfg.elevenlabs_api_key or cfg.voice_fallback_command else "unavailable"
-        return cockpit_status(current.public(), provider_state, transcriber.status(), voice_state)
+        return cockpit_status(current.public(), provider_state, transcriber.status(), voice_state, preview)
+
+    @app.post("/api/presentation/preview", dependencies=[Depends(require_auth)])
+    async def presentation_preview(request: PresentationPreviewRequest):
+        result = preview.set_presentation(request.model_dump())
+        await events.publish("presentation.preview", {**result, "physically_confirmed": False})
+        return {**result, "physically_confirmed": False}
+
+    @app.post("/api/actuators/commissioning-preview", dependencies=[Depends(require_auth)])
+    async def actuator_preview(request: ActuatorPreviewRequest):
+        if request.slot not in ACTUATORS:
+            raise HTTPException(status_code=422, detail="unknown logical actuator slot")
+        try:
+            result = preview.commission(request.slot, request.operation, request.speed)
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        await events.publish("actuator.commissioning_preview", result)
+        return result
+
+    @app.post("/api/drive/preview", dependencies=[Depends(require_auth)])
+    async def drive_preview(request: DrivePreviewRequest):
+        try:
+            result = preview.drive_request(request.direction, request.speed_limit, request.deadman)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        await events.publish("drive.preview", result)
+        return result
 
     @app.get("/api/developer", dependencies=[Depends(require_auth)])
     def developer_workspace():
         return {
             "repository": repository_status(),
-            "actions": [action.public() for action in developer_actions().values()],
+            "actions": [action.public() for action in developer_actions(cfg.log_path, cfg.hermes_command).values()],
             "arbitrary_commands": False,
             "filesystem_api": False,
             "robot_authority": "NONE",
@@ -315,7 +447,7 @@ def create_app(
     @app.post("/api/developer/action", dependencies=[Depends(require_auth)])
     async def developer_action(request: DeveloperActionRequest):
         try:
-            result = await run_developer_action(request.action_id)
+            result = await run_developer_action(request.action_id, cfg.log_path, cfg.hermes_command)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except RuntimeError as exc:
@@ -336,6 +468,80 @@ def create_app(
             "columns": inventory_schema(), "physical_verification": "NOT_VERIFIED",
             "authority": "non-authoritative-intake", "persistence": "not_implemented",
         }
+
+    @app.get("/api/inventory", dependencies=[Depends(require_auth)])
+    def inventory_status(search: str = "", filter: str = "ALL", sort: str = "inventory_id"):
+        if len(search) > 200 or filter not in {"ALL", "RECEIVED", "ORDERED", "NOT_BOUGHT", "UNKNOWN", "KEEP", "REPLACE", "UNDECIDED", "VERIFY_ON_ARRIVAL", "REVIEW_REQUIRED", "VERIFIED", "CONFLICT", "ESP32", "STM32", "HOST", "PASSIVE", "SAFETY_CRITICAL", "CAD_BLOCKED", "DRIVER_BLOCKED", "MEASUREMENT_REQUIRED"} or sort not in {"inventory_id", "part_name", "manufacturer", "model_exact_variant", "physical_status"}:
+            raise HTTPException(status_code=422, detail="invalid inventory query")
+        result = inventory.reconciliation(); needle = search.casefold()
+        items = [item for item in result["items"] if not needle or any(needle in str(item[key]).casefold() for key in ("inventory_id", "part_name", "manufacturer", "model_exact_variant"))]
+        predicates = {"RECEIVED":lambda x:x["physical_status"]=="RECEIVED", "ORDERED":lambda x:x["physical_status"]=="ORDERED", "NOT_BOUGHT":lambda x:x["physical_status"]=="NOT_BOUGHT", "UNKNOWN":lambda x:x["physical_status"]=="UNKNOWN", "KEEP":lambda x:x["decision_keep_replace_undecided"]=="KEEP", "REPLACE":lambda x:x["decision_keep_replace_undecided"]=="REPLACE", "UNDECIDED":lambda x:x["decision_keep_replace_undecided"]=="UNDECIDED", "VERIFY_ON_ARRIVAL":lambda x:str(x["verify_on_arrival"]).lower()=="yes", "REVIEW_REQUIRED":lambda x:x["review_state"]!="REVIEWED", "VERIFIED":lambda x:x["verified"], "CONFLICT":lambda x:x["evidence_state"]=="CONFLICT" or bool(x["conflict_reason"]), "ESP32":lambda x:x["controller_ownership"]=="ESP32", "STM32":lambda x:x["controller_ownership"]=="STM32", "HOST":lambda x:x["controller_ownership"]=="HOST", "PASSIVE":lambda x:x["controller_ownership"]=="PASSIVE", "SAFETY_CRITICAL":lambda x:x["safety_criticality"].lower() in {"critical","high"}, "CAD_BLOCKED":lambda x:x["cad_status"] in {"BLOCKED","MEASUREMENT_REQUIRED","MATCH_REVIEW_REQUIRED"}, "DRIVER_BLOCKED":lambda x:x["driver_state"].startswith("BLOCKED"), "MEASUREMENT_REQUIRED":lambda x:not x["dimensions_measured"] and x["cad_status"]!="NOT_APPLICABLE"}
+        if filter != "ALL": items = [item for item in items if predicates[filter](item)]
+        result["items"] = sorted(items, key=lambda x:(str(x[sort]).casefold(), x["inventory_id"]))
+        visible_ids = {item["inventory_id"] for item in items}
+        result["blockers"] = [blocker for blocker in result["blockers"] if blocker["inventory_id"] in visible_ids]
+        result["storage"] = inventory.snapshot() | {"items": None}
+        return result
+
+    def mutation_error(exc: Exception):
+        if isinstance(exc, KeyError): return HTTPException(status_code=404, detail=str(exc))
+        if isinstance(exc, RuntimeError): return HTTPException(status_code=409, detail=str(exc))
+        return HTTPException(status_code=422, detail=str(exc))
+
+    async def inventory_event(event: str, result: dict):
+        payload = {"action": event, "revision": result["revision"], "robot_authority": "NONE"}
+        await events.publish("inventory.mutation", payload); audit.write("inventory.mutation", **payload)
+
+    @app.post("/api/inventory/items", dependencies=[Depends(require_auth)])
+    async def create_inventory_item(request: InventoryCreateRequest):
+        values = request.model_dump(); revision = values.pop("expected_revision")
+        try: result = inventory.create(values, revision)
+        except (KeyError, RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        await inventory_event("item_created", result); return result
+
+    @app.patch("/api/inventory/items/{inventory_id}", dependencies=[Depends(require_auth)])
+    async def edit_inventory_item(inventory_id: str, request: InventoryEditRequest):
+        values = request.model_dump(exclude_none=True); revision = values.pop("expected_revision")
+        try: result = inventory.update(inventory_id, values, revision)
+        except (KeyError, RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        await inventory_event("item_changed", result); return result
+
+    @app.delete("/api/inventory/items/{inventory_id}", dependencies=[Depends(require_auth)])
+    async def remove_inventory_item(inventory_id: str, expected_revision: int):
+        try: result = inventory.remove(inventory_id, expected_revision)
+        except (KeyError, RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        await inventory_event("item_tombstoned", result); return result
+
+    @app.post("/api/inventory/items/{inventory_id}/review", dependencies=[Depends(require_auth)])
+    async def review_inventory_item(inventory_id: str, request: InventoryReviewRequest):
+        values = request.model_dump(exclude_none=True); revision = values.pop("expected_revision"); verify = values.pop("request_verification")
+        try: result = inventory.review(inventory_id, values, revision, verify)
+        except (KeyError, RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        action = "decision_changed" if "decision_keep_replace_undecided" in values else (
+            "evidence_changed" if {"evidence_source", "evidence_state", "reviewer", "review_date"} & set(values)
+            else "review_changed")
+        await inventory_event(action, result); return result
+
+    @app.post("/api/inventory/import/preview", dependencies=[Depends(require_auth)])
+    async def inventory_import_preview(request: Request):
+        try: return inventory.preview_csv(await request.body())
+        except ValueError as exc: raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/api/inventory/import/commit", dependencies=[Depends(require_auth)])
+    async def inventory_import_commit(request: Request, expected_revision: int):
+        try: result = inventory.import_csv(await request.body(), expected_revision)
+        except (RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        await inventory_event("import_persisted", result); return result
+
+    @app.get("/api/inventory/export", dependencies=[Depends(require_auth)])
+    def inventory_export():
+        return Response(inventory.export_csv(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition":"attachment; filename=zie-purchased-parts.csv"})
+
+    @app.post("/api/inventory/rollback", dependencies=[Depends(require_auth)])
+    async def inventory_rollback(request: RevisionRequest):
+        try: result = inventory.rollback(request.expected_revision)
+        except (RuntimeError, ValueError) as exc: raise mutation_error(exc) from exc
+        await inventory_event("rollback", result); return result
 
     @app.post("/api/hardware/inventory/preview", dependencies=[Depends(require_auth)])
     async def hardware_inventory_preview(request: Request):

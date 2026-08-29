@@ -683,3 +683,34 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   port `8766`.
 - Enable `ZIE_SIMULATOR=true` for current host-only integration testing. Simulator
   telemetry is not physical evidence and must remain clearly labeled.
+# 2026-08-29 — Deliberately slow Control Center product versioning
+
+- `0.01` identifies the structural Project Cockpit foundation at `1c1cf43`.
+- `0.02` identifies functional workspaces and safe fixed developer tools.
+- Subsequent meaningful stages increment by `0.01`; `1.00` is reserved for a much
+  later genuinely integrated/release-capable Zi-E system.
+- Product/App versioning is independent from protocol, SDK, package-schema, CAD, and
+  other compatibility versions with their own technical meaning.
+
+# 2026-08-29 — Preview semantics and developer authority remain separate
+
+- Camera test frames, face/RGB previews, drive previews, and actuator commissioning
+  previews are process-local development functions. They never satisfy physical gates
+  and never emit `PHYSICALLY_CONFIRMED`.
+- Browser developer requests select one fixed action identity only. Executables,
+  arguments, working directory, and allowed log location are server-owned; developer
+  actions have robot authority `NONE`.
+# 2026-08-29 — Control Center 0.03 inventory compatibility and truth boundary
+
+- The existing 32-field CSV remains the interchange schema; 0.03 metadata is stored
+  separately in application-owned ignored runtime state.
+- Purchased inventory starts empty. Design candidates remain reference-only and are
+  never converted to purchased, received, reviewed, or verified automatically.
+- Every persisted mutation uses optimistic revision checking, validation, atomic
+  replacement, and a bounded prior revision. Removal is a tombstone.
+- Physical `VERIFIED` is a guarded explicit engineering-review transition requiring
+  received status, exact identity, reviewed evidence, provenance, reviewer, and date.
+  No import, typed model, URL, photo, candidate match, simulation, or software test
+  self-verifies hardware.
+- Inventory/reconciliation has robot authority `NONE` and cannot pass commissioning
+  gates or widen Hardware Profile/driver/control authority.

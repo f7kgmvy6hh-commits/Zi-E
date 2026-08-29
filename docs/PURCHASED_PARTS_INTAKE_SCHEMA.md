@@ -44,3 +44,26 @@ source, controller ownership or disposition differs.
 
 The Sheet becomes authoritative for physical inventory only after review. It does not
 by itself prove electrical suitability, safety, commissioning or execution authority.
+
+## Control Center 0.03 compatibility decision
+
+The 32 columns above remain unchanged and authoritative for CSV interchange. Runtime
+metadata is intentionally separate in ignored `runtime/inventory/active.json`:
+`physical_status`, `storage_location`, evidence/review lifecycle, explicit candidate
+match, driver state, commissioning/measurement requirements, conflicts, verification,
+tombstone/history, and revision timestamps. Export retains exact canonical ordering.
+
+For ordinary entry, users need only: `inventory_id`, `part_name`, `manufacturer`,
+`model_exact_variant`, `quantity`, `physical_status` (`RECEIVED`, `ORDERED`,
+`NOT_BOUGHT`, `UNKNOWN`), purchase reference, photo reference, storage location, and
+notes. Missing engineering values remain unknown and move to the separate review.
+
+### Google Sheet without API credentials
+
+1. Maintain the ten simple user columns in the Sheet.
+2. Export as CSV and place values into the matching canonical template columns.
+3. Preview the canonical CSV in Control Center; resolve validation/conflicts.
+4. Explicitly confirm persistence with the current inventory revision.
+5. Perform engineering review, reconciliation, and evidence-backed decisions.
+
+Google API synchronization and credentials are deliberately absent.

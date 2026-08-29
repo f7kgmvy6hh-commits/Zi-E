@@ -395,7 +395,7 @@ def test_inventory_preview_is_non_authoritative_and_never_self_verifies(tmp_path
 
 
 def test_developer_workspace_is_allowlisted_and_has_no_robot_or_shell_authority(tmp_path, monkeypatch):
-    async def fixed_failure(action_id):
+    async def fixed_failure(action_id, *_):
         if action_id != "compileall":
             raise KeyError("unknown developer action")
         return {
@@ -445,3 +445,63 @@ def test_semantic_contracts_disable_raw_motion_presentation_and_flashing(tmp_pat
         html = client.get("/").text
         for label in ("OVERVIEW", "CAMERA / VISION", "HARDWARE INVENTORY", "COMMISSIONING", "DEVELOPER"):
             assert label in html
+        assert "setInterval(()=>{if(held)sendDrive(selectedDirection,true)},250)" in html
+        assert "onpointercancel=releaseDrive" in html
+        assert "inventory-blockers').onclick" in html
+        assert "(x.measurement_requirements||[]).join(', ')" in html
+        assert "(x.commissioning_dependencies||[]).join(', ')" in html
+        assert "ZI-E 0.02" not in html
+
+
+def test_current_version_and_functional_preview_surfaces_are_honest(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        assert client.get("/api/health", headers=headers).json()["version"] == "0.03"
+        cockpit = client.get("/api/control-center", headers=headers).json()
+        assert cockpit["version"] == "0.03"
+        assert cockpit["camera"]["mode"] == "TEST_SOURCE"
+        assert cockpit["camera"]["fps"] == 0
+        assert cockpit["camera"]["source"] == "generated-static-frame"
+        assert cockpit["power"]["battery_estimate"] is None
+        assert cockpit["controller_link"]["phase2b2"] == "WAITING_FOR_VERIFIED_INPUTS"
+        assert "physical commissioning gates incomplete" in cockpit["safety"]["motion_blocked_reasons"]
+
+
+def test_preview_semantics_never_physically_confirm_and_reject_extra_fields(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        drive = client.post("/api/drive/preview", headers=headers,
+            json={"direction": "forward", "speed_limit": 20, "deadman": True}).json()
+        assert drive["delivery"] == "SIMULATED" and drive["physically_confirmed"] is False
+        presentation = client.post("/api/presentation/preview", headers=headers, json={
+            "expression": "happy", "face_pack": "builtin-preview", "brightness": 50,
+            "animation_speed": 50, "rgb_brightness": 30, "rgb_pattern": "calm",
+            "display_test_pattern": False,
+        }).json()
+        assert presentation["delivery"] == "SIMULATED"
+        assert presentation["physically_confirmed"] is False
+        assert client.post("/api/drive/preview", headers=headers, json={
+            "direction": "stop", "speed_limit": 0, "deadman": False, "command": "whoami",
+        }).status_code == 422
+
+
+def test_single_actuator_commissioning_preview_and_real_fail_closed(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        first = client.post("/api/actuators/commissioning-preview", headers=headers,
+            json={"slot": "head.pan", "operation": "enable", "speed": 10})
+        assert first.json()["physically_confirmed"] is False
+        assert client.post("/api/actuators/commissioning-preview", headers=headers,
+            json={"slot": "head.tilt", "operation": "enable", "speed": 10}).status_code == 409
+    with TestClient(create_app(real_settings(tmp_path))) as client:
+        result = client.post("/api/actuators/commissioning-preview", headers=headers,
+            json={"slot": "head.pan", "operation": "enable", "speed": 10}).json()
+        assert result["state"] == "REJECTED" and result["delivery"] == "NOT_DELIVERED"
+        assert result["physically_confirmed"] is False
+
+
+def test_developer_request_has_no_arbitrary_arguments(tmp_path):
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    with TestClient(create_app(settings(tmp_path))) as client:
+        assert client.post("/api/developer/action", headers=headers,
+            json={"action_id": "compileall", "arguments": ["--evil"]}).status_code == 422

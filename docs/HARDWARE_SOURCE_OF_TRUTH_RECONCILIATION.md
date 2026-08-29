@@ -122,3 +122,16 @@ embedded modules own multimedia/presence; STM32 built-in protected modules own c
 bumper, power, drive, arms, head motion, gripper and tool safety. Host/plugins submit
 semantic intent only. No mapping above grants GPIO/PWM/register/bus-frame/raw-actuator
 access to the App, AI, provider, pack, or plugin.
+
+## Control Center 0.03 reconciliation boundary
+
+This document remains design-candidate reference. Control Center does not seed these
+rows into purchased inventory. A user-entered item can record `POSSIBLE_MATCH`, but
+only explicit engineering review may record `MATCHED` or `MISMATCH`; none of those
+states alone means physically `VERIFIED`.
+
+Per purchased item, 0.03 reports exact identity/receipt, candidate-match status,
+review/evidence state, ownership, semantic slot and Hardware Profile mapping, driver
+readiness, CAD/measurement state, electrical evidence, safety criticality, decision,
+and blockers. It never binds a live profile, implements a driver, changes CAD from an
+unverified value, passes a commissioning gate, or freezes Phase 2B2.

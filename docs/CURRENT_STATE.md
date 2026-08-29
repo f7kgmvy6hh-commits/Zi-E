@@ -1,6 +1,61 @@
-# Current State — 2026-08-28
+# Current State — 2026-08-29
 
-## Control Center V1 cockpit — 2026-08-28
+## ZI-E Control Center 0.03 — 2026-08-29
+
+- Product-facing App version is `0.03`: hardware inventory, evidence, and
+  reconciliation foundation. The staged 0.02 work remains preserved beneath this
+  stage; current Git HEAD is still `1c1cf43` because no commit was requested.
+- The exact 32-column purchased-parts CSV remains the compatibility schema. New
+  lifecycle/revision fields live in a separate application-owned JSON store under
+  ignored `runtime/inventory/`, preventing silent CSV schema drift.
+- Inventory starts empty. Users can create/edit bounded intake fields, tombstone
+  records, preview/confirm canonical CSV imports, export deterministic CSV, search,
+  filter, sort, inspect engineering detail, record explicit reviews/decisions, and
+  request verification only through a guarded review transition.
+- Writes are UTF-8, bounded, validated, atomic, optimistic-revision protected, and
+  preserve one validated previous revision for fixed rollback. Malformed active data
+  fails closed. Browser requests never select paths, executable content, or generic
+  JSON/filesystem operations.
+- Reconciliation exposes identity, evidence, candidate-match, ownership, logical
+  slot/Profile, driver, CAD, measurement, electrical, safety, decision,
+  commissioning-dependency, blocker, and Phase 2B2 states without inventing parts or
+  measurements. Design candidates are never imported as purchased inventory.
+- Inventory, evidence, review, import, tombstone, decision, and rollback operations
+  have robot authority `NONE`; they cannot pass any of the 16 physical commissioning
+  gates. Phase 2B2 remains `WAITING_FOR_VERIFIED_INPUTS`.
+- Fresh validation: 104 App pytest tests and 44 fallback tests passed; compileall,
+  PowerShell, HTML, JavaScript, canonical 32-column schema/migration validation, and
+  `git diff --check` passed. Independent adversarial findings around conflict-safe
+  verification, lifecycle revocation, CSV enum rejection, concurrent revisions, and
+  blocker navigation were repaired and regression-tested.
+
+## ZI-E Control Center 0.02 — 2026-08-29
+
+- Product-facing App version is now authoritatively `0.02`; `0.01` names the prior
+  structural Project Cockpit foundation. Protocol, SDK, CAD, and package versions
+  retain their separate technical meanings.
+- The 16-workspace cockpit now provides a generated static camera test source,
+  semantic face/RGB preview controls, bounded simulation-only drive requests with a
+  500 ms server-side dead-man expiry, and
+  one-at-a-time actuator commissioning previews. Every preview reports simulated or
+  not-delivered state and can never report physical confirmation.
+- Sensor, power, controller, controller-link, inventory, commissioning, and safety
+  views remain structurally useful while preserving null/unavailable physical data.
+- Developer actions remain a server-owned closed allowlist. Repository, Windows
+  Terminal, Codex, and contained log launchers use fixed repository-derived paths and
+  fixed arguments when local executables are available. Hermes is available only for
+  the exact existing `hermes` configuration; otherwise it remains unavailable.
+- No production hardware driver, CAN transmit, raw actuator/GPIO/PWM, generic shell,
+  arbitrary filesystem, unrestricted flashing, or physical commissioning path exists.
+  Autonomous physical motion remains blocked and Phase 2B2 remains
+  `WAITING_FOR_VERIFIED_INPUTS`.
+- Fresh validation: 76 App pytest tests and 44 fallback tests passed; Python
+  compileall, PowerShell parsing, HTML parsing, JavaScript syntax checking, and
+  `git diff --check` passed. Independent adversarial findings were repaired: drive
+  expiry/release, visible physical blockers, honest detached-launch acceptance, and
+  mismatched actuator-stop rejection.
+
+## Control Center 0.01 cockpit — 2026-08-28
 
 - The authenticated loopback App now has 16 workspaces for operator status, simulator
   semantics, hardware intake, P1/CAD, commissioning, safety, providers/plugins,

@@ -6,11 +6,14 @@ from dataclasses import asdict, dataclass
 import importlib.util
 import io
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import time
 from typing import Any
 
 from app.security.redaction import redact_text
+from app.version import APP_STAGE, APP_VERSION
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +25,9 @@ APP_STATES = (
     "NOT_VERIFIED", "VERIFY_ON_ARRIVAL", "REQUESTED", "ACCEPTED",
     "DELIVERED", "PHYSICALLY_CONFIRMED", "FAULT", "COMMISSIONED",
 )
+EXPRESSIONS = ("neutral", "happy", "curious", "sleepy", "warning")
+DRIVE_DIRECTIONS = ("forward", "backward", "left", "right", "stop")
+CAMERA_MODES = ("UNAVAILABLE", "TEST_SOURCE", "SIMULATED", "FUTURE_PHYSICAL")
 
 WORKSPACES = (
     "OVERVIEW", "ROBOT", "CAMERA / VISION", "FACE / DISPLAY / RGB",
@@ -122,7 +128,83 @@ def inventory_preview(content: bytes) -> dict[str, Any]:
     }
 
 
-def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str, tts: str) -> dict[str, Any]:
+class WorkspacePreview:
+    """Process-local preview state with no hardware or HostRuntime authority."""
+    def __init__(self, simulation: bool):
+        self.simulation = simulation
+        self.expression, self.face_pack = "neutral", "builtin-preview"
+        self.brightness, self.animation_speed, self.rgb_brightness = 50, 50, 35
+        self.rgb_pattern, self.test_pattern = "calm", False
+        self.active_actuator: str | None = None
+        self.actuator_positions = {slot: 0.0 for slot in ACTUATORS}
+        self.drive = {"direction": "stop", "speed_limit": 25, "deadman": False,
+                      "request_status": "SIMULATED" if simulation else "REJECTED"}
+        self.drive_deadline = 0.0
+
+    def presentation(self) -> dict[str, Any]:
+        return {"state": "PREVIEW", "delivery": "SIMULATED" if self.simulation else "NOT_DELIVERED",
+                "expression": self.expression, "face_pack": self.face_pack,
+                "brightness": self.brightness, "animation_speed": self.animation_speed,
+                "rgb_brightness": self.rgb_brightness, "rgb_pattern": self.rgb_pattern,
+                "display_test_pattern": self.test_pattern, "display_health": "UNAVAILABLE",
+                "rgb_fail_state": "fail-dark"}
+
+    def set_presentation(self, values: dict[str, Any]) -> dict[str, Any]:
+        if values["expression"] not in EXPRESSIONS:
+            raise ValueError("unsupported semantic expression")
+        for key in ("brightness", "animation_speed", "rgb_brightness"):
+            if not 0 <= values[key] <= 100:
+                raise ValueError(f"{key} is outside 0..100")
+        for key in ("expression", "face_pack", "brightness", "animation_speed",
+                    "rgb_brightness", "rgb_pattern", "display_test_pattern"):
+            setattr(self, "test_pattern" if key == "display_test_pattern" else key, values[key])
+        return self.presentation()
+
+    def commission(self, slot: str, operation: str, speed: int) -> dict[str, Any]:
+        if slot not in ACTUATORS or operation not in {"enable", "jog_plus", "jog_minus", "stop"}:
+            raise ValueError("invalid semantic commissioning request")
+        if not 1 <= speed <= 25:
+            raise ValueError("test speed is outside safe simulation bound 1..25")
+        if not self.simulation:
+            return {"slot": slot, "operation": operation, "state": "REJECTED",
+                    "delivery": "NOT_DELIVERED", "physically_confirmed": False}
+        if operation == "enable":
+            if self.active_actuator not in {None, slot}:
+                raise RuntimeError("another commissioning actuator is active")
+            self.active_actuator = slot
+        elif operation in {"jog_plus", "jog_minus"}:
+            if self.active_actuator != slot:
+                raise RuntimeError("actuator must be explicitly enabled")
+            delta = 1.0 if operation == "jog_plus" else -1.0
+            self.actuator_positions[slot] = max(-10.0, min(10.0, self.actuator_positions[slot] + delta))
+        elif self.active_actuator == slot:
+            self.active_actuator = None
+        elif self.active_actuator is not None:
+            raise RuntimeError(f"stop rejected; active commissioning actuator is {self.active_actuator}")
+        return {"slot": slot, "operation": operation, "state": "SIMULATED", "delivery": "SIMULATED",
+                "requested_position": self.actuator_positions[slot], "speed": speed,
+                "active_slot": self.active_actuator, "physically_confirmed": False}
+
+    def drive_request(self, direction: str, speed_limit: int, deadman: bool) -> dict[str, Any]:
+        if direction not in DRIVE_DIRECTIONS or not 0 <= speed_limit <= 40:
+            raise ValueError("invalid bounded drive request")
+        accepted = self.simulation and (direction == "stop" or deadman)
+        self.drive = {"direction": direction if accepted else "stop", "speed_limit": speed_limit,
+                      "deadman": deadman, "request_status": "SIMULATED" if accepted else "REJECTED"}
+        self.drive_deadline = time.monotonic() + 0.5 if accepted and direction != "stop" else 0.0
+        return {**self.drive, "phase": "ACCEPTED" if accepted else "REJECTED",
+                "delivery": "SIMULATED" if accepted else "NOT_DELIVERED", "physically_confirmed": False}
+
+    def drive_status(self) -> dict[str, Any]:
+        if self.drive["direction"] != "stop" and time.monotonic() >= self.drive_deadline:
+            self.drive = {**self.drive, "direction": "stop", "deadman": False,
+                          "request_status": "DEADMAN_EXPIRED"}
+            self.drive_deadline = 0.0
+        return dict(self.drive)
+
+
+def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str, tts: str,
+                   preview: WorkspacePreview | None = None) -> dict[str, Any]:
     simulation = runtime["target_mode"] == "simulation"
     real_confirmed = (
         runtime["target_mode"] == "future-real-target"
@@ -134,7 +216,9 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
         "DISCONNECTED"
     )
     hardware_state = "UNAVAILABLE"
+    preview = preview or WorkspacePreview(simulation)
     return {
+        "version": APP_VERSION, "stage": APP_STAGE,
         "state_vocabulary": APP_STATES,
         "workspaces": WORKSPACES,
         "target": {
@@ -144,20 +228,27 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
         "controllers": [
             {"id": "esp32", "role": "multimedia/presence/display/camera/audio", "state": hardware_state,
              "identity": None, "firmware": None, "session_id": None, "heartbeat_age": None,
-             "reset_reason": None, "faults": [], "commissioning": "NOT_VERIFIED"},
+             "uptime": None, "reset_reason": None, "faults": [], "commissioning": "NOT_VERIFIED"},
             {"id": "stm32", "role": "protected motion/safety/sensors/limits/faults", "state": hardware_state,
              "identity": None, "firmware": None, "session_id": None, "heartbeat_age": None,
-             "reset_reason": None, "faults": [], "commissioning": "NOT_VERIFIED"},
+             "uptime": None, "reset_reason": None, "faults": [], "commissioning": "NOT_VERIFIED"},
         ],
-        "camera": {"state": "UNAVAILABLE", "source": None, "resolution": None, "fps": None,
-                   "latency_ms": None, "stream": None, "snapshot": "UNAVAILABLE", "overlays": "NOT_CONFIGURED"},
-        "presentation": {"state": "NOT_CONFIGURED", "face_pack": None, "sound_pack": None,
-                         "display_health": "UNAVAILABLE", "rgb_fail_state": "fail-dark"},
+        "camera": {"state": "TEST_SOURCE" if simulation else "UNAVAILABLE",
+                   "mode": "TEST_SOURCE" if simulation else "UNAVAILABLE", "allowed_modes": CAMERA_MODES,
+                   "source": "generated-static-frame" if simulation else None,
+                   "resolution": "640x360" if simulation else None, "fps": 0 if simulation else None,
+                   "latency_ms": None, "stream": False,
+                   "snapshot": "AVAILABLE" if simulation else "UNAVAILABLE",
+                   "preview_url": "/hud/test-frame.svg" if simulation else None,
+                   "overlays": "OFF", "connection_error": None if simulation else "physical camera not connected"},
+        "presentation": preview.presentation(),
         "actuators": [
-            {"slot": slot, "state": "UNAVAILABLE", "identity": None, "position": None,
-             "commanded_position": None, "speed": None, "range": None, "current": None,
+            {"slot": slot, "state": "SIMULATED" if simulation else "UNAVAILABLE", "identity": None,
+             "position": preview.actuator_positions[slot] if simulation else None,
+             "requested_position": preview.actuator_positions[slot] if simulation else None,
+             "speed": None, "range": [-10.0, 10.0] if simulation else None, "current": None,
              "temperature": None, "fault": None, "commissioning": "NOT_VERIFIED",
-             "controls": "semantic-bounded-future"} for slot in ACTUATORS
+             "controls": "semantic-bounded-simulation", "active": preview.active_actuator == slot} for slot in ACTUATORS
         ],
         "sensors": [
             {"slot": slot, "state": "UNAVAILABLE", "value": None, "units": None,
@@ -190,11 +281,12 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
             "physical_estop": "UNAVAILABLE", "safe_stop_verification": "NOT_VERIFIED",
             "lease": "UNAVAILABLE", "heartbeat": "UNAVAILABLE", "cliff": "NOT_VERIFIED",
             "bumper": "NOT_VERIFIED",
-            "motion_blocked_reasons": [] if simulation else [
-                "real target unavailable", "cliff sensors uncommissioned",
+            "motion_blocked_reasons": (["real target unavailable"] if not simulation else []) + [
+                "physical commissioning gates incomplete", "cliff sensors uncommissioned",
                 "battery protection unverified", "controller link unavailable",
             ],
         },
+        "drive": preview.drive_status(),
         "firmware": {
             "esp32": {"detected": False, "firmware": None, "approved_target": None, "flash": "NOT_CONFIGURED"},
             "stm32": {"detected": False, "firmware": None, "approved_target": None, "flash": "NOT_CONFIGURED"},
@@ -210,6 +302,7 @@ class DeveloperAction:
     available: bool
     command: tuple[str, ...] | None
     timeout: int
+    kind: str = "bounded_process"
 
     def public(self) -> dict[str, Any]:
         value = asdict(self)
@@ -217,8 +310,19 @@ class DeveloperAction:
         return value
 
 
-def developer_actions() -> dict[str, DeveloperAction]:
+def _contained_log_path(log_path: Path) -> Path | None:
+    resolved = (REPOSITORY_ROOT / log_path).resolve() if not log_path.is_absolute() else log_path.resolve()
+    runtime_root = (REPOSITORY_ROOT / "runtime").resolve()
+    return resolved if resolved == runtime_root or runtime_root in resolved.parents else None
+
+
+def developer_actions(log_path: Path | None = None, hermes_command: str | None = None) -> dict[str, DeveloperAction]:
     cadquery_available = importlib.util.find_spec("cadquery") is not None
+    terminal = shutil.which("wt.exe") or shutil.which("wt")
+    explorer = shutil.which("explorer.exe") or shutil.which("explorer")
+    codex = shutil.which("codex.exe") or shutil.which("codex")
+    hermes = (shutil.which("hermes.exe") or shutil.which("hermes")) if hermes_command == "hermes" else None
+    safe_log = _contained_log_path(log_path or Path("runtime/zie.log.jsonl"))
     return {
         "app_tests": DeveloperAction("app_tests", "Run full App pytest", True,
                                      (sys.executable, "-m", "pytest", "tests/app", "-q"), 180),
@@ -228,21 +332,31 @@ def developer_actions() -> dict[str, DeveloperAction]:
                                       (sys.executable, "-m", "compileall", "-q", "app", "tests/app"), 120),
         "cad_checks": DeveloperAction("cad_checks", "Run current CAD checks", cadquery_available,
                                       (sys.executable, "-B", "src/validate_design.py") if cadquery_available else None, 180),
-        "open_repository": DeveloperAction("open_repository", "Open repository folder", False, None, 0),
-        "open_terminal": DeveloperAction("open_terminal", "Open Windows Terminal at repository", False, None, 0),
-        "launch_codex": DeveloperAction("launch_codex", "Launch Codex", False, None, 0),
-        "launch_hermes": DeveloperAction("launch_hermes", "Launch Hermes", False, None, 0),
-        "open_logs": DeveloperAction("open_logs", "Open App logs", False, None, 0),
+        "open_repository": DeveloperAction("open_repository", "Open repository folder", bool(explorer), (explorer, str(REPOSITORY_ROOT)) if explorer else None, 10, "detached_launch"),
+        "open_terminal": DeveloperAction("open_terminal", "Open Windows Terminal at repository", bool(terminal), (terminal, "-d", str(REPOSITORY_ROOT)) if terminal else None, 10, "detached_launch"),
+        "launch_codex": DeveloperAction("launch_codex", "Launch Codex", bool(terminal and codex), (terminal, "-d", str(REPOSITORY_ROOT), codex, "--cd", str(REPOSITORY_ROOT), "--sandbox", "workspace-write", "--ask-for-approval", "never", "--search") if terminal and codex else None, 10, "detached_launch"),
+        "launch_hermes": DeveloperAction("launch_hermes", "Launch Hermes", bool(terminal and hermes), (terminal, "-d", str(REPOSITORY_ROOT), hermes) if terminal and hermes else None, 10, "detached_launch"),
+        "open_logs": DeveloperAction("open_logs", "Open App logs", bool(explorer and safe_log), (explorer, "/select,", str(safe_log)) if explorer and safe_log else None, 10, "detached_launch"),
     }
 
 
-async def run_developer_action(action_id: str) -> dict[str, Any]:
-    action = developer_actions().get(action_id)
+async def run_developer_action(action_id: str, log_path: Path | None = None, hermes_command: str | None = None) -> dict[str, Any]:
+    action = developer_actions(log_path, hermes_command).get(action_id)
     if action is None:
         raise KeyError("unknown developer action")
     if not action.available or action.command is None:
         raise RuntimeError("developer action is unavailable")
     cwd = REPOSITORY_ROOT / "mechanical" / "cad" / "current" if action_id == "cad_checks" else REPOSITORY_ROOT
+    if action.kind == "detached_launch":
+        try:
+            subprocess.Popen(action.command, cwd=cwd, shell=False, stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) |
+                             getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+        except OSError as exc:
+            raise RuntimeError("fixed local application launch is unavailable") from exc
+        return {"action_id": action_id, "state": "ACCEPTED", "exit_code": None,
+                "output": "fixed local application launch requested", "robot_authority": "NONE"}
     process = await asyncio.create_subprocess_exec(
         *action.command, cwd=cwd, stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
@@ -252,11 +366,11 @@ async def run_developer_action(action_id: str) -> dict[str, Any]:
     except asyncio.TimeoutError:
         process.kill()
         await process.communicate()
-        return {"action_id": action_id, "state": "FAULT", "exit_code": None, "output": "timed out"}
+        return {"action_id": action_id, "state": "TIMEOUT", "exit_code": None, "output": "timed out", "robot_authority": "NONE"}
     decoded = redact_text(output.decode("utf-8", errors="replace")[-20000:])
     return {
         "action_id": action_id,
-        "state": "ACCEPTED" if process.returncode == 0 else "FAULT",
+        "state": "PASSED" if process.returncode == 0 else "FAILED",
         "exit_code": process.returncode,
         "output": decoded,
         "robot_authority": "NONE",

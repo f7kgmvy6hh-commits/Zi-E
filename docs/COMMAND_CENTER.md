@@ -1,7 +1,38 @@
-# ZI-E Control Center V1
+# ZI-E Control Center 0.03
 
-Status: App software foundation complete with semantic adapter contract; physical
+Status: inventory/evidence/reconciliation foundation; physical
 HostRuntime adapter and robot remain deliberately unimplemented/uncommissioned.
+
+Version history: `0.01` is the structural Project Cockpit foundation. `0.02` adds
+functional simulation/preview workspaces and fixed local developer launch workflows.
+`1.00` remains reserved for a future genuinely integrated release-capable system.
+`0.03` adds contained purchased-inventory persistence and engineering reconciliation.
+
+## Purchased hardware workflow
+
+The active store is fixed at project-owned `runtime/inventory/` and ignored by Git.
+It starts empty and never imports design candidates. The exact existing 32-column CSV
+is unchanged; 0.03 metadata (physical status, storage location, evidence/review state,
+driver state, candidate match, commissioning dependencies, revision timestamps,
+tombstones and history) is stored separately in the JSON state.
+
+Normal intake fields are deliberately small. Engineering review is explicit and
+separate. Every mutation includes the expected revision; stale writes return conflict.
+Validated writes use a same-directory temporary file and atomic replacement, while a
+validated previous state is retained for fixed rollback. Import requires preview then
+explicit commit. Export is a deterministic browser download in canonical order.
+Rollback is exposed by the narrow authenticated backend and audited; a dedicated HUD
+rollback button is deferred until a revision-comparison confirmation view is added.
+
+`VERIFIED` requires: received physical status, exact manufacturer and model, reviewed
+evidence state, reviewed review state, evidence source, reviewer, review date, and an
+explicit verification request. Receipt, model text, purchase/photo links, CSV import,
+candidate matching, tests, and simulation cannot satisfy this transition.
+
+Google Sheet workflow: use the ten simple intake columns documented in
+`PURCHASED_PARTS_INTAKE_SCHEMA.md`, export CSV, map into the canonical template,
+preview in Control Center, validate, explicitly persist, then complete engineering
+review and reconciliation. No Google credentials or API integration exists.
 
 The Control Center serves five compatible roles without acquiring hardware authority:
 development cockpit, hardware-intake tool, commissioning console, simulator UI, and
@@ -15,8 +46,11 @@ Inventory, P1/CAD, Commissioning, Safety, Plugins/Profiles, Diagnostics, and Dev
 Unavailable fields remain explicit `UNAVAILABLE`, `NOT_CONFIGURED`, `NOT_VERIFIED`, or
 `VERIFY_ON_ARRIVAL`; null values are never replaced by demonstration telemetry.
 
-Robot state buttons retain the simulator semantic path. Direction, speed, actuator
-jog, presentation and flashing contracts are visible but `NOT_CONFIGURED`. Inventory
+Robot state buttons retain the simulator semantic path. Bounded directional drive
+uses hold-to-request UI release stops plus a 500 ms server-side dead-man expiry;
+one-at-a-time actuator jog and presentation semantics are functional only
+as process-local `SIMULATED`/`PREVIEW` requests. A generated static 640×360 camera
+test frame is labeled `TEST_SOURCE` and is not a stream or physical camera. Inventory
 preview is UTF-8, header-exact, in-memory, bounded to 2 MiB/500 rows, non-persistent,
 and always marks rows `NOT_VERIFIED`/`REVIEW_REQUIRED`. The commissioning view begins
 at zero and has no App mutation endpoint. VirtualRobot cannot advance a physical gate.
@@ -30,9 +64,15 @@ validation only when CadQuery is installed. Actions take no arguments, use fixed
 working directories, have timeouts and bounded output, require authentication, and
 are audit/event logged with `robot_authority: NONE`.
 
-Folder/Terminal/Codex/Hermes/log launch entries remain `UNAVAILABLE` until fixed local
-workflows are reviewed. There is no generic shell, arbitrary path/filesystem, CAN
-transmit, raw actuator, or unrestricted flashing endpoint.
+Folder, Windows Terminal, Codex, and log launch entries use fixed server-owned command
+tuples, repository-root discovery, no browser arguments, and detached external local
+applications. Codex uses `--cd <root> --sandbox workspace-write --ask-for-approval
+never --search`; `--yolo` is forbidden. Logs must resolve under the repository
+`runtime/` directory. Hermes launches only when the existing configuration is exactly
+`hermes` and the executable/terminal are discoverable; any parameterized command keeps
+it `UNAVAILABLE`. There is no generic shell, arbitrary path/filesystem, CAN transmit,
+raw actuator, or unrestricted flashing endpoint. All developer actions have robot
+authority `NONE`.
 
 ## Boundary
 
