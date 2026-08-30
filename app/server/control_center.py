@@ -14,6 +14,8 @@ from typing import Any
 
 from app.security.redaction import redact_text
 from app.version import APP_STAGE, APP_VERSION
+from app.presence.media import media_capability_status
+from app.presence.runtime import unverified_presence_status
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -217,6 +219,8 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
     )
     hardware_state = "UNAVAILABLE"
     preview = preview or WorkspacePreview(simulation)
+    presence = unverified_presence_status()
+    media = media_capability_status()
     return {
         "version": APP_VERSION, "stage": APP_STAGE,
         "state_vocabulary": APP_STATES,
@@ -242,6 +246,19 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
                    "preview_url": "/hud/test-frame.svg" if simulation else None,
                    "overlays": "OFF", "connection_error": None if simulation else "physical camera not connected"},
         "presentation": preview.presentation(),
+        "presence": presence,
+        "media": media,
+        "face_engine": {
+            "mode": "OFFLINE_AUTONOMOUS",
+            "mode_source": "HOST_PRESENCE_LINK",
+            "renderer": "HOST_PREVIEW_MODEL_ONLY",
+            "pack": "zie-core-procedural",
+            "state": "IDLE",
+            "emotion": "NEUTRAL",
+            "variant": "idle-core",
+            "physical_delivery": "NOT_DELIVERED",
+            "may_originate_motion": False,
+        },
         "actuators": [
             {"slot": slot, "state": "SIMULATED" if simulation else "UNAVAILABLE", "identity": None,
              "position": preview.actuator_positions[slot] if simulation else None,
@@ -263,7 +280,9 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
                             "error_counters": None, "bus_off": None, "heartbeat": None,
                             "latency": None, "protocol_compatibility": "NOT_VERIFIED",
                             "transmit_api": False},
-        "voice": {"stt": stt, "tts": tts, "providers": providers},
+        "voice": {"stt": stt, "tts": tts, "providers": providers,
+                  "wake": "UNVERIFIED", "local_safety_voice": "MODEL_ONLY",
+                  "critical_grammar": ["STOP", "FREEZE", "EMERGENCY_STOP"]},
         "p1": {"documentation": "READY", "inventory": "NOT_VERIFIED", "commissioning": "NOT_DONE",
                "cad_version": "v0.3", "cad_checks": {"total": 39, "passed": 38, "restricted": 1},
                "cad_classes": ["FIXED", "PARAMETRIC", "BLOCKED_BY_MEASUREMENT", "VERIFY_ON_ARRIVAL"],

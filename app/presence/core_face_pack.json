@@ -1,0 +1,22 @@
+{
+  "pack_id": "zie-core-procedural",
+  "display_name": "Zi-E Core Procedural",
+  "version": "1.0.0",
+  "engine_compatibility": "face-engine-v1",
+  "minimum_engine_version": "1.0",
+  "author": "Zi-E Project",
+  "license_id": "LicenseRef-Zi-E-Owned",
+  "provenance": "Original procedural test assets; no XiaoZhi content",
+  "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "tags": ["core", "procedural", "friendly"],
+  "style": "robotic-friendly",
+  "storage_class": "builtin",
+  "estimated_storage_bytes": 8192,
+  "variants": [
+    {"variant_id": "idle-core", "state": "IDLE", "asset_refs": ["asset.procedural/eyes", "asset.procedural/mouth"], "weight": 1},
+    {"variant_id": "listening-core", "state": "LISTENING", "asset_refs": ["asset.procedural/eyes-wide", "asset.procedural/mouth-soft"], "weight": 1},
+    {"variant_id": "thinking-core", "state": "THINKING", "asset_refs": ["asset.procedural/eyes-focus", "asset.procedural/mouth-flat"], "weight": 1},
+    {"variant_id": "speaking-core", "state": "SPEAKING", "asset_refs": ["asset.procedural/eyes", "asset.procedural/mouth-open"], "weight": 1},
+    {"variant_id": "error-core", "state": "ERROR", "asset_refs": ["asset.procedural/eyes-alert", "asset.procedural/mouth-flat"], "weight": 1}
+  ]
+}

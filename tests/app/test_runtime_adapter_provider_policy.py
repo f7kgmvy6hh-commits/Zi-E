@@ -135,7 +135,7 @@ def test_public_foundation_surfaces_are_honest_and_read_only(tmp_path):
         assert client.get("/api/configuration", headers=headers).json()["mutable"] is False
         assert client.get("/api/presentation", headers=headers).json()["context"] is None
         providers = client.get("/api/providers", headers=headers).json()["modalities"]
-        assert set(providers) == {"llm", "stt", "tts", "wake"}
+        assert set(providers) == {"llm", "stt", "tts", "wake", "vision"}
         for modality, entries in providers.items():
             priorities = [entry["priority"] for entry in entries]
             assert priorities == sorted(priorities)

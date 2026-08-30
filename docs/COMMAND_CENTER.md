@@ -10,6 +10,15 @@ functional simulation/preview workspaces and fixed local developer launch workfl
 `0.04` adds required-hardware coverage and practical evidence/readiness reports. App
 versions track software changes; physical evidence entry alone does not force a bump.
 
+## Presence cockpit implementation
+
+The HUD derives version 0.04 from the backend and adds a truthful Host/ESP32/STM32
+graph, prioritized alerts, top safety/controller truth, procedural semantic Face
+preview, Face Pack metadata and provider flow. All physical values remain unavailable
+or unverified. Existing inventory, commissioning, simulation and developer workflows
+remain intact. Responsive grids, visible focus, labels and reduced-motion support were
+added without a frontend framework.
+
 ## Purchased hardware workflow
 
 The active store is fixed at project-owned `runtime/inventory/` and ignored by Git.

@@ -10,6 +10,7 @@ class Modality(str, Enum):
     STT = "stt"
     TTS = "tts"
     WAKE = "wake"
+    VISION = "vision"
 
 
 @dataclass(frozen=True)
@@ -22,10 +23,19 @@ class ProviderStatus:
     authorization: str
     health: str
     scope: str = "app-local-non-robot"
+    selection_reason: str = "UNAVAILABLE"
+    latency_ms: int | None = None
+    last_failure: str | None = None
+    primary_eligible: bool = False
 
     def public(self) -> dict[str, object]:
         value = asdict(self)
         value["modality"] = self.modality.value
+        eligible = self.configured and self.health in {"configured", "healthy", "ready"}
+        value["primary_eligible"] = eligible
+        value["selection_reason"] = "PRIMARY" if eligible and self.priority == 1 else (
+            "FALLBACK_READY" if eligible else "UNAVAILABLE"
+        )
         return value
 
 
@@ -121,6 +131,10 @@ def app_provider_status(settings, stt_status: str) -> dict[str, list[dict[str, o
         ],
         Modality.WAKE: [
             ProviderStatus("wake-unconfigured", Modality.WAKE, "provider.invoke.wake", 1,
+                           False, "not_verified", "not_configured"),
+        ],
+        Modality.VISION: [
+            ProviderStatus("vision-unconfigured", Modality.VISION, "provider.invoke.vision", 1,
                            False, "not_verified", "not_configured"),
         ],
     }

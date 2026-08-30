@@ -41,6 +41,12 @@ class FacePack:
     provenance: str
     storage_class: str
     variants: tuple[FaceVariant, ...]
+    display_name: str = ""
+    author: str = ""
+    tags: tuple[str, ...] = ()
+    style: str = ""
+    estimated_storage_bytes: int = 0
+    minimum_engine_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -78,6 +84,12 @@ def validate_face_pack(pack: FacePack) -> None:
         raise ValueError("license and provenance are required")
     if pack.storage_class not in _STORAGE:
         raise ValueError("unknown storage class")
+    if len(pack.display_name) > 96 or len(pack.author) > 96 or len(pack.style) > 64:
+        raise ValueError("oversized pack metadata")
+    if len(pack.tags) > 32 or any(not _IDENTIFIER.fullmatch(tag) for tag in pack.tags):
+        raise ValueError("invalid pack tags")
+    if not 0 <= pack.estimated_storage_bytes <= 64 * 1024 * 1024:
+        raise ValueError("invalid storage estimate")
     if not pack.variants or len(pack.variants) > 256:
         raise ValueError("invalid variant count")
     ids: set[str] = set()
@@ -106,6 +118,7 @@ class FaceEngine:
         self._rng = random.Random(seed)
         self._mode = FaceEngineMode.OFFLINE_AUTONOMOUS
         self._last_variant: str | None = None
+        self._selection_generation = 0
 
     @property
     def mode(self) -> FaceEngineMode:
@@ -137,6 +150,7 @@ class FaceEngine:
             chosen = self._rng.choices(pool, weights=[item.weight for item in pool], k=1)[0]
             autonomous = True
         self._last_variant = chosen.variant_id
+        self._selection_generation += 1
         return FaceSelection(self._mode, chosen.variant_id, intent, autonomous)
 
     def _candidates(self, state: FaceState) -> list[FaceVariant]:

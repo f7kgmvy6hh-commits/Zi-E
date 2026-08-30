@@ -772,6 +772,17 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   transmit binding exists.
 - Adopt Bench 0 through Bench 7 progression. Only Bench 0 is executable now; USB logic
   power and robot-wide physical power remain separate gates.
+# ESP32 Presence Runtime implementation decisions — 2026-08-30
+
+- Generic ESP32-S3 smoke builds compile only with every physical binding, production
+  run, TWAI and physical authority disabled; no placeholder pins exist.
+- Structured control is capped at 16 KiB and separate camera transfer at 2 MiB.
+- Host presence link—not Internet—selects online versus offline Face mode.
+- Host Face Library metadata is bounded to 2,048 packs; device-cache planning is eight
+  validated identities and performs no deployment.
+- Vision is an independent provider modality; wake remains local ESP32 capability.
+- Control Center stays 0.04 and derives that version from the authenticated backend.
+
 # Target Architecture Freeze Candidate V1 — 2026-08-30
 
 - Freeze-candidate ownership is HostRuntime brain/coordinator, ESP32-S3 presence and

@@ -2,6 +2,16 @@
 
 ## Development pipeline and physical integration preparation — 2026-08-30
 
+- Presence implementation delta: starting pushed checkpoint
+  `0a448efe85bf7220f3bdb764318c4d39c68f5d78`; this pass remains uncommitted.
+  Presence lifecycle gates verified board/network/Host, requires fresh generations,
+  retires sessions, and models offline-local behavior. Control/media inputs are
+  bounded; capabilities and connection grant no authority.
+- Face Pack metadata, bounded Host library/device-cache planning, validator and an
+  original procedural core pack are implemented. Control Center remains 0.04, derives
+  version from the backend, and adds truthful system/presence/provider/Face views.
+- Official EIM winget execution was attempted once and blocked by sandbox WindowsApps
+  access. HW-002, first power, commissioning and Phase2B2 remain unchanged.
 - Host toolchain is ready through fixed detected paths: Git 2.45.1, project Python
   3.11.16, uv 0.12.7, CMake 4.3.3, Ninja 1.13.2, MSYS2 UCRT64 GNU C/C++ 16.1.0,
   Windows PowerShell 5.1, Node 26.7.0 and Codex CLI 0.151.0. The validated venv has no

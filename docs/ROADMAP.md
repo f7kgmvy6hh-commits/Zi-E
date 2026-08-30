@@ -1,5 +1,13 @@
 # ZI-E Roadmap
 
+## Current implementation lane
+
+`Architecture contracts → XiaoZhi donor audit → ESP32 Presence Runtime foundation
+(CURRENT) + Control Center UX + Face Pack infrastructure → official ESP-IDF build →
+HW-002 verification → verified profile → USB bench → multimedia bring-up → verified
+STM32 → controller link → Phase2B2 freeze → sensors → bounded actuator → protected
+power → measured CAD/COM → integrated commissioning`.
+
 ## Control Center version history
 
 - **0.01:** structural/project-cockpit foundation at commit `1c1cf43`.

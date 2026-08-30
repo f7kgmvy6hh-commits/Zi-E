@@ -2,8 +2,9 @@
 
 ## Source and method
 
-Repository: https://github.com/78/xiaozhi-esp32  
-Pinned commit: `374a5ccf95c2ed513dbad9ca204adbac75062dce`  
+Repository: https://github.com/78/xiaozhi-esp32
+
+Pinned commit: `374a5ccf95c2ed513dbad9ca204adbac75062dce`
 License: MIT (copyright 2025 Shenzhen Xinzhi Future Technology Co., Ltd. and
 Project Contributors). No files or assets were copied in this pass.
 

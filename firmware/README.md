@@ -105,6 +105,11 @@ ratings. Use `scripts/toolchain-doctor.ps1` and `scripts/firmware-workflow.ps1`;
 select a flash/program target by discovery order.
 # Target architecture preparation
 
+The ESP32 target supports an explicit `ZIE_UNVERIFIED_GENERIC_BUILD` compile smoke
+with camera, display, audio, TWAI, production run and physical authority disabled. It
+contains no pins and is not a runnable board profile. See
+`docs/ESP32_OFFICIAL_COMPONENT_PLAN.md`.
+
 The future ESP32 target is a Zi-E Presence Runtime using official ESP-IDF components
 behind a physically verified per-board binding. XiaoZhi ESP32 is a pinned engineering
 reference, not vendored code, a cloud dependency, or an authority layer. The future
