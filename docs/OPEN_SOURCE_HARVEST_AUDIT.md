@@ -269,3 +269,22 @@ and production TUF/Uptane metadata remain deferred.
 
 No external code, CAD, or configuration was imported. Network-provider behavior,
 credentials, and production health probing remain future work.
+
+### XiaoZhi ESP32 donor audit — 2026-08-30
+
+Pinned `78/xiaozhi-esp32` at `374a5ccf95c2ed513dbad9ca204adbac75062dce`.
+Direct clone was blocked by the sandbox; immutable GitHub commit/raw views and the
+issue tracker were inspected. Full file decisions and license boundaries are in
+`XIAOZHI_ADOPTION_AUDIT.md`.
+
+| Problem / comparable failure | Material finding | Adapted Zi-E mitigation | Disposition |
+|---|---|---|---|
+| XiaoZhi issue #1646: camera build/API mismatch | Camera glue is sensitive to IDF/component version | Lock an official component/IDF matrix only after verified board identity; unavailable camera must not break presence runtime | **ADAPT**, no code copied |
+| XiaoZhi issue #1684: later utterances intermittently unheard | Audio session/concurrency recovery needs repeated-dialogue tests | Bound/cancel audio sessions; test second utterance, reconnect, playback/capture overlap | **ADAPT** |
+| XiaoZhi issue #892: weak-network WebSocket can remain listening | Disconnect must terminate transient device state | Authenticated fresh sessions; deterministic audio teardown; connection never grants robot readiness | **ADAPT** |
+| XiaoZhi custom-board guide and 138-board isolation | Similar board names do not establish compatible codec/PMIC/touch/pins | One verified physical identity per Zi-E board binding; HW-002 stays disabled until arrival review | **ADOPT idea** |
+| XiaoZhi MCP advertises GPIO/servo/device control | Generic AI device tools can bypass semantic authority | Retain schema/discovery lessons but reject direct GPIO/PWM/servo/motor tools | **REJECT authority model** |
+
+Official components are preferred for ESP-SR, esp32-camera, LVGL/esp_lvgl_port,
+audio codec/device/effects, and LED strip. Each future version/license remains an
+explicit adoption decision. No source, assets, pins, or configuration were imported.

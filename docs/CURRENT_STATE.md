@@ -467,3 +467,23 @@ Production driver binding remains later work.
 - Full relevant application suite: 27 passed, 0 failed.
 - Live checks passed for server lifecycle, health, HUD delivery, plugin registry,
   Hermes chat, ElevenLabs audio, simulator command, E-stop, and restart recovery.
+# 2026-08-30 target architecture and XiaoZhi donor preparation
+
+Current working baseline is pushed `d8f6e1c12de60d78c3a3ee444111a2d586d79455`
+with this session uncommitted. Target Architecture Freeze Candidate V1 now fixes the
+responsibility chain HostRuntime -> authenticated semantic ESP32 Presence Runtime ->
+semantic STM32 Safety/Motion Authority without freezing physical bindings.
+
+XiaoZhi ESP32 was audited as an MIT engineering donor at pinned commit
+`374a5ccf95c2ed513dbad9ca204adbac75062dce`. No donor source/assets were copied and no
+runtime dependency was added. Official Espressif/LVGL components are preferred for
+speech, camera, audio codec/device/effects, display port, and LEDs; actual versions
+remain target/build decisions after HW-002 verification.
+
+Host-testable Zi-E-owned Face Engine/Face Pack validation and fixed local safety-voice
+grammar now exist. They are data/observation logic only and grant no robot authority.
+Host/ESP32 and ESP32/STM32 documents are semantic boundaries, not live transports.
+ESP-IDF and STM32 vendor toolchains remain absent on this machine, production targets
+remain disabled, HW-002 remains ordered/unverified, first power is not authorized,
+physical commissioning is not done, and Phase2B2 remains
+`WAITING_FOR_VERIFIED_INPUTS`.

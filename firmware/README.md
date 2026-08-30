@@ -103,3 +103,11 @@ Disabled target boundaries live under `targets/esp32` and `targets/stm32`. They 
 a reviewed profile under `board_profiles` and contain no guessed pins, clocks, buses or
 ratings. Use `scripts/toolchain-doctor.ps1` and `scripts/firmware-workflow.ps1`; never
 select a flash/program target by discovery order.
+# Target architecture preparation
+
+The future ESP32 target is a Zi-E Presence Runtime using official ESP-IDF components
+behind a physically verified per-board binding. XiaoZhi ESP32 is a pinned engineering
+reference, not vendored code, a cloud dependency, or an authority layer. The future
+STM32 target remains the sole physical safety/motion authority. See
+`docs/TARGET_ARCHITECTURE_FREEZE_CANDIDATE_V1.md` and the two semantic interface V1
+contracts. Both production targets remain disabled; no pins or CAN values are frozen.

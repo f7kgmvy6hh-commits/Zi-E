@@ -141,3 +141,10 @@ their two simple fixtures. It is explicitly a fallback, not a pytest replacement
 surface. See `APP_HOSTRUNTIME_ADAPTER_CONTRACT.md`. The current simulator and
 unavailable adapters contain no raw-control methods; profile/configuration/pack and
 provider changes remain future capability-scoped HostRuntime operations.
+# Target-architecture status continuity
+
+Future provider, ESP32/STM32/controller-link, and Face Engine panels remain derived
+status/configuration under existing Control Center authority. They may show independent
+provider modality health, Face mode/pack/state, Internet/Hermes/device/link state, and
+copied motion-authority state. They must not add raw GPIO/PWM/CAN/actuator controls or
+infer authority from connectivity. No Control Center redesign was made in this pass.

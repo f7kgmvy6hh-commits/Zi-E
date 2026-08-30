@@ -215,3 +215,18 @@ Next physical action after parts arrive: import/review inventory, quarantine con
 measure received parts, update CAD/profile mappings, then execute logic-only first
 power. Do not begin autonomous motion or production controller-link/CAN decisions;
 independent evidence-ready driver bench work may proceed within its safety boundary.
+# Continuation after Target Architecture Candidate V1
+
+1. Review/freeze the target architecture contracts.
+2. Re-fetch pinned XiaoZhi files only when a small adaptation is justified; prefer
+   official upstream components and record every license/version.
+3. Bind the Zi-E Face Engine to an ESP32 render backend and scalable Face Pack storage
+   after verified display/flash/PSRAM evidence.
+4. Build ESP32 network/audio/wake/camera services behind disabled board bindings.
+5. Complete Provider Manager/Hermes and authenticated HostRuntime/ESP32 transport.
+6. Verify incoming HW-002 identity and enable exactly one reviewed board profile.
+7. Select/verify STM32 hardware and compile its safety/motion target.
+8. Collect controller-link evidence, then freeze Phase2B2.
+9. Verify protected power, perform staged bench bring-up, then bounded actuators.
+10. Reconcile measured mass/geometry into CAD COM/stability and complete physical
+    commissioning. Independent evidence-ready lanes may proceed without skipping gates.

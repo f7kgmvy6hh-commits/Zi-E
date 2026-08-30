@@ -772,3 +772,18 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   transmit binding exists.
 - Adopt Bench 0 through Bench 7 progression. Only Bench 0 is executable now; USB logic
   power and robot-wide physical power remain separate gates.
+# Target Architecture Freeze Candidate V1 — 2026-08-30
+
+- Freeze-candidate ownership is HostRuntime brain/coordinator, ESP32-S3 presence and
+  authenticated semantic bridge, and STM32 physical safety/motion authority.
+- XiaoZhi at pinned SHA `374a5ccf95c2ed513dbad9ca204adbac75062dce` is an MIT
+  engineering donor only. Zi-E stays cloud-, provider-, donor-, and board-replaceable.
+- Prefer official maintained ESP-IDF/Espressif/LVGL components over copying donor
+  wrappers; use donor glue only after a file-level license/risk review.
+- Zi-E Face Engine is semantic and locally animated. Online Host intent forbids random
+  full-face switching; offline contextual personality never creates motion.
+- Face Packs are bounded data with hash/license/provenance and no executable content.
+- Critical local voice grammar is only STOP/FREEZE/EMERGENCY_STOP; recognition grants
+  no authority and physical kill/E-stop remains higher.
+- No pins, board revisions, CAN values, electrical facts, memory partitions, or
+  physical timings were frozen by these decisions.
