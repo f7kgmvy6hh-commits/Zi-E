@@ -743,3 +743,32 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Receipt evidence for `HW-017` confirms purchase only; it does not establish physical
   receipt without a clearly matched photo. Inventory evidence cannot grant robot
   authority or pass any physical commissioning gate.
+
+# 2026-08-30 — First real bench evidence-closure boundary
+
+- Keep first-bench reporting derived from the existing inventory/reconciliation model
+  and existing WHAT I NEED FROM YOU surface; add no parallel workflow or authority.
+- Current evidence permits unpowered identification and measurement only. A received
+  item is not power-ready merely because family voltage/interface text exists.
+- Require item-specific identity, input/output, logic-level, connector and protection
+  review before considering isolated active-module tests. Such a test does not satisfy
+  integrated first-power or commissioning gates.
+- Keep `HW-010` unpowered and disconnected, `HW-002` blocked until arrival review,
+  production GPIO/harness unfrozen, STM32/motion/CAN blocked, Phase2B2 waiting, and
+  physical commissioning at zero passes.
+
+# 2026-08-30 — Vendor toolchain and physical-target integration boundary
+
+- Keep vendor SDKs/toolchains outside Zi-E and detect them through a read-only doctor.
+  Use the existing setup plus one fixed firmware workflow; do not create another setup
+  system or expose target commands through the HUD.
+- Keep ESP32 and STM32 production composition `BOARD_BINDING_DISABLED` until an
+  explicitly reviewed repository board profile exists. Never add fake GPIO, clock,
+  timer, electrical or CAN values to obtain a successful build.
+- Require explicit reviewed board profile plus exact COM port or ST-LINK serial for
+  flash/program workflows. Never select the first discovered device.
+- Preserve the semantic App/HostRuntime boundary and Phase2A/2B1. Real-target config
+  cannot create availability or authority; Phase2B2 remains waiting and no physical CAN
+  transmit binding exists.
+- Adopt Bench 0 through Bench 7 progression. Only Bench 0 is executable now; USB logic
+  power and robot-wide physical power remain separate gates.

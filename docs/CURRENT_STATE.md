@@ -1,4 +1,49 @@
-# Current State — 2026-08-29
+# Current State — 2026-08-30
+
+## Development pipeline and physical integration preparation — 2026-08-30
+
+- Host toolchain is ready through fixed detected paths: Git 2.45.1, project Python
+  3.11.16, uv 0.12.7, CMake 4.3.3, Ninja 1.13.2, MSYS2 UCRT64 GNU C/C++ 16.1.0,
+  Windows PowerShell 5.1, Node 26.7.0 and Codex CLI 0.151.0. The validated venv has no
+  pip module/executable but its App dependencies import; the existing uv-based setup is
+  the rebuild path.
+- Espressif EIM, ESP-IDF/idf.py, ESP32-S3 compiler, esptool and OpenOCD are not
+  installed/detected. WinGet execution is sandbox-blocked, so official installation is
+  a manual host action. Exact ESP-IDF version remains unknown, not inferred.
+- STM32CubeCLT, GNU Arm GCC/GDB, STM32CubeProgrammer, ST-LINK tools/drivers and CubeMX
+  are not installed/detected. ST license/installer acceptance remains a manual action.
+- The repository now has a toolchain doctor, one fixed firmware workflow, and disabled
+  ESP32/STM32 build boundaries. Target operations require an explicit reviewed board
+  profile; flash/program also require explicit port/probe identity. No profile exists,
+  no fake pins/clock/CAN values were added, and no physical transmit path is active.
+- Bench 0 (PC, App and host firmware) is executable. Bench 1+ remains blocked on vendor
+  tools and verified physical targets. Hardware is not verified, first power is not
+  authorized, physical commissioning is not done, and Phase2B2 remains
+  `WAITING_FOR_VERIFIED_INPUTS`. See `DEVELOPMENT_PIPELINE_READINESS.md`.
+- Fresh validation: 120 App pytest tests, 3 toolchain/workflow tests, 44 fallback tests,
+  host CMake/Ninja build (35 steps) and CTest 1/1 pass. Python compileall, PowerShell,
+  HTML and JavaScript parsing, doctor smoke check and `git diff --check` pass. ESP-IDF
+  and STM32 compile smokes are unavailable because their official tools are absent;
+  no hardware test or flash/program action was performed.
+
+## First real bench evidence closure — 2026-08-30
+
+- Derived first-bench status is `EVIDENCE_COLLECTION_ONLY`: unpowered article/label/
+  connector inspection and measurement may proceed, plus narrowly bounded continuity
+  or host-only cable checks after instrument identity is reviewed. No received active
+  module is presently approved for power.
+- `HW-010` is `DO_NOT POWER OR CONNECT`; its input/output, polarity, isolation,
+  current, protection/fuse and connector evidence is incomplete. No other regulator is
+  owned; `HW-033` remains candidate-only.
+- `HW-002` remains ordered. Delivered board/revision, ESP32 module, camera sensor/FPC,
+  USB arrangement and physical pinout evidence are required before camera testing.
+  Workbook wiring/GPIO/firmware maps remain provisional and freeze no pin or harness.
+- Received ESP32-side peripheral candidates have item-specific evidence closures and
+  conditional independent tests, but ownership/profile binding is not inferred and no
+  powered test is yet authorized.
+- STM32, motion, battery/BMS and CAN hardware/evidence remain absent. First power is
+  unauthorized, commissioning has zero passes, robot authority is `NONE`, and Phase2B2
+  remains `WAITING_FOR_VERIFIED_INPUTS`. See `FIRST_BENCH_READINESS.md`.
 
 ## Real hardware evidence intake — 2026-08-29
 
@@ -26,12 +71,13 @@
 
 ## ZI-E Control Center 0.04 — 2026-08-29
 
-- Pushed base `214ca2d` contains completed 0.02 and 0.03. Uncommitted 0.04 adds
-  build-decision reports without rewriting history.
+- Pushed checkpoint `680bb9f` contains Control Center 0.04 and the real inventory
+  intake. Current preparation remains uncommitted by request.
 - App version `0.04` reflects API/HUD changes. Physical evidence entry alone does not
   require a software-version bump.
-- Purchased inventory remains empty by default; design candidates are separate
-  references and are never seeded, received, or verified.
+- Active working inventory contains 31 evidence-supported lines; a newly initialized
+  store remains empty by default. Design candidates stay separate and are never seeded,
+  received, or verified automatically.
 - Required Hardware, WHAT I NEED FROM YOU, CAD/electrical/driver, ESP32/STM32,
   first-power, commissioning, and Phase 2B2 reports are conservative, grant robot
   authority `NONE`, and pass zero physical gates.

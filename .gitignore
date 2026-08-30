@@ -6,6 +6,7 @@
 /build-package-dev*/
 /build-security*/
 /build-final*/
+/build/
 /.venv/
 /.env
 /runtime/

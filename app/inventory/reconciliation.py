@@ -60,6 +60,114 @@ REQUIREMENTS = (
 
 DOCUMENTED_PRIMARY_CANDIDATE_COUNT = 34
 
+FIRST_BENCH_ITEM_PLANS = {
+    "HW-001": ("ESP32-S3 spare development board", "BLOCKED_PENDING_BOARD_IDENTITY",
+        ["front/back photo", "module and board-revision label close-up", "USB-chip and connector close-up",
+         "exact purchase/order page", "board-vendor schematic or pinout"],
+        "After identity review: USB-only boot/log/flash test with no peripherals attached."),
+    "HW-002": ("ordered ESP32-S3 camera board", "BLOCKED_UNTIL_ARRIVAL",
+        ["front/back photo", "board/revision and ESP32 module label close-up", "OV5640 sensor marking close-up",
+         "camera FPC/connector orientation close-up", "both USB connectors/chips close-up",
+         "exact purchase/order page", "board-vendor schematic and pinout"],
+        "After arrival identity review: USB-only board boot, then camera example using the reviewed board pin map."),
+    "HW-003": ("ILI9488 display/touch module", "DO_NOT_CONNECT_YET",
+        ["front/back photo", "PCB revision and display/touch-controller label close-up", "every connector/pin label close-up",
+         "VCC and logic-level documentation", "touch-controller and microSD schematic/datasheet reference"],
+        "After voltage/interface review: current-limited display-only test; touch remains separate until its controller is identified."),
+    "HW-004": ("PCM5102/PCM5102A DAC module", "DO_NOT_CONNECT_YET",
+        ["front/back photo", "IC and regulator/jumper label close-up", "all power/I2S/output pin labels",
+         "module VIN/logic documentation", "exact module schematic or purchase page"],
+        "After voltage/interface review: isolated DAC-only I2S test into a non-powered measurement/load path."),
+    "HW-005": ("PAM8403 amplifier module", "DO_NOT_CONNECT_YET",
+        ["front/back photo", "IC and terminal/pin label close-up", "module supply documentation",
+         "multimeter continuity check confirming speaker negatives are not ground"],
+        "After evidence review: current-limited amplifier-only test into one known speaker; never ground or join bridge outputs."),
+    "HW-006": ("MAX9814 microphone module", "DO_NOT_CONNECT_YET",
+        ["front/back photo", "IC and GAIN/AR/power/output label close-up", "module VIN documentation",
+         "powered output-bias measurement procedure/result before ESP32 ADC connection"],
+        "After VIN and bias review: microphone-only test with bounded ADC input; no assumed ESP32 ownership/pin."),
+    "HW-007": ("VL53L0X/GY-53/CJMCU-style range module", "DO_NOT_CONNECT_YET_CONFLICT",
+        ["front/back photo", "sensor/breakout marking and every pin-label close-up", "breakout VIN range documentation",
+         "level-shifter/regulator schematic evidence", "explicit KEEP/REPLACE decision versus VL53L1X"],
+        "After electrical and mismatch review: independent I2C identity/ranging test; it does not commission the head-range requirement."),
+    "HW-008": ("WS2812/WS2811-family RGB breakouts", "DO_NOT_CONNECT_YET_CONFLICT",
+        ["front/back photo", "LED/driver marking and DI/DO/power label close-up", "module supply documentation",
+         "explicit KEEP/REPLACE decision versus belly matrix"],
+        "After voltage review: one-breakout current-limited color test with common ground and reviewed logic-level strategy."),
+    "HW-009": ("8 ohm speakers", "UNPOWERED_IDENTIFICATION_ONLY",
+        ["front/back and marking photo", "diameter/depth/mounting measurements", "multimeter DC-resistance measurement per speaker"],
+        "After amplifier evidence review: test one speaker at bounded level; speaker evidence alone does not authorize amplifier power."),
+    "HW-010": ("5 V / 3 A seller-described power board", "DO_NOT_POWER_OR_CONNECT",
+        ["front/back high-resolution photo", "all IC/transformer/regulator markings", "input/output terminal label close-up",
+         "exact purchase/order page", "manufacturer schematic/datasheet", "documented input voltage/range and frequency/type",
+         "documented output voltage/tolerance", "polarity/line-neutral/earth identification",
+         "isolation or non-isolation evidence", "continuous/peak current and thermal conditions",
+         "short-circuit/over-current/over-voltage/thermal protection evidence", "required upstream fuse/eFuse specification",
+         "connector pitch/type/rating", "unpowered continuity/isolation check plan",
+         "current-limited unloaded-output measurement plan with operator disconnect"],
+        "No powered test until board identity and safe input method are reviewed; never attach it to robot loads for initial characterization."),
+    "HW-016": ("USB-A to USB-C cable", "UNPOWERED_OR_HOST_ONLY_IDENTIFICATION",
+        ["connector close-up", "data-capability test on a known non-robot USB device", "continuity/shield result if safely measurable"],
+        "May be checked on a known low-risk USB device; do not use it as board evidence or assume data capability."),
+    "HW-017": ("receipt-only multimeter", "BLOCKED_PENDING_PHYSICAL_MATCH",
+        ["photo of the actual meter front/back", "model/range/fuse/category label close-up", "probe and jack close-up",
+         "receipt-to-unit match", "exact manual/datasheet"],
+        "After physical identity and condition review: continuity and low-voltage DC checks only; no mains work from unverified CAT claims."),
+    "HW-022": ("latching pushbuttons", "UNPOWERED_CONTINUITY_AFTER_METER_REVIEW",
+        ["pin and body close-up", "continuity matrix in both switch states", "contact-rating datasheet/order page"],
+        "Unpowered contact identification only; not a verified power disconnect."),
+    "HW-023": ("slide switches", "UNPOWERED_CONTINUITY_AFTER_METER_REVIEW",
+        ["pin and body marking close-up", "continuity matrix in both positions", "contact-rating datasheet/order page"],
+        "Unpowered common/contact identification only; not a verified power disconnect."),
+}
+
+
+def _first_bench_readiness(items: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
+    by_id = {item["inventory_id"]: item for item in items}
+    plans = []
+    for inventory_id, (name, status, evidence, conditional_test) in FIRST_BENCH_ITEM_PLANS.items():
+        item = by_id.get(inventory_id)
+        if not item:
+            continue
+        plans.append({"priority":"P0" if inventory_id in {"HW-002", "HW-010", "HW-017"} else "P1",
+            "inventory_id":inventory_id, "item":name, "physical_status":item["physical_status"],
+            "bench_status":status, "evidence_to_provide":evidence,
+            "conditional_independent_test":conditional_test, "powered_test_authorized":False})
+    received = [item for item in items if item.get("physical_status") == "RECEIVED"]
+    conflicts = [{"inventory_id":record["inventory_id"], "reason":record["purchased"].get("mismatch_reason")
+                  or record["purchased"].get("conflict_reason")}
+                 for record in records if record["quarantined"]]
+    return {
+        "state":"EVIDENCE_COLLECTION_ONLY",
+        "first_power_authorized":False,
+        "powered_subsystem_test_authorized":False,
+        "can_do_now":[
+            "Photograph received articles, labels, both PCB sides, connectors, pin legends, and packaging/order references.",
+            "Measure unpowered mechanical dimensions and connector pitch/orientation.",
+            "After HW-017 is physically matched and inspected, perform low-energy continuity/resistance checks only.",
+            "Check HW-016 data capability using a known low-risk non-robot USB device.",
+        ],
+        "do_not_connect":[
+            "Do not energize HW-010 or connect it to any robot/subsystem load.",
+            "Do not connect received active peripherals to ESP32 GPIO or power until each module's VIN, logic levels, pin labels, and interface are reviewed.",
+            "Do not use workbook seller GPIO/wiring/firmware sheets as physical pin evidence.",
+            "Do not build a final harness, common-ground tree, or production pin assignment.",
+            "Do not connect motion, battery/BMS, STM32, or CAN paths; required hardware/evidence is absent.",
+        ],
+        "power":{"state":"BLOCKED_UNVERIFIED_POWER_HARDWARE", "inventory_ids":[x for x in ("HW-010",) if x in by_id],
+            "other_received_regulators":[], "candidate_only_not_owned":["HW-033 XL4015E"]},
+        "camera":{"state":"BLOCKED_UNTIL_ARRIVAL_AND_REVIEW", "inventory_ids":[x for x in ("HW-002",) if x in by_id],
+            "seller_maps":"PROVISIONAL_ONLY", "production_pin_freeze":False},
+        "wiring":{"state":"PROVISIONAL_ENGINEERING_PLAN_ONLY", "verified_physical_pin_mappings":[],
+            "final_harness_freeze":False, "production_pin_freeze":False,
+            "missing":["connector identity/pitch/mating/orientation", "module VIN and logic levels",
+                "polarity and return paths", "common-ground/current budget", "USB data capability"]},
+        "stm32_motion_can":{"state":"BLOCKED_MISSING_REQUIRED_HARDWARE_AND_EVIDENCE",
+            "phase2b2":PHASE2B2_STATE, "commissioning_passes":0},
+        "received_inventory_count":len(received), "item_plans":plans, "conflicts":conflicts,
+        "robot_authority":"NONE",
+    }
+
 
 def normalized(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", value.casefold())
@@ -171,7 +279,13 @@ def build_reports(items: list[dict[str, Any]]) -> dict[str, Any]:
                    x["purchased"].get("zie_logical_slot") for x in matches)}
         coverage.append(row)
         if status not in {"REVIEWED_HARDWARE", "OPTIONAL_CONDITIONAL"}: missing.append(row)
+    first_bench = _first_bench_readiness(items, records)
     user_queue = []
+    for plan in first_bench["item_plans"]:
+        user_queue.append({"priority":plan["priority"], "inventory_id":plan["inventory_id"],
+            "task":"Provide: " + "; ".join(plan["evidence_to_provide"]),
+            "status":plan["bench_status"], "evidence_needed":plan["evidence_to_provide"],
+            "purpose":"FIRST_BENCH_EVIDENCE_CLOSURE"})
     for req in missing:
         action = ("Enter the actual part/intent; provide receipt state, exact label and connector photos, "
                   "manufacturer/model, purchase reference, manufacturer datasheet, and relevant dimensions/mass."
@@ -218,5 +332,6 @@ def build_reports(items: list[dict[str, Any]]) -> dict[str, Any]:
         "phase2b2_inputs_required":phase, "commissioning_prerequisites":{"physical_passes":0,"gates":gates},
         "first_power_readiness":{"state":"PREREQUISITES_INCOMPLETE" if first_unresolved else "READY_FOR_PHYSICAL_TEST",
                                  "physical_power_authorized":False,"unresolved":first_unresolved},
+        "first_bench_readiness":first_bench,
         "safety_critical_unresolved":[r for r in coverage if r["safety_priority"]=="P0" and r["coverage_status"]!="REVIEWED_HARDWARE"],
         "robot_authority":"NONE"}

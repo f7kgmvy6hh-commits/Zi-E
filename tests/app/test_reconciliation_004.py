@@ -38,6 +38,8 @@ def test_empty_inventory_produces_real_intake_queue_without_seeding_candidates()
     assert report["commissioning_prerequisites"]["physical_passes"] == 0
     assert report["first_power_readiness"]["physical_power_authorized"] is False
     assert report["robot_authority"] == "NONE"
+    assert report["first_bench_readiness"]["state"] == "EVIDENCE_COLLECTION_ONLY"
+    assert report["first_bench_readiness"]["first_power_authorized"] is False
 
 
 def test_exact_and_fuzzy_candidate_results_remain_non_authoritative():
@@ -130,5 +132,8 @@ def test_reconciliation_api_is_authenticated_closed_and_has_no_robot_authority(t
         report = client.get("/api/reconciliation", headers=headers).json()
         assert report["actual_active_inventory_count"] == 0
         assert report["robot_authority"] == "NONE"
+        bench = client.get("/api/reconciliation/reports/first_bench_readiness", headers=headers)
+        assert bench.status_code == 200
+        assert bench.json()["data"]["first_power_authorized"] is False
         assert client.get("/api/reconciliation/reports/../../secrets", headers=headers).status_code == 404
         assert client.get("/api/reconciliation/reports/not-allowlisted", headers=headers).status_code == 404

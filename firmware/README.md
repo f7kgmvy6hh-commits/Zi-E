@@ -96,3 +96,10 @@ ctest --test-dir build/firmware-host --output-on-failure
 ```
 
 This validates architecture and safe-command behavior only. It is not hardware commissioning. Before motion on assembled hardware, follow the repository's low-power commissioning and actual-state-confirmation rules.
+
+## Physical target preparation
+
+Disabled target boundaries live under `targets/esp32` and `targets/stm32`. They require
+a reviewed profile under `board_profiles` and contain no guessed pins, clocks, buses or
+ratings. Use `scripts/toolchain-doctor.ps1` and `scripts/firmware-workflow.ps1`; never
+select a flash/program target by discovery order.

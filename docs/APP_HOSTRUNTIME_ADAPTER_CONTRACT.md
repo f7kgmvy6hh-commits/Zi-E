@@ -51,3 +51,9 @@ The privileged implementation, process/transport isolation, authentication betwe
 App and runtime, persistence, real telemetry, hardware drivers, CAN/framing, physical
 E-stop confirmation, and commissioning remain future work. Phase 2B2 remains
 `WAITING_FOR_VERIFIED_INPUTS`.
+
+Future authenticated real transport is responsible for semantic host requests plus
+session, authority-generation and profile/configuration identity; copied ESP32
+readiness, events, delivery and controller-link state return to the Host. ESP32–STM32
+messages remain unavailable until Phase2B2 freezes a bounded verified contract. No raw
+socket, GPIO, PWM, motor or CAN frame is exposed through the App/HUD adapter.

@@ -108,3 +108,41 @@ def test_boundary_annotations_quarantine_mismatches_without_authority(monkeypatc
         assert record["purchased"]["verified"] is False
     assert report["commissioning_prerequisites"]["physical_passes"] == 0
     assert report["robot_authority"] == "NONE"
+
+
+def test_first_bench_report_allows_evidence_work_only(monkeypatch, tmp_path):
+    store = InventoryStore(tmp_path / "inventory", inventory_schema())
+    store.import_csv(canonical_content(monkeypatch, tmp_path), 0)
+    report = build_reports(store.reconciliation()["items"])
+    bench = report["first_bench_readiness"]
+    assert bench["state"] == "EVIDENCE_COLLECTION_ONLY"
+    assert bench["first_power_authorized"] is False
+    assert bench["powered_subsystem_test_authorized"] is False
+    assert bench["robot_authority"] == "NONE"
+    assert bench["power"] == {"state":"BLOCKED_UNVERIFIED_POWER_HARDWARE",
+        "inventory_ids":["HW-010"], "other_received_regulators":[],
+        "candidate_only_not_owned":["HW-033 XL4015E"]}
+    assert bench["camera"]["state"] == "BLOCKED_UNTIL_ARRIVAL_AND_REVIEW"
+    assert bench["camera"]["seller_maps"] == "PROVISIONAL_ONLY"
+    assert bench["wiring"]["verified_physical_pin_mappings"] == []
+    assert bench["stm32_motion_can"]["phase2b2"] == "WAITING_FOR_VERIFIED_INPUTS"
+    assert bench["stm32_motion_can"]["commissioning_passes"] == 0
+
+
+def test_first_bench_item_plans_are_exact_and_feed_what_i_need(monkeypatch, tmp_path):
+    items = InventoryStore(tmp_path / "inventory", inventory_schema()).preview_csv(
+        canonical_content(monkeypatch, tmp_path))["items"]
+    report = build_reports(items)
+    plans = {row["inventory_id"]:row for row in report["first_bench_readiness"]["item_plans"]}
+    assert plans["HW-010"]["bench_status"] == "DO_NOT_POWER_OR_CONNECT"
+    assert "isolation or non-isolation evidence" in plans["HW-010"]["evidence_to_provide"]
+    assert plans["HW-002"]["physical_status"] == "ORDERED"
+    assert plans["HW-002"]["powered_test_authorized"] is False
+    assert "OV5640 sensor marking close-up" in plans["HW-002"]["evidence_to_provide"]
+    assert plans["HW-003"]["bench_status"] == "DO_NOT_CONNECT_YET"
+    assert plans["HW-007"]["bench_status"] == "DO_NOT_CONNECT_YET_CONFLICT"
+    assert plans["HW-017"]["bench_status"] == "BLOCKED_PENDING_PHYSICAL_MATCH"
+    requests = [row for row in report["user_input_required"]
+                if row.get("purpose") == "FIRST_BENCH_EVIDENCE_CLOSURE"]
+    assert {row["inventory_id"] for row in requests} == set(plans)
+    assert all(row["evidence_needed"] for row in requests)

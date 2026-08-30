@@ -506,7 +506,7 @@ def create_app(
         allowed = {"hardware_reconciliation_summary", "missing_hardware", "user_input_required",
             "cad_readiness", "electrical_readiness", "driver_implementation_queue",
             "safety_critical_unresolved", "phase2b2_inputs_required", "commissioning_prerequisites",
-            "first_power_readiness", "required_hardware", "esp32_readiness", "stm32_readiness"}
+            "first_power_readiness", "first_bench_readiness", "required_hardware", "esp32_readiness", "stm32_readiness"}
         if report_id not in allowed:
             raise HTTPException(status_code=404, detail="unknown reconciliation report")
         return {"report": report_id, "data": reports[report_id], "robot_authority": "NONE"}

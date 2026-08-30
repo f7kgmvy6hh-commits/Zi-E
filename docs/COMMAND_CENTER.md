@@ -36,6 +36,11 @@ Google Sheet workflow: use the ten simple intake columns documented in
 preview in Control Center, validate, explicitly persist, then complete engineering
 review and reconciliation. No Google credentials or API integration exists.
 
+The reconciliation surface also derives `first_bench_readiness`: a read-only,
+no-authority evidence-closure report that feeds exact item requests into the existing
+WHAT I NEED FROM YOU queue. It distinguishes unpowered work from conditional future
+isolated tests and never authorizes first power or commissioning.
+
 The Control Center serves five compatible roles without acquiring hardware authority:
 development cockpit, hardware-intake tool, commissioning console, simulator UI, and
 eventual semantic real-robot operator interface.
