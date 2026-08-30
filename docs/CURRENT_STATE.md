@@ -1,5 +1,29 @@
 # Current State — 2026-08-29
 
+## Real hardware evidence intake — 2026-08-29
+
+- The 0.04 engineering working copy now contains 31 supported rows from
+  `Zi-E_Hardware_Master_Inventory.xlsx`, source SHA-256
+  `378b06f0f34baa188b7b496d3e0a7f0e12e1b043fe082e0ca83a23e3685660b6`:
+  167 total units, 29 `RECEIVED`, one `ORDERED`, and one physical status `UNKNOWN`.
+- Every imported row remains `REVIEW_REQUIRED`, `UNDECIDED`, and not verified.
+  `HW-032` and `HW-033` remain seller-reference candidates and are excluded from
+  purchased inventory.
+- `HW-002` remains ordered and blocked on physical board/revision/sensor/pinout
+  comparison. Workbook camera/GPIO/wiring/firmware sheets remain provisional plans,
+  not physical evidence or frozen pins.
+- `HW-007` VL53L0X-family hardware and `HW-008` WS2812/WS2811-family breakouts are
+  explicit mismatches against the different rangefinder and belly-matrix candidates;
+  both require an explicit KEEP/REPLACE decision. `HW-010` remains blocked from system
+  power pending electrical verification. The multimeter receipt is retained while its
+  physical receipt remains unresolved.
+- Required-hardware coverage remains unreviewed; STM32, CAN/controller-link, motion,
+  drive, battery/BMS, protected power, and other absent robot hardware remain missing.
+  CAD and electrical evidence remain incomplete, ESP32/STM32 remain waiting for
+  evidence, first power is unauthorized, all physical commissioning gates remain
+  unpassed, robot authority remains `NONE`, and Phase 2B2 remains
+  `WAITING_FOR_VERIFIED_INPUTS`.
+
 ## ZI-E Control Center 0.04 — 2026-08-29
 
 - Pushed base `214ca2d` contains completed 0.02 and 0.03. Uncommitted 0.04 adds

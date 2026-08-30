@@ -726,3 +726,20 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   self-verifies hardware.
 - Inventory/reconciliation has robot authority `NONE` and cannot pass commissioning
   gates or widen Hardware Profile/driver/control authority.
+
+# 2026-08-29 — Real hardware workbook intake boundary
+
+- Accept `HW-001` through `HW-031` as evidence-supported working inventory without
+  automatically reviewing, verifying, keeping, binding, commissioning, or approving
+  any item. Keep `HW-032` antenna and `HW-033` XL4015E seller-reference rows outside
+  purchased inventory until purchase/receipt is explicitly confirmed.
+- Treat the workbook's Camera Pin Map, GPIO Allocation, Full Wiring Map, and Firmware
+  Pin Defines as provisional engineering drafts only. Seller wording cannot override
+  the repository evidence policy or freeze physical wiring/firmware pins.
+- Preserve actual-versus-candidate mismatches: VL53L0X-family does not silently satisfy
+  VL53L1X, and WS2812/WS2811 breakouts do not silently satisfy the belly-matrix
+  candidate. Keep the 5 V / 3 A board electrically blocked until its terminals,
+  range, polarity, isolation, protection, and safe-current behavior are verified.
+- Receipt evidence for `HW-017` confirms purchase only; it does not establish physical
+  receipt without a clearly matched photo. Inventory evidence cannot grant robot
+  authority or pass any physical commissioning gate.
