@@ -140,8 +140,10 @@ def test_first_bench_item_plans_are_exact_and_feed_what_i_need(monkeypatch, tmp_
     assert plans["HW-002"]["powered_test_authorized"] is False
     assert "OV5640 sensor marking close-up" in plans["HW-002"]["evidence_to_provide"]
     assert plans["HW-003"]["bench_status"] == "DO_NOT_CONNECT_YET"
-    assert plans["HW-007"]["bench_status"] == "DO_NOT_CONNECT_YET_CONFLICT"
-    assert plans["HW-017"]["bench_status"] == "BLOCKED_PENDING_PHYSICAL_MATCH"
+    assert plans["HW-006"]["bench_status"] == "INDEPENDENT_BENCH_PASS_INTEGRATION_NOT_COMMISSIONED"
+    assert plans["HW-007"]["bench_status"] == "QUARANTINED_RANGING_NOT_VERIFIED"
+    assert plans["HW-008"]["bench_status"] == "INDEPENDENT_BENCH_PASS_FINAL_5V_NOT_VERIFIED"
+    assert plans["HW-017"]["bench_status"] == "PRESENT_ACTIVE_BENCH_TOOL"
     requests = [row for row in report["user_input_required"]
                 if row.get("purpose") == "FIRST_BENCH_EVIDENCE_CLOSURE"]
     assert {row["inventory_id"] for row in requests} == set(plans)

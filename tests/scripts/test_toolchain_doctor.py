@@ -58,6 +58,7 @@ def test_disabled_target_boundaries_contain_no_pin_or_bus_values():
 def test_generic_build_workflow_is_fixed_no_flash_and_bounded():
     script = (ROOT / "scripts" / "build-esp32.ps1").read_text(encoding="utf-8")
     assert "GENERIC_UNVERIFIED_ESP32S3" in script
+    assert "HW_002_NOT_ARRIVED_UNVERIFIED" in script
     assert "set-target', 'esp32s3" in script
     assert "fullclean" in script and "reconfigure" in script and "build" in script and "size" in script
     assert "param()" in script

@@ -9,8 +9,8 @@ states compile without peripheral component dependencies. Production composition
 a repository-reviewed profile containing `ZIE_BOARD_PROFILE_VERIFIED=TRUE` and an
 active official ESP-IDF environment.
 
-No verified profile exists while received `HW-002` still lacks complete board-specific
-verification. Do not add placeholder GPIOs or confuse it with the separately bench-
+No verified profile exists while ordered `HW-002` has not arrived and therefore
+lacks board-specific evidence. Do not add placeholder GPIOs or confuse it with the separately bench-
 validated spare HW678 / S3-N16R8 board.
 Camera, TFT, I2C, I2S, microSD, USB and TWAI pins remain `UNVERIFIED_BOARD_PIN`; seller
 maps are procurement references only. Vendor headers and future physical pins belong

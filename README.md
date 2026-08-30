@@ -1,38 +1,126 @@
-# ZI-E
+# Zi-E
 
-**Project Release v0.3** — Desktop AI Companion Robot
-
-Includes the dedicated head laser ToF rangefinder and current CAD/pre-purchase design state.
-
-ZI-E is an original, modular desktop AI robot combining an expressive digital face, camera/audio interaction, two functional arms with quick-swap tools, two-wheel differential mobility, local safety control, and an external laptop/future-phone AI brain.
+Zi-E is a modular desktop AI companion robot under active engineering development.
+The repository contains the HostRuntime and Control Center foundations, bounded
+semantic protocols, a physically inert ESP32-S3 Presence target, host-testable
+firmware contracts, hardware evidence, and safety/commissioning gates.
 
 ## Current status
-**Prototype component architecture + parametric CAD are complete enough to enter physical validation.** Production dimensions/parts are not frozen until the listed freeze-gate tests pass.
 
-### Start here
-- [`docs/ZI-E_MASTER_SPEC.md`](docs/ZI-E_MASTER_SPEC.md) — complete current architecture
-- [`docs/COMPONENT_MASTER_MATRIX.md`](docs/COMPONENT_MASTER_MATRIX.md) — primary/backups/switch conditions
-- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — project status
-- [`docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md`](docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md) — mandatory design/review process
-- [`mechanical/cad/current/`](mechanical/cad/current/) — current CAD source, STEP/STL, renders and validation data
-- [`docs/OPEN_ITEMS_AND_FREEZE_GATES.md`](docs/OPEN_ITEMS_AND_FREEZE_GATES.md) — what must still be physically verified
-- [`docs/GITHUB_HANDOFF_CURRENT.md`](docs/GITHUB_HANDOFF_CURRENT.md) — migration/upload guide
+- Control Center: App 0.05, evidence-driven engineering cockpit.
+- HostRuntime: development foundation and tests are active.
+- ESP32-S3: the official ESP-IDF v6.0.2 generic Presence target cross-build passes.
+- ESP32 physical binding: disabled; HW-002 has not arrived and is unverified.
+- ESP32 flashing: not authorized and absent from the generic build workflow.
+- STM32: official toolchain and physical target remain incomplete.
+- Phase2B2: WAITING_FOR_VERIFIED_INPUTS.
+- Physical commissioning: NOT_STARTED; first integrated power is NOT_AUTHORIZED.
 
-## Key architecture
-- AI brain: laptop initially; phone may later become portable/edge brain.
-- Multimedia/UI: ESP32-S3-WROOM-1-N16R8.
-- Real-time safety/motion: STM32G0B1RET6.
-- Face: 3.5-inch landscape IPS touch panel class + OV5640 AF camera.
-- Head: Pan + Tilt + vertical retract with Active/Sleep/Protected Shutdown.
-- Arms: 2-DOF shoulder, elbow, telescopic forearm, roll, wrist pitch, quick-swap tool.
-- Tools: adaptive gripper and removable electromagnet tool.
-- Mobility: exactly **two powered wheels + one passive ball caster**; no four-wheel/mecanum base in V1.
-- Safety: local cliff sensors, bumper, IMU, current/jam supervision, hardware Motion Kill, state interlocks and safe-stop behavior.
-- Battery: low-central 3S2P 18650 Li-ion pack architecture.
+See [Current State](docs/CURRENT_STATE.md) for the exact software and hardware truth.
 
-## Important warning
-`legacy/` contains old WALL-E-era material with known contradictions and is **not source of truth**. Likewise, `assets/deprecated/` contains generated images that may show incorrect geometry. Use current docs/CAD instead.
+## Architecture
 
+```text
+HostRuntime / AI brain
+        authenticated, bounded semantic protocol
+ESP32-S3 Presence Runtime
+        bounded semantic controller-link boundary
+STM32 Safety / Motion Authority
+```
 
-## Latest design delta
-CAD v0.3 includes the hidden **Belly Light Matrix** (secret-until-lit RGB information/ambient panel) and integrates a pre-purchase Open-Source Harvest audit. See `docs/BELLY_MATRIX_SPEC.md`, `docs/OPEN_SOURCE_HARVEST_AUDIT.md`, and `docs/PRE_PURCHASE_GATE.md`.
+HostRuntime owns AI, planning, memory, providers, Hermes integration, semantic
+coordination, and the Control Center. ESP32 owns the future network/media/face edge
+but no final motion authority. STM32 owns motors, actuators, encoders, limits,
+cliff/bumper/current supervision, E-stop, Motion Kill, safe stop, and final physical
+motion acceptance or rejection.
+
+A connection never grants motion authority. ACCEPTED does not mean EXECUTED. Face
+behavior cannot originate movement. STOP/FREEZE/EMERGENCY_STOP remain deterministic,
+bounded safety observations; physical stop confirmation belongs to the protected
+STM32 path.
+
+## Quick start
+
+Windows setup creates a local virtual environment and a random bearer token in the
+Git-ignored .env file:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\start.ps1
+```
+
+The Control Center opens on the configured loopback address (default
+http://127.0.0.1:8766/). The bearer token stays in page memory only; it is not stored
+by the browser.
+
+Run the App and script test suite:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\app tests\scripts -q
+.\.venv\Scripts\python.exe .\scripts\run_tests_fallback.py
+```
+
+Run the host firmware configure/build/tests with the fixed workflow:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\firmware-workflow.ps1 -Action host-configure
+powershell -ExecutionPolicy Bypass -File .\scripts\firmware-workflow.ps1 -Action host-test
+```
+
+Run the official generic ESP32-S3 build from an EIM-activated ESP-IDF environment:
+
+```powershell
+cd "C:\Users\mohamad alayan\Desktop\Zi-E"
+eim run "powershell -ExecutionPolicy Bypass -File .\scripts\build-esp32.ps1"
+```
+
+This fixed action is **BUILD ONLY / NO FLASH / GENERIC_UNVERIFIED_ESP32S3**. It
+accepts no board profile, port, credentials, flash action, or arbitrary command. A
+successful build does not establish compatibility with HW-002 or any physical board.
+
+## Documentation
+
+- [Current State](docs/CURRENT_STATE.md) — concise active status and blockers.
+- [Master Specification](docs/ZI-E_MASTER_SPEC.md) — product/architecture contract.
+- [Modular Hardware Architecture](docs/MODULAR_HARDWARE_ARCHITECTURE.md) — authority
+  and subsystem boundaries.
+- [Open Items and Freeze Gates](docs/OPEN_ITEMS_AND_FREEZE_GATES.md) — evidence still
+  required.
+- [Engineering Method and Memory Loop](docs/ENGINEERING_METHOD_AND_MEMORY_LOOP.md) —
+  mandatory review method.
+- [Repository Map](REPOSITORY_MAP.md) — active and historical areas.
+- [Firmware guide](firmware/README.md) and
+  [ESP32 target guide](firmware/targets/esp32/README.md).
+
+## Repository areas
+
+- app/ — HostRuntime-facing Control Center, providers, models, and security bounds.
+- firmware/ — shared contracts, host tests, and disabled physical targets.
+- mechanical/ and electronics/ — active engineering artifacts and evidence.
+- docs/ — current specifications, decisions, evidence, risks, and archives.
+- scripts/ — fixed setup, validation, and build workflows.
+- legacy/ — preserved historical snapshots/exports and untrusted reference material.
+
+The root README is the human entrypoint, REPOSITORY_MAP.md maps paths, and
+PROJECT_CONTEXT.md holds stable product context. Historical exports may preserve
+contradictory old facts and never override active evidence.
+
+## Hardware and safety
+
+HW-002 is ordered, has not arrived, and remains unverified. The separately
+bench-validated HW678 spare board is not HW-002; its memory, GPIO, power behavior,
+and temporary bench wiring do not define a production profile. No camera, display,
+audio, touch, RGB, wake, I2C, I2S, TWAI, power, or actuator pin is frozen by the
+generic build.
+
+No unrestricted physical motion or hardware API is exposed to AI, App, plugin, or
+browser code. No integrated power or normal autonomous motion is permitted until the
+physical evidence and low-power commissioning gates pass, including actual-state
+confirmation.
+
+## Provenance
+
+XiaoZhi is a pinned engineering donor/reference, not Zi-E's identity, cloud
+dependency, or motion-authority source. Imported code/assets require explicit
+license and provenance review. Materials under legacy/ are historical and untrusted
+unless independently promoted through the current engineering process.

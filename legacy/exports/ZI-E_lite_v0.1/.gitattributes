@@ -1,0 +1,8 @@
+# Historical export: retain Git's normal text normalization so moved files keep
+# the same repository blobs they had at their original paths.
+* text=auto
+# These three source blobs were historically stored with their existing byte form;
+# keep that form while allowing normal normalization for the rest of the export.
+/LITE_MASTER_ALL_IN_ONE.md -text
+/bom/BOM.csv -text
+/templates/CUT_LIST.csv -text

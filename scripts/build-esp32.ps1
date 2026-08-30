@@ -43,6 +43,6 @@ $null = New-Item -ItemType Directory -Path (Split-Path $statusPath) -Force
     result = 'PASS'
     idf_version = $idfVersion
     flash = 'NOT_AUTHORIZED'
-    physical_target = 'UNVERIFIED_PRESENT'
+    physical_target = 'HW_002_NOT_ARRIVED_UNVERIFIED'
 } | ConvertTo-Json | Set-Content -LiteralPath $statusPath -Encoding UTF8
 Write-Output 'RESULT PASS'

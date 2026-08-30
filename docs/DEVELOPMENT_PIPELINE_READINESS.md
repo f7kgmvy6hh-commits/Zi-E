@@ -119,7 +119,7 @@ No HUD/App endpoint may expose a raw socket, GPIO, PWM, motor register or CAN fr
 | Bench | Scope | Current state |
 |---|---|---|
 | 0 | PC + toolchains + App/host tests | EXECUTABLE NOW; vendor target tools incomplete |
-| 1 | one verified ESP32 over USB, no peripherals | BLOCKED: `HW-002` not received; spare board identity unreviewed |
+| 1 | one verified ESP32 over USB, no peripherals | SPARE HW678 INDEPENDENT BENCH PASS; production HW-002 lane BLOCKED_PENDING_ARRIVAL_AND_PROFILE |
 | 2 | one verified ESP32 peripheral | BLOCKED on Bench 1 and per-item evidence |
 | 3 | verified STM32 over exact programmer/debugger | BLOCKED: controller/tool/probe missing |
 | 4 | ESP32 + STM32 link, actuator power absent | BLOCKED: Phase2B2 inputs/link hardware missing |

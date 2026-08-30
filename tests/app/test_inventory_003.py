@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from fastapi.testclient import TestClient
 
-from app.inventory.store import InventoryStore, MAX_BYTES, MAX_ROWS
+from app.inventory.store import InventoryStore, MAX_BYTES, MAX_ROWS, _spreadsheet_safe
 from app.server.control_center import inventory_schema
 from app.server.main import create_app
 from tests.app.test_server import TOKEN, settings
@@ -97,6 +97,32 @@ def test_csv_import_export_utf8_round_trip_never_verifies(tmp_path):
     second.import_csv(exported, 0)
     assert second.export_csv() == exported
     assert second.reconciliation()["summary"]["verified"] == 0
+
+
+def test_csv_export_neutralizes_formulas_without_mutating_inventory(tmp_path):
+    value = store(tmp_path)
+    payload = "=HYPERLINK(\"https://invalid.example\",\"open\")"
+    value.create(intake(notes=payload), 0)
+    exported = list(csv.DictReader(io.StringIO(value.export_csv().decode("utf-8"))))
+    assert exported[0]["notes"].startswith("'=")
+    assert value.snapshot()["items"][0]["notes"] == payload
+
+
+@pytest.mark.parametrize("value", ["=formula", "+formula", "-formula", "@formula", " @formula",
+                                   "\tformula", "\rformula", "\nformula", " \tformula", " \rformula"])
+def test_spreadsheet_formula_prefixes_are_neutralized(value):
+    assert _spreadsheet_safe(value).startswith("'")
+
+
+@pytest.mark.parametrize("value", [None, 0, -12, 3.5, False])
+def test_spreadsheet_export_does_not_coerce_non_strings(value):
+    assert _spreadsheet_safe(value) is value
+
+
+def test_quarantined_import_is_physically_received_but_never_verified(tmp_path):
+    preview = store(tmp_path).preview_csv(csv_bytes([canonical_row(purchase_status="quarantined")]))
+    assert preview["items"][0]["physical_status"] == "RECEIVED"
+    assert preview["items"][0]["verified"] is False
 
 
 def test_csv_rejects_header_malformed_duplicate_oversize_and_excess_rows(tmp_path):

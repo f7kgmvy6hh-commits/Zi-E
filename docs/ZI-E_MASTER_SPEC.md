@@ -21,6 +21,11 @@ The AI layer sends high-level intents only. It never receives unrestricted raw a
 - Responsibilities: display/UI/face animation, OV5640 camera, touch, audio path, Wi-Fi/BLE, laptop/phone communications, high-level robot state.
 - 16 MB flash / 8 MB PSRAM class.
 
+These are design-candidate requirements, not received-board evidence. HW-002 has not
+arrived, so its actual module, memory, camera, revision, pins, and power behavior
+remain unverified. The separate HW678 spare's verified 16 MB/8 MB configuration does
+not prove HW-002.
+
 ### Safety / motion controller
 - STM32G0B1RET6.
 - Responsibilities: deterministic motion, safety supervision, sensor fusion, actuators, limits, current/fault supervision, cliff/collision handling, heartbeat/command lease, safe-state transitions.

@@ -1,0 +1,82 @@
+{
+  "schema": "zie.project-evidence.v1",
+  "updated": "2026-08-31",
+  "software": {
+    "host_development": "READY",
+    "esp32_toolchain": "READY",
+    "esp32_generic_cross_build": "PASS",
+    "esp32_target": "ESP32-S3",
+    "esp32_profile": "GENERIC_UNVERIFIED_ESP32S3",
+    "esp32_physical_target": "HW_002_NOT_ARRIVED_UNVERIFIED",
+    "esp32_flash": "NOT_AUTHORIZED",
+    "stm32_development": "INCOMPLETE",
+    "physical_commissioning": "NOT_STARTED",
+    "first_integrated_power": "NOT_AUTHORIZED",
+    "phase2b2": "WAITING_FOR_VERIFIED_INPUTS"
+  },
+  "hardware": [
+    {
+      "id": "HW-002",
+      "label": "final camera / Presence board",
+      "physical_state": "NOT_ARRIVED",
+      "evidence_state": "UNVERIFIED",
+      "functional_state": "NOT_TESTED",
+      "integration_state": "BLOCKED_PENDING_ARRIVAL",
+      "restrictions": ["NO_BOARD_PROFILE", "NO_GPIO_BINDING", "NO_FLASH"]
+    },
+    {
+      "id": "SPARE-HW678",
+      "label": "spare HW678 ESP32-S3 development board",
+      "physical_state": "PRESENT",
+      "evidence_state": "INDEPENDENT_BENCH_VERIFIED",
+      "functional_state": "BENCH_PASS",
+      "integration_state": "NOT_HW_002",
+      "restrictions": ["TEMPORARY_BENCH_PINS_NOT_PRODUCTION", "5VIN_NOT_VERIFIED_5V_OUTPUT"]
+    },
+    {
+      "id": "HW-006",
+      "label": "MAX9814 microphone module",
+      "physical_state": "PRESENT",
+      "evidence_state": "INDEPENDENT_BENCH_PASS",
+      "functional_state": "POWER_BIAS_ADC_ACOUSTIC_GAIN_PASS",
+      "integration_state": "NOT_COMMISSIONED",
+      "restrictions": ["TEMPORARY_GPIO4_NOT_PRODUCTION", "NO_FINAL_AUDIO_QUALITY_CLAIM"]
+    },
+    {
+      "id": "HW-007",
+      "label": "VL53L0X range sensor",
+      "physical_state": "PRESENT",
+      "evidence_state": "IDENTITY_VERIFIED",
+      "functional_state": "RANGING_NOT_VERIFIED",
+      "integration_state": "QUARANTINED",
+      "restrictions": ["DO_NOT_POWER_IN_THIS_PASS", "REWORK_OR_REPLACEMENT_REQUIRED", "TEMPORARY_GPIO5_GPIO6_NOT_PRODUCTION"]
+    },
+    {
+      "id": "HW-008",
+      "label": "WS2812-family RGB breakout",
+      "physical_state": "PRESENT",
+      "evidence_state": "INDEPENDENT_BENCH_PASS",
+      "functional_state": "DI_RGB_CHANNELS_3V3_330OHM_PASS",
+      "integration_state": "NOT_COMMISSIONED_FINAL_5V_NOT_VERIFIED",
+      "restrictions": ["TEMPORARY_GPIO7_NOT_PRODUCTION", "TEMPORARY_3V3_BENCH_OPERATION_ONLY", "FINAL_5V_OPERATION_NOT_VERIFIED", "DO_NOT_USE_HW678_5VIN_AS_5V_SOURCE", "INTEGRATED_RGB_NOT_COMMISSIONED"]
+    },
+    {
+      "id": "HW-010",
+      "label": "unverified power board",
+      "physical_state": "PRESENT",
+      "evidence_state": "UNVERIFIED",
+      "functional_state": "NOT_TESTED",
+      "integration_state": "DO_NOT_POWER_OR_CONNECT",
+      "restrictions": ["IDENTITY_POLARITY_IO_ISOLATION_CURRENT_PROTECTION_UNKNOWN"]
+    },
+    {
+      "id": "HW-017",
+      "label": "digital multimeter",
+      "physical_state": "PRESENT",
+      "evidence_state": "BENCH_TOOL_OBSERVED",
+      "functional_state": "IN_USE",
+      "integration_state": "BENCH_TOOL",
+      "restrictions": ["EXACT_SAFETY_CATEGORY_UNVERIFIED"]
+    }
+  ]
+}

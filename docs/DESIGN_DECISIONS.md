@@ -1,5 +1,44 @@
 # ZI-E Design Decisions — Concept v0.1
 
+## 2026-08-31 — Evidence identity and maintenance validation boundary
+
+- The independently tested HW678/S3-N16R8 board remains `SPARE-HW678` in the
+  project evidence overlay. The repository does not explicitly prove it is the
+  physical unit represented by procurement row HW-001, so no inventory-ID mapping is
+  assigned pending a reviewed photo/order-to-unit link.
+- Evidence validation checks the exact conservative state tuple for every surfaced
+  hardware item. A changed or promoted state invalidates the complete evidence file
+  and cannot pass readiness or commissioning.
+- Historical move destinations retain prospective Git blob identity. Archive-local
+  attributes preserve the three pre-existing byte-form exceptions without causing
+  line-ending rewrites across the rest of the Lite export.
+- HW-008 has an independent functional bench PASS for DI and RED/GREEN/BLUE/OFF using
+  the ESP32 3V3 rail, a measured approximately 330 Ω series resistor, and temporary
+  GPIO7. This does not verify final 5 V operation, freeze GPIO7, or complete integrated
+  display/RGB commissioning; HW678 5Vin remains prohibited as an assumed 5 V source.
+
+## 2026-08-30 — Superseding physical-evidence and Control Center truth boundary
+
+- **Supersedes mistaken HW-002 presence language below:** HW-002 has not arrived and
+  remains ordered/unverified. The present, independently bench-tested HW678 spare is
+  a separate board; its 16 MB flash, 8 MB OPI PSRAM, GPIO, and rail observations
+  cannot define HW-002.
+- Do not map that bench record to inventory HW-001 without an explicit reviewed
+  photo/order-to-unit link. Similar N16R8 descriptions are supporting context, not
+  identity proof; the evidence record names the unit `SPARE-HW678` meanwhile.
+- HW-017 is physically present and actively used as a bounded bench tool. That
+  observation does not validate an exact model, fuse, CAT rating, or mains use.
+- Current changing bench/software truth is carried by a small repository-owned,
+  schema-validated evidence record. The Control Center accepts only the exact bounded
+  schema and fails closed to UNKNOWN/NOT_RUN/NOT_AUTHORIZED; evidence presence never
+  grants authority or passes commissioning.
+- Repository metadata may be cached in-process for at most two seconds to reduce Git
+  process creation. Live runtime, controller, power, safety, and commissioning state
+  is not cached by this policy.
+- Root historical bundles/exports and the former chronological Current State are
+  preserved under legacy and docs/archive with manifests. Archive moves do not erase
+  content or reduce existing Git history.
+
 ## 2026-08-30 — Fixed generic ESP32-S3 build remains physically inert
 
 - The unverified ESP32-S3 profile may be configured, cross-compiled, linked, and sized
@@ -752,9 +791,10 @@ Images are **visual direction references**, not dimensionally accurate CAD.
   VL53L1X, and WS2812/WS2811 breakouts do not silently satisfy the belly-matrix
   candidate. Keep the 5 V / 3 A board electrically blocked until its terminals,
   range, polarity, isolation, protection, and safe-current behavior are verified.
-- Receipt evidence for `HW-017` confirms purchase only; it does not establish physical
-  receipt without a clearly matched photo. Inventory evidence cannot grant robot
-  authority or pass any physical commissioning gate.
+- At the 2026-08-29 workbook-intake snapshot, receipt evidence for `HW-017` confirmed
+  purchase only. The later observed physical presence is recorded in the superseding
+  decision above. Inventory evidence still cannot grant robot authority or pass any
+  physical commissioning gate.
 
 # 2026-08-30 — First real bench evidence-closure boundary
 
@@ -765,8 +805,10 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Require item-specific identity, input/output, logic-level, connector and protection
   review before considering isolated active-module tests. Such a test does not satisfy
   integrated first-power or commissioning gates.
-- Keep `HW-010` unpowered and disconnected, `HW-002` received but blocked until its
-  board-specific evidence review is complete,
+- This session mistakenly recorded `HW-002` as received; the superseding decision
+  above corrects it to NOT_ARRIVED/UNVERIFIED. Preserve the valid safety consequences:
+  keep `HW-010` unpowered/disconnected and keep HW-002 blocked until arrival and
+  board-specific evidence review,
   production GPIO/harness unfrozen, STM32/motion/CAN blocked, Phase2B2 waiting, and
   physical commissioning at zero passes.
 

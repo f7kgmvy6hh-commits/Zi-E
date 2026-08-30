@@ -68,6 +68,13 @@ def _text(value: Any, limit: int = 1000) -> str:
     return value.strip()
 
 
+def _spreadsheet_safe(value: Any) -> Any:
+    """Keep CSV exports inert when opened by formula-evaluating spreadsheet apps."""
+    if isinstance(value, str) and value.lstrip(" ").startswith(("=", "+", "-", "@", "\t", "\r", "\n")):
+        return "'" + value
+    return value
+
+
 class InventoryStore:
     """Revisioned JSON state plus exact-schema CSV import/export; no robot authority."""
 
@@ -335,7 +342,7 @@ class InventoryStore:
             if role not in {"", "existing", "required", "substitute_candidate"}:
                 raise ValueError(f"invalid procurement_role at row {number}")
             physical = {"received": "RECEIVED", "ordered": "ORDERED", "required": "NOT_BOUGHT",
-                        "": "UNKNOWN", "existing": "UNKNOWN", "quarantined": "UNKNOWN",
+                        "": "UNKNOWN", "existing": "UNKNOWN", "quarantined": "RECEIVED",
                         "returned": "UNKNOWN"}[purchase_status]
             base = self._base_item({"inventory_id": inventory_id, "part_name": row["part_name"],
                 "manufacturer": row["manufacturer"], "model_exact_variant": row["model_exact_variant"],
@@ -372,7 +379,7 @@ class InventoryStore:
         output = io.StringIO(newline=""); writer = csv.DictWriter(output, fieldnames=self.columns, lineterminator="\n")
         writer.writeheader()
         for item in sorted((x for x in self._state["items"] if not x["removed"]), key=lambda x: x["inventory_id"]):
-            writer.writerow({key: item.get(key, "") for key in self.columns})
+            writer.writerow({key: _spreadsheet_safe(item.get(key, "")) for key in self.columns})
         return output.getvalue().encode("utf-8")
 
     def rollback(self, expected_revision: int) -> dict[str, Any]:

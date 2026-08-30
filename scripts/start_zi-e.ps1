@@ -36,9 +36,12 @@ if (-not $Values.ZIE_VOICE_FALLBACK_COMMAND) {
 New-Item -ItemType Directory -Force -Path $Runtime | Out-Null
 $Owned = @()
 if ($Values.ZIE_CAMOFOX_ENABLED -match '^(?i:true|1|yes|on)$') {
-    if (-not $Values.ZIE_CAMOFOX_COMMAND) { throw 'ZIE_CAMOFOX_ENABLED requires ZIE_CAMOFOX_COMMAND.' }
-    $Camo = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile','-Command',$Values.ZIE_CAMOFOX_COMMAND -WorkingDirectory $Root -PassThru -WindowStyle Hidden
-    $Owned += @{ name = 'camofox'; pid = $Camo.Id; commandPattern = 'powershell.*camofox' }
+    if ($Values.ZIE_CAMOFOX_COMMAND -ne 'camofox') {
+        throw 'ZIE_CAMOFOX_COMMAND must be the fixed command name camofox; shell expressions and arguments are forbidden.'
+    }
+    $Camofox = Get-Command 'camofox' -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    $Camo = Start-Process -FilePath $Camofox.Source -WorkingDirectory $Root -PassThru -WindowStyle Hidden
+    $Owned += @{ name = 'camofox'; pid = $Camo.Id; commandPattern = 'camofox(\.exe)?' }
 }
 $Server = Start-Process -FilePath $Python -ArgumentList '-m','app.server.main' -WorkingDirectory $Root -PassThru -WindowStyle Hidden
 $Owned += @{ name = 'server'; pid = $Server.Id; commandPattern = 'app.server.main' }

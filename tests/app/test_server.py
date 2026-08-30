@@ -456,9 +456,13 @@ def test_semantic_contracts_disable_raw_motion_presentation_and_flashing(tmp_pat
 def test_current_version_and_functional_preview_surfaces_are_honest(tmp_path):
     headers = {"Authorization": f"Bearer {TOKEN}"}
     with TestClient(create_app(settings(tmp_path))) as client:
-        assert client.get("/api/health", headers=headers).json()["version"] == "0.04"
+        assert client.get("/api/health", headers=headers).json()["version"] == "0.05"
         cockpit = client.get("/api/control-center", headers=headers).json()
-        assert cockpit["version"] == "0.04"
+        assert cockpit["version"] == "0.05"
+        assert cockpit["development_readiness"]["esp32_generic_cross_build"] == "PASS"
+        assert cockpit["development_readiness"]["esp32_physical_target"] == "HW_002_NOT_ARRIVED_UNVERIFIED"
+        assert {item["id"] for item in cockpit["bench_evidence"]} == {
+            "SPARE-HW678", "HW-002", "HW-006", "HW-007", "HW-008", "HW-010", "HW-017"}
         assert cockpit["camera"]["mode"] == "TEST_SOURCE"
         assert cockpit["camera"]["fps"] == 0
         assert cockpit["camera"]["source"] == "generated-static-frame"

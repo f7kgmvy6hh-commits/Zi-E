@@ -3,8 +3,8 @@
 ## Current implementation lane
 
 `Architecture contracts → XiaoZhi donor audit → ESP32 Presence Runtime foundation
-(CURRENT) + Control Center UX + Face Pack infrastructure → official ESP-IDF build →
-HW-002 verification → verified profile → USB bench → multimedia bring-up → verified
++ official generic ESP-IDF build + Control Center 0.05 (CURRENT) →
+HW-002 arrival/verification → verified profile → USB bench → multimedia bring-up → verified
 STM32 → controller link → Phase2B2 freeze → sensors → bounded actuator → protected
 power → measured CAD/COM → integrated commissioning`.
 
@@ -21,16 +21,19 @@ power → measured CAD/COM → integrated commissioning`.
   dependency visibility.
 - **0.04:** actual-evidence build-decision reports: required-hardware coverage,
   prioritized human evidence intake, and conservative engineering readiness.
+- **0.05:** evidence-driven maintenance/hardening: validated project and bench truth,
+  software-versus-physical readiness, bounded Git metadata caching, single-generation
+  HUD refresh, bounded event display, memory-only token handling, and safer CSV export.
 
-Evidence-led proposed progression (not automatically authorized): `0.04` actual
-purchased-parts reconciliation; `0.05` real-measurement CAD reconciliation; `0.06`
-electrical/wiring freeze candidate; `0.07` bench bring-up; `0.08` ESP32 physical
-integration; `0.09` STM32 physical integration; `0.10` Phase 2B2 freeze/implementation
-only after verified inputs. Scope may change when evidence arrives.
+Evidence-led proposed progression (not automatically authorized): real-measurement CAD
+reconciliation; electrical/wiring freeze candidate; controlled bench bring-up; ESP32
+physical integration after HW-002 evidence; STM32 physical integration; then Phase 2B2
+freeze/implementation only after verified inputs. App version numbers are not physical
+gate numbers and may change as software evolves.
 
 Version `1.00` is reserved for a much later integrated, release-capable Zi-E system.
 
-## Current active workflow — Control Center 0.04
+## Current active workflow — Control Center 0.05
 
 Control Center inventory is the engineering working copy. Google Sheet is intake
 convenience followed by import, explicit review, and an approved export/snapshot—not

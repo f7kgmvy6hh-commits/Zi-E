@@ -105,9 +105,12 @@ ratings. Use `scripts/toolchain-doctor.ps1` and `scripts/firmware-workflow.ps1`;
 select a flash/program target by discovery order.
 # Target architecture preparation
 
-The ESP32 target supports an explicit `ZIE_UNVERIFIED_GENERIC_BUILD` compile smoke
+The ESP32 target supports an explicit `ZIE_UNVERIFIED_GENERIC_BUILD` real
+ESP-IDF cross-build
 with camera, display, audio, TWAI, production run and physical authority disabled. It
-contains no pins and is not a runnable board profile. See
+contains no pins and is not a physical board profile. Configure, compile, link, image
+generation, and size reporting pass under the official ESP-IDF v6.0.2 toolchain;
+flash remains unauthorized. See
 `docs/ESP32_OFFICIAL_COMPONENT_PLAN.md`.
 
 The future ESP32 target is a Zi-E Presence Runtime using official ESP-IDF components
@@ -115,4 +118,4 @@ behind a physically verified per-board binding. XiaoZhi ESP32 is a pinned engine
 reference, not vendored code, a cloud dependency, or an authority layer. The future
 STM32 target remains the sole physical safety/motion authority. See
 `docs/TARGET_ARCHITECTURE_FREEZE_CANDIDATE_V1.md` and the two semantic interface V1
-contracts. Both production targets remain disabled; no pins or CAN values are frozen.
+contracts. Both production bindings remain disabled; no pins or CAN values are frozen.

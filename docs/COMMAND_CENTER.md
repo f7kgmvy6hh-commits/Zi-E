@@ -1,23 +1,32 @@
-# ZI-E Control Center 0.04
+# ZI-E Control Center 0.05
 
-Status: actual-evidence build-decision software foundation; physical
+Status: evidence-driven maintenance/hardening cockpit; physical
 HostRuntime adapter and robot remain deliberately unimplemented/uncommissioned.
 
 Version history: `0.01` is the structural Project Cockpit foundation. `0.02` adds
 functional simulation/preview workspaces and fixed local developer launch workflows.
 `1.00` remains reserved for a future genuinely integrated release-capable system.
 `0.03` adds contained purchased-inventory persistence and engineering reconciliation.
-`0.04` adds required-hardware coverage and practical evidence/readiness reports. App
-versions track software changes; physical evidence entry alone does not force a bump.
+`0.04` adds required-hardware coverage and practical evidence/readiness reports.
+`0.05` adds schema-validated project/bench evidence, truthful software-versus-
+physical readiness, bounded repository-metadata caching, non-overlapping HUD refresh,
+memory-only browser tokens, and CSV export formula neutralization. App versions track
+software changes; physical evidence entry alone does not force a bump.
 
 ## Presence cockpit implementation
 
-The HUD derives version 0.04 from the backend and adds a truthful Host/ESP32/STM32
+The HUD derives version 0.05 from the backend and presents a truthful Host/ESP32/STM32
 graph, prioritized alerts, top safety/controller truth, procedural semantic Face
-preview, Face Pack metadata and provider flow. All physical values remain unavailable
-or unverified. Existing inventory, commissioning, simulation and developer workflows
-remain intact. Responsive grids, visible focus, labels and reduced-motion support were
-added without a frontend framework.
+preview, Face Pack metadata, provider flow, development readiness, and bounded hardware
+evidence. HW-002 is explicitly NOT_ARRIVED/UNVERIFIED; spare-board evidence cannot
+promote it. Existing inventory, commissioning, simulation and developer workflows
+remain intact.
+
+One scheduler owns the enhanced refresh path. A new generation aborts the previous
+request group, stale generations cannot render, hidden tabs skip noncritical polling,
+and visibility restoration refreshes immediately. The event stream reconnects once
+and retains at most 100 visible entries. Repository metadata alone uses a two-second
+in-process cache; live runtime/safety state is never cached by that layer.
 
 ## Purchased hardware workflow
 
@@ -31,7 +40,8 @@ Normal intake fields are deliberately small. Engineering review is explicit and
 separate. Every mutation includes the expected revision; stale writes return conflict.
 Validated writes use a same-directory temporary file and atomic replacement, while a
 validated previous state is retained for fixed rollback. Import requires preview then
-explicit commit. Export is a deterministic browser download in canonical order.
+explicit commit. Export is a deterministic browser download in canonical order and
+neutralizes formula-leading cells without mutating stored inventory.
 Rollback is exposed by the narrow authenticated backend and audited; a dedicated HUD
 rollback button is deferred until a revision-comparison confirmation view is added.
 
