@@ -15,6 +15,8 @@
       q('#top-esp32').textContent = c.controllers[0].state;
       q('#top-stm32').textContent = c.controllers[1].state;
       q('#top-safety').textContent = c.safety.motion_authority;
+      q('#firmware-status').innerHTML = Object.entries(c.firmware.esp32)
+        .map(([name,state])=>`<div class="metric"><span>${safe(name.replaceAll('_',' '))}</span><strong>${safe(state)}</strong></div>`).join('');
       q('#system-graph').innerHTML = [
         ['HostRuntime','Brain / coordinator',c.target.runtime.readiness],
         ['ESP32 Presence','Media / network / semantic bridge',c.presence.state],

@@ -1,5 +1,17 @@
 # ZI-E Design Decisions — Concept v0.1
 
+## 2026-08-30 — Fixed generic ESP32-S3 build remains physically inert
+
+- The unverified ESP32-S3 profile may be configured, cross-compiled, linked, and sized
+  without a verified board profile, while all physical bindings remain disabled.
+- The fixed generic workflow accepts no caller arguments and contains no flash/monitor
+  path. A build result never verifies HW-002 or authorizes first power.
+- Embedded bounds are software ingestion limits, not physical timing, electrical,
+  flash, or PSRAM claims.
+- ESP-IDF's generic 2 MB flash-image default is accepted only to make a nonphysical
+  build artifact. It is not a board declaration and must be replaced by verified
+  evidence in any future HW-002 profile.
+
 ## Control Center 0.04 evidence-driven build decisions — 2026-08-29
 
 - App version `0.04` reflects API/HUD changes; hardware evidence entry alone does not
@@ -753,7 +765,8 @@ Images are **visual direction references**, not dimensionally accurate CAD.
 - Require item-specific identity, input/output, logic-level, connector and protection
   review before considering isolated active-module tests. Such a test does not satisfy
   integrated first-power or commissioning gates.
-- Keep `HW-010` unpowered and disconnected, `HW-002` blocked until arrival review,
+- Keep `HW-010` unpowered and disconnected, `HW-002` received but blocked until its
+  board-specific evidence review is complete,
   production GPIO/harness unfrozen, STM32/motion/CAN blocked, Phase2B2 waiting, and
   physical commissioning at zero passes.
 

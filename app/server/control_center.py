@@ -21,6 +21,7 @@ from app.presence.runtime import unverified_presence_status
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 INVENTORY_TEMPLATE = REPOSITORY_ROOT / "docs" / "templates" / "PURCHASED_PARTS_INTAKE_TEMPLATE.csv"
 PHASE2B2_STATE = "WAITING_FOR_VERIFIED_INPUTS"
+ESP32_BUILD_STATUS = REPOSITORY_ROOT / "runtime" / "esp32-generic-build.json"
 
 APP_STATES = (
     "SIMULATED", "DISCONNECTED", "UNAVAILABLE", "NOT_CONFIGURED",
@@ -90,6 +91,27 @@ def repository_status() -> dict[str, Any]:
         "diff_summary": diff.splitlines() if diff else [],
         "recent_log": recent.splitlines() if recent else [],
     }
+
+
+def esp32_development_status() -> dict[str, Any]:
+    status = {
+        "toolchain": "READY", "generic_cross_build": "NOT_RUN",
+        "generic_target": "ESP32-S3", "generic_profile": "GENERIC_UNVERIFIED_ESP32S3",
+        "verified_board": "BLOCKED_HW_002", "physical_target": "UNVERIFIED_PRESENT",
+        "flash": "NOT_AUTHORIZED",
+    }
+    try:
+        import json
+        report = json.loads(ESP32_BUILD_STATUS.read_text(encoding="utf-8-sig"))
+        if (report.get("schema") == "zie.esp32-generic-build.v1"
+                and report.get("target") == "esp32s3"
+                and report.get("profile") == "GENERIC_UNVERIFIED_ESP32S3"
+                and report.get("flash") == "NOT_AUTHORIZED"):
+            status["generic_cross_build"] = report.get("result", "FAIL")
+            status["idf_version"] = report.get("idf_version")
+    except (OSError, ValueError, TypeError):
+        pass
+    return status
 
 
 def inventory_schema() -> list[str]:
@@ -307,7 +329,8 @@ def cockpit_status(runtime: dict[str, Any], providers: dict[str, Any], stt: str,
         },
         "drive": preview.drive_status(),
         "firmware": {
-            "esp32": {"detected": False, "firmware": None, "approved_target": None, "flash": "NOT_CONFIGURED"},
+            "esp32": {"detected": False, "firmware": None, "approved_target": None,
+                      **esp32_development_status()},
             "stm32": {"detected": False, "firmware": None, "approved_target": None, "flash": "NOT_CONFIGURED"},
             "unrestricted_flashing": False,
         },

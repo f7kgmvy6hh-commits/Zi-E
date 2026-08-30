@@ -1,5 +1,30 @@
 # Current State — 2026-08-30
 
+## First official ESP32-S3 cross-build implementation — 2026-08-30
+
+- The generic `GENERIC_UNVERIFIED_ESP32S3` ESP-IDF project now has a real bounded
+  Presence Runtime entrypoint and built-in-component-only composition. Every physical
+  peripheral binding remains unavailable/unverified/disabled; there are no pins or
+  motion APIs.
+- `scripts/build-esp32.ps1` is a fixed clean ESP32-S3 configure/build/size workflow. It
+  accepts no arguments and contains no flash, monitor, port discovery, or credentials.
+- Control Center separates ESP32 toolchain, generic cross-build, verified-board,
+  physical-target, and flash-authorization states.
+- Official ESP-IDF v6.0.2 execution is `CROSS_BUILD_PASS`: clean configure, ESP32-S3
+  compile/link, bootloader and application image generation, and size all passed in
+  normal PowerShell. The canonical path containing spaces passed after the workflow
+  invoked official `IDF_PATH\tools\idf.py` through Python with an argument array.
+- Generic footprint: 160,471-byte IDF image total; `0x27350`-byte application in the
+  build-only `0x100000` app partition; DIRAM 47,249/341,760 bytes (13.83%). The 16 KiB
+  IRAM row is fully occupied by ESP-IDF's dedicated pre-D/IRAM slice; executable text
+  continues into lightly used shared D/IRAM and the full linker-region assertion passed.
+  This is not an overflow, but remains a footprint trend to review as drivers arrive.
+- The generated 2 MB flash argument is ESP-IDF's upstream generic default and is build
+  configuration only—not HW-002 physical evidence. HW-002 is received/unverified;
+  spare HW678's verified 16 MB flash and 8 MB OPI PSRAM do not define HW-002.
+- Software-only validation passes: 155 pytest tests, 44 fallback tests, host
+  CMake/Ninja/CTest, embedded runtime host syntax, static parses, and diff checks.
+
 ## Development pipeline and physical integration preparation — 2026-08-30
 
 - Presence implementation delta: starting pushed checkpoint
@@ -17,14 +42,16 @@
   Windows PowerShell 5.1, Node 26.7.0 and Codex CLI 0.151.0. The validated venv has no
   pip module/executable but its App dependencies import; the existing uv-based setup is
   the rebuild path.
-- Espressif EIM, ESP-IDF/idf.py, ESP32-S3 compiler, esptool and OpenOCD are not
-  installed/detected. WinGet execution is sandbox-blocked, so official installation is
-  a manual host action. Exact ESP-IDF version remains unknown, not inferred.
+- Espressif EIM 0.18.0 and official ESP-IDF v6.0.2 are installed outside the sandbox;
+  the selected GCC is 15.2.0, esptool is 5.3.1, and OpenOCD is
+  v0.12.0-esp32-20260424. Normal PowerShell verifies these through EIM. The sandbox
+  cannot execute the user-owned EIM/Python environment.
 - STM32CubeCLT, GNU Arm GCC/GDB, STM32CubeProgrammer, ST-LINK tools/drivers and CubeMX
   are not installed/detected. ST license/installer acceptance remains a manual action.
 - The repository now has a toolchain doctor, one fixed firmware workflow, and disabled
-  ESP32/STM32 build boundaries. Target operations require an explicit reviewed board
-  profile; flash/program also require explicit port/probe identity. No profile exists,
+  ESP32/STM32 build boundaries. The physically inert generic ESP32-S3 build needs no
+  board profile; physical workflows require an explicit reviewed board profile and
+  flash/program also require explicit port/probe identity. No verified profile exists,
   no fake pins/clock/CAN values were added, and no physical transmit path is active.
 - Bench 0 (PC, App and host firmware) is executable. Bench 1+ remains blocked on vendor
   tools and verified physical targets. Hardware is not verified, first power is not
@@ -32,8 +59,8 @@
   `WAITING_FOR_VERIFIED_INPUTS`. See `DEVELOPMENT_PIPELINE_READINESS.md`.
 - Fresh validation: 120 App pytest tests, 3 toolchain/workflow tests, 44 fallback tests,
   host CMake/Ninja build (35 steps) and CTest 1/1 pass. Python compileall, PowerShell,
-  HTML and JavaScript parsing, doctor smoke check and `git diff --check` pass. ESP-IDF
-  and STM32 compile smokes are unavailable because their official tools are absent;
+  HTML and JavaScript parsing, doctor smoke check and `git diff --check` pass. This was
+  the earlier checkpoint before ESP-IDF installation; STM32 compile remains unavailable;
   no hardware test or flash/program action was performed.
 
 ## First real bench evidence closure — 2026-08-30
@@ -45,7 +72,8 @@
 - `HW-010` is `DO_NOT POWER OR CONNECT`; its input/output, polarity, isolation,
   current, protection/fuse and connector evidence is incomplete. No other regulator is
   owned; `HW-033` remains candidate-only.
-- `HW-002` remains ordered. Delivered board/revision, ESP32 module, camera sensor/FPC,
+- `HW-002` is physically received/present but remains unverified. Board/revision,
+  ESP32 module, camera sensor/FPC,
   USB arrangement and physical pinout evidence are required before camera testing.
   Workbook wiring/GPIO/firmware maps remain provisional and freeze no pin or harness.
 - Received ESP32-side peripheral candidates have item-specific evidence closures and
@@ -64,7 +92,7 @@
 - Every imported row remains `REVIEW_REQUIRED`, `UNDECIDED`, and not verified.
   `HW-032` and `HW-033` remain seller-reference candidates and are excluded from
   purchased inventory.
-- `HW-002` remains ordered and blocked on physical board/revision/sensor/pinout
+- `HW-002` is received and blocked on complete board/revision/sensor/pinout
   comparison. Workbook camera/GPIO/wiring/firmware sheets remain provisional plans,
   not physical evidence or frozen pins.
 - `HW-007` VL53L0X-family hardware and `HW-008` WS2812/WS2811-family breakouts are
@@ -493,7 +521,7 @@ remain target/build decisions after HW-002 verification.
 Host-testable Zi-E-owned Face Engine/Face Pack validation and fixed local safety-voice
 grammar now exist. They are data/observation logic only and grant no robot authority.
 Host/ESP32 and ESP32/STM32 documents are semantic boundaries, not live transports.
-ESP-IDF and STM32 vendor toolchains remain absent on this machine, production targets
-remain disabled, HW-002 remains ordered/unverified, first power is not authorized,
+The ESP-IDF software toolchain is installed; STM32 vendor tooling remains absent.
+Production physical bindings remain disabled, HW-002 is received/unverified, first power is not authorized,
 physical commissioning is not done, and Phase2B2 remains
 `WAITING_FOR_VERIFIED_INPUTS`.

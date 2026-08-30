@@ -1,34 +1,19 @@
-#include <cstdint>
+#include "presence_runtime.hpp"
 
-#if !defined(ZIE_BOARD_BINDING_DISABLED) && !defined(ZIE_VERIFIED_BOARD_PROFILE_ACTIVE)
-#error "A verified board profile or explicitly disabled generic target is required"
-#endif
-
-namespace {
-
-enum class CapabilityState : std::uint8_t {
-  unavailable,
-  unverified,
-  disabled,
-};
-
-struct PresenceCapabilities {
-  CapabilityState audio{CapabilityState::unverified};
-  CapabilityState camera{CapabilityState::unverified};
-  CapabilityState display{CapabilityState::unverified};
-  CapabilityState wake{CapabilityState::unverified};
-  CapabilityState controller_link{CapabilityState::disabled};
-  bool production_run_allowed{false};
-  bool physical_authority{false};
-};
-
-[[maybe_unused]] constexpr PresenceCapabilities kGenericUnverifiedCapabilities{};
-
-}  // namespace
+#include "esp_log.h"
 
 extern "C" void app_main() {
-  // Compile-smoke target only. No GPIO, peripheral initialization, network authority,
-  // controller-link transmit, flash workflow, or production run mode exists here.
-  static_assert(!kGenericUnverifiedCapabilities.production_run_allowed);
-  static_assert(!kGenericUnverifiedCapabilities.physical_authority);
+  static constexpr char kTag[] = "zie_presence";
+  static zie::presence::PresenceRuntime runtime;
+  runtime.initialize();
+  const auto& status = runtime.status();
+  ESP_LOGI(kTag, "target=%s profile=%s lifecycle=%s physical_authority=%s",
+           status.target, status.profile, zie::presence::to_string(status.lifecycle),
+           status.physical_authority ? "true" : "false");
+  ESP_LOGI(kTag, "camera=%s display=%s audio=%s wake=%s controller_link=%s",
+           zie::presence::to_string(status.camera),
+           zie::presence::to_string(status.display),
+           zie::presence::to_string(status.audio),
+           zie::presence::to_string(status.wake),
+           zie::presence::to_string(status.controller_link));
 }

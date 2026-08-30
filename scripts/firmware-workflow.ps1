@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidateSet('doctor','host-configure','host-build','host-test','esp32-configure',
-        'esp32-build','esp32-flash','esp32-monitor','stm32-configure','stm32-build',
+        'esp32-generic-build','esp32-build','esp32-flash','esp32-monitor','stm32-configure','stm32-build',
         'stm32-program','stm32-debug','stm32-log')]
     [string]$Action = 'doctor',
     [string]$BoardProfile,
@@ -52,6 +52,7 @@ switch ($Action) {
     'host-test' { & $cmake --build $hostBuild
         $ctest=Find-FixedTool @('ctest') @('C:\msys64\ucrt64\bin\ctest.exe','C:\Program Files\CMake\bin\ctest.exe')
         & $ctest --test-dir $hostBuild --output-on-failure }
+    'esp32-generic-build' { & (Join-Path $PSScriptRoot 'build-esp32.ps1') }
     'esp32-configure' { $profile=Require-VerifiedProfile; $idf=Find-FixedTool @('idf.py') @("$env:IDF_PATH\tools\idf.py");
         & $idf -C (Join-Path $repo 'firmware/targets/esp32') "-DZIE_VERIFIED_BOARD_PROFILE=$profile" set-target esp32s3 }
     'esp32-build' { $profile=Require-VerifiedProfile; $idf=Find-FixedTool @('idf.py') @("$env:IDF_PATH\tools\idf.py");

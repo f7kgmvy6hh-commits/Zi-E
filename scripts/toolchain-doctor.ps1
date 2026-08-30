@@ -45,7 +45,7 @@ function Add-Tool {
     if (-not $Path) { $status = $MissingStatus }
     else {
         $version = Read-Version $Path $Arguments
-        if ($version -match '^(VERSION_CHECK_FAILED|Traceback)') { $status = 'MISSING' }
+        if (-not $version -or $version -match '^(VERSION_CHECK_FAILED|Traceback)') { $status = 'MISSING' }
     }
     $rows.Add([pscustomobject]@{ area=$Area; tool=$Name; status=$status; path=$Path;
         version=$version; note=$Note })
@@ -68,7 +68,7 @@ $codex = Resolve-FixedTool @('codex')
 
 Add-Tool HOST Git $git @('--version')
 Add-Tool HOST Python $python @('--version')
-Add-Tool HOST 'project pip' $pip @('--version') MISSING 'The current project venv has no pip executable/module.'
+Add-Tool HOST 'project pip' $pip @('--version') OPTIONAL 'Optional: the App environment is managed by uv and imports are checked separately.'
 Add-Tool HOST 'system Python' $systemPython @('--version') OPTIONAL 'Not used by the current App venv.'
 Add-Tool HOST 'system pip' $systemPip @('--version') OPTIONAL 'Not used to mutate the current App venv.'
 Add-Tool HOST CMake $cmake @('--version')
@@ -93,8 +93,19 @@ $xtensa = Resolve-FixedTool @('xtensa-esp32s3-elf-gcc') @(
 $esptool = Resolve-FixedTool @('esptool','esptool.py') @('C:\Espressif\python_env\*\Scripts\esptool.exe')
 $openocd = Resolve-FixedTool @('openocd') @('C:\Espressif\tools\openocd-esp32\*\openocd-esp32\bin\openocd.exe')
 Add-Tool ESP32 EIM $eim @('--version') MANUAL_VENDOR_INSTALL_REQUIRED 'Install official Espressif EIM outside the repository.'
-Add-Tool ESP32 idf.py $idf @('--version') MANUAL_VENDOR_INSTALL_REQUIRED
-Add-Tool ESP32 ESP-IDF $idf @('--version') MANUAL_VENDOR_INSTALL_REQUIRED
+Add-Tool ESP32 'idf.py launcher' $idf @('--version') MANUAL_VENDOR_INSTALL_REQUIRED 'Launcher/wrapper identity; this is not the framework version.'
+$idfVersion = Read-Version $idf @('--version')
+$frameworkVersion = if ($idfVersion -match 'ESP-IDF\s+(v?[0-9]+\.[0-9]+(?:\.[0-9]+)?)') { $Matches[1] } else { $null }
+if (-not $frameworkVersion -and $idf) {
+    $idfRoot = Split-Path (Split-Path $idf -Parent) -Parent
+    $versionFile = Join-Path $idfRoot 'version.txt'
+    if (Test-Path -LiteralPath $versionFile) {
+        $candidateVersion = (Get-Content -LiteralPath $versionFile -Raw).Trim()
+        if ($candidateVersion -match '^[0-9]+\.[0-9]+(?:\.[0-9]+)?$') { $frameworkVersion = "v$candidateVersion" }
+    }
+}
+$frameworkStatus = if (-not $idf) { 'MANUAL_VENDOR_INSTALL_REQUIRED' } elseif (-not $frameworkVersion) { 'MISSING' } else { 'READY' }
+$rows.Add([pscustomobject]@{area='ESP32';tool='ESP-IDF';status=$frameworkStatus;path=$idf;version=$frameworkVersion;note='Framework version parsed from idf.py --version, with ESP-IDF version.txt as authoritative fallback; never inferred from an EIM wrapper version.'})
 Add-Tool ESP32 'ESP32-S3 compiler' $xtensa @('--version') MANUAL_VENDOR_INSTALL_REQUIRED
 Add-Tool ESP32 esptool $esptool @('version') MANUAL_VENDOR_INSTALL_REQUIRED
 Add-Tool ESP32 OpenOCD $openocd @('--version') MANUAL_VENDOR_INSTALL_REQUIRED

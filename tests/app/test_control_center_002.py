@@ -52,3 +52,13 @@ def test_no_raw_hardware_or_general_shell_routes_exist(tmp_path):
         paths = {route.path.lower() for route in client.app.routes}
     forbidden = ("terminal", "shell", "gpio", "pwm", "can/transmit", "raw", "flash")
     assert not any(token in path for path in paths for token in forbidden)
+
+
+def test_esp32_development_status_separates_build_hardware_and_flash(monkeypatch, tmp_path):
+    monkeypatch.setattr(control_center, "ESP32_BUILD_STATUS", tmp_path / "not-run.json")
+    status = control_center.esp32_development_status()
+    assert status["toolchain"] == "READY"
+    assert status["generic_cross_build"] == "NOT_RUN"
+    assert status["physical_target"] == "UNVERIFIED_PRESENT"
+    assert status["verified_board"] == "BLOCKED_HW_002"
+    assert status["flash"] == "NOT_AUTHORIZED"

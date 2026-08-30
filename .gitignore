@@ -7,6 +7,12 @@
 /build-security*/
 /build-final*/
 /build/
+/firmware/targets/esp32/build/
+/firmware/targets/esp32/sdkconfig
+/firmware/targets/esp32/sdkconfig.old
+*.elf
+*.bin
+*.map
 /.venv/
 /.env
 /runtime/
